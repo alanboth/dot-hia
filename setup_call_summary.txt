@@ -1,0 +1,64 @@
+
+  SPEEDS 
+
+bus 21
+bus_driver 15
+minibus 15
+minibus_driver 15
+car 21
+taxi 21
+walking 4.8
+walk_to_pt 4.8
+bicycle 14.5
+motorcycle 25
+truck 21
+van 15
+subway 28
+rail 35
+auto_rickshaw 22
+shared_auto 22
+shared_taxi 21
+cycle_rickshaw 10
+pedestrian 4.8
+tram 28
+other 21
+
+  EMISSION INVENTORY 
+
+bus 0
+bus_driver 0.82
+car 0.228
+taxi 0.011
+walking 0
+bicycle 0
+motorcycle 0.011
+truck 0.859
+big_truck 0.711
+other 0.082
+
+  Dose--response read from C:/Users/rstudio/Documents/R/win-library/4.0/ithimr/extdata/global/dose_response/drpa/extdata/ 
+
+
+  Trips read from C:\Users\rstudio\Dropbox\HIA - RMIT - DOT\Model\Data\Processed\/trips_melbourne.csv 
+
+
+  GBD read from C:\Users\rstudio\Dropbox\HIA - RMIT - DOT\Model\Data\Processed\/gbd_melbourne.csv 
+
+
+  Population read from C:\Users\rstudio\Dropbox\HIA - RMIT - DOT\Model\Data\Processed\/population_melbourne.csv 
+
+
+  Physical activity survey read from C:\Users\rstudio\Dropbox\HIA - RMIT - DOT\Model\Data\Processed\/pa_melbourne.csv 
+
+
+  Injuries read from C:\Users\rstudio\Dropbox\HIA - RMIT - DOT\Model\Data\Processed\/injuries_melbourne.csv 
+
+
+  Emissions will be calculated for the following modes:
+bus_driver car taxi motorcycle truck big_truck other
+  To edit an emission contribution, supply e.g. 'emission_inventory=list(car=4)' in the call to 'run_ithim_setup'.
+
+  To exclude a mode from the emission inventory, supply e.g. 'emission_inventory=list(other=0)' in the call to 'run_ithim_setup'.
+
+
+
