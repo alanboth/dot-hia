@@ -56,6 +56,9 @@ options(scipen=999)
 # stop_VISTA <- read.csv("Data/Travel survey/VISTA 12-18/S_VISTA1218_V1.csv")
 
 calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
+  # hh_VISTA_location="Data/Travel survey/VISTA 12-18/H_VISTA_1218_V1.csv"
+  # person_VISTA_location="Data/Travel survey/VISTA 12-18/P_VISTA1218_V1.csv"
+  # trip_VISTA_location="Data/Travel survey/VISTA 12-18/T_VISTA1218_V1.csv"
   
   
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T) %>%
@@ -120,13 +123,13 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
     mutate(STOP=as.numeric(gsub("MODE", "",STOP)))
   trips_melbourne_time <- trips_melbourne %>%
     dplyr::select(TRIPID,TIME1:TIME9) %>%
-    mutate_at(vars(starts_with("TIME")),funs(as.numeric)) %>%
+    mutate_at(vars(starts_with("TIME")),as.numeric) %>%
     pivot_longer(TIME1:TIME9,names_to="STOP",values_to="TIME") %>%
     filter(!is.na(TIME)) %>%
     mutate(STOP=as.numeric(gsub("TIME", "",STOP)))
   trips_melbourne_dist <- trips_melbourne %>%
     dplyr::select(TRIPID,DIST1:DIST9) %>%
-    mutate_at(vars(starts_with("DIST")),funs(as.numeric)) %>%
+    mutate_at(vars(starts_with("DIST")),as.numeric) %>%
     pivot_longer(DIST1:DIST9,names_to="STOP",values_to="DIST") %>%
     filter(!is.na(DIST)) %>%
     mutate(STOP=as.numeric(gsub("DIST", "",STOP)))
@@ -207,10 +210,12 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   
   ### Create numeric id
   trips_melbourne <- trips_melbourne %>%
-    group_by(PERSID) %>%
+    rename(persid=PERSID) %>%
+    group_by(persid) %>%
     mutate(participant_id=group_indices()) %>%
     ungroup()
   
+  return(trips_melbourne)
 }
 
 # write.csv(trips_melbourne, "Data/Processed/trips_melbourne.csv", row.names=F, quote=F)

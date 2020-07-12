@@ -16,7 +16,10 @@
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
-calculateDeathRates <- function(population_deaths) {
+calculateDeathRates <- function(population_deaths_location) {
+  # population_deaths_location="Data/Population and deaths/population_deaths.csv"
+  
+  population_deaths <- read.csv(population_deaths_location)
   
   deaths_rates <- population_deaths %>%
     ### Ages to numeric. Need to convert to a character first
