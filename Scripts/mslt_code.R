@@ -22,16 +22,83 @@ rm (list = ls())
 options(scipen=999)
 source("Scripts/functions_mslt.R")
 #### TO DO: 
-## Mortality all cause, incidence and case fatality
-## Intervention duration
-## Replace place holdersL disease_names, mslt and pfs (get pifs from ITHIMR SCRIPT)
+## Udpate mslt input sheet with Australian data, need to run disbayes/dsmod for diseases
+## Add Intervention duration
 ## Add all cause mortality pifs modifying the general life table only and compare results. 
+## Add weights to matched population
+## trends case fatality and incidence
+## Run uncertainty
 
 
-# ---- chunk-1 ----
-### Get data and set parameters
+## CALCULATION ORDER only including physical activity changes
+# 1) Matched population
+# 2) mmets per person 
+# 3) RRs per person
+# 4) PIFS by age and sex
 
-## Data 
+
+## PARAMETERS
+SCEN_SHORT_NAME <- c("base", "scen1")
+
+## UNCERTAINTY PARAMETERS
+
+# NSAMPLES <- 1024
+MMET_CYCLING <-  4.63#c(log(4.63),log(1.2))
+MMET_WALKING <- 2.53 #c(log(2.53),log(1.1)) 
+
+## TO DO: Calculate SD from CI, see Erzats
+DIABETES_IHD_RR_F <<- 2.82 ## c(log(2.82),log()) CI (2.35, 3.38)
+DIABETES_STROKE_RR_F <<- 2.28 ## c(log(2.28),log()) CI (1.93, 2.69)
+DIABETES_IHD_RR_M <<- 2.16 ## c(log(2.16),log()) CI (1.82, 2.56)
+DIABETES_STROKE_RR_M <<- 1.83 ## c(log(1.83),log()) CI (1.60, 2.08)
+
+## GET DEMOGRAPHICS
+## DATA DOSE RESPONSE RRS (FROM METAHIT)
+
+global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
+## for windows??
+global_path <- paste0(global_path, "/")
+
+file_name <- paste0(getwd(), "Data/Processed/disease_outcomes_lookup.csv")
+DISEASE_INVENTORY <-  read_csv(file_name)
+list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata/"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
+for (i in 1:length(list_of_files)){
+  assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
+         readr::read_csv(list_of_files[[i]],col_types = cols()),
+         pos = 1)
+}
+
+## GET MATCHED POPULATION
+
+synth_pop <- read_csv(paste0(getwd(), "//Data//Processed//matched_pop.csv")) %>%
+  dplyr::mutate(participant_id = seq.int(nrow(synth_pop))) %>%
+  dplyr::rename(age = age1)
+
+## CALCULTE RRS PER PERSON 
+
+### FIRST WE NEED MMETS PER PERSON  
+mmets_pp <- synth_pop %>% dplyr::select(participant_id, sex, age, dem_index, starts_with("time") & contains(c("pedestrian", "bicycle")), work_ltpa_marg_met) %>%
+  dplyr::mutate_all(funs(ifelse(is.na(.), 0, .))) %>%
+  dplyr::mutate(base_mmet = work_ltpa_marg_met + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
+  dplyr::mutate(scen1_mmet = work_ltpa_marg_met + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
+
+### SECOND WE CALCULATE RRS PER PERSON FROM MMET PER PERSON AND RRS DATA FROM ITHIMR
+#### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
+#### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortatlity)  
+RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
+
+### CALCULTE PIFS BY AGE AND SEX GROUP
+
+# RR_PA_calculations <- RR_PA_calculations %>%
+#   dplyr::mutate(dem_index = group_indices(., age_cat, sex)) ### Added here to add 
+
+### Calculate PIFs by age and sex for air pollution and physical activity combined
+#### health_burden2 was created by Rob J for metahit
+
+#### ALAN, can you please help me with this funciton? it provisions for having air pollution RRs, bue twe do not have them yet. You can find the function 
+#### in functions_mslt
+pifs_pa_ap <- health_burden_2(RR_PA_calculations)
+
 
 # PLACE HOLDER
 pif_expanded <- read_csv(paste0(paste0(getwd(),"/Data/Processed/pif_expanded.csv")))

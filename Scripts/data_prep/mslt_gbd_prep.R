@@ -352,3 +352,110 @@ for (d in 1:nrow(DISEASE_SHORT_NAMES)){
 
 names(mslt_df)[names(mslt_df) == "rate_ylds (years lived with disability)_allc"] <- "pyld_rate"
 mslt_df[is.na(mslt_df)] <- 0 
+
+
+
+#####ALAN comments below
+#### We will add disbayes outcomes and then this feeds onto mslt code, for now, we use placeholder
+
+### the code below is old, but I will need potentially, so please leave there for now
+
+
+# 
+# # ---- chunk 1.5 Get Disbayes output ----
+# ### USE uk DATA, NEED TO GENERATE DATA FOR AUSTRALIA
+# 
+# 
+# 
+# place_holder_aus <- load(file = "C:\\Metahit\\mh-mslt\\data\\city regions\\Output disbayes\\uk_smoothed_res.rda")
+# 
+# ## create column one with outcome and year
+# place_holder_aus <- cbind(
+#   mes=rownames(place_holder_aus), place_holder_aus)
+# 
+# ### Separate avoce in outcome and year
+# place_holder_aus <- cbind(place_holder_aus, (str_split_fixed(place_holder_aus$
+#                                                                mes, fixed('['), 2)))
+# 
+# place_holder_aus <- place_holder_aus[ (place_holder_aus$`1` %in% c("inc", "cf", "prev")), ]
+# place_holder_aus$`1` <- as.character(place_holder_aus$`1`)
+# place_holder_aus$`2` <- as.character(place_holder_aus$`2`)
+# place_holder_aus$`2` <- gsub("].*", "",place_holder_aus$`2`)
+# 
+# 
+# ## Rename columns
+# names(place_holder_aus)[names(place_holder_aus) == "1"] <- "rates"
+# names(place_holder_aus)[names(place_holder_aus) == "2"] <- "year"
+# 
+# ## Rename string values inc to incidence, cf to case fatality and prev to prevalence
+# 
+# place_holder_aus <- place_holder_aus %>%
+#   mutate(rates = str_replace(rates, "inc", "incidence"))  %>%
+#   mutate(rates = str_replace(rates, "cf", "case_fatality"))  %>%
+#   mutate(rates = str_replace(rates, "prev", "prevalence"))
+# 
+# ## Move to columns for data for case_fatality, incidence and prevelence
+# 
+# place_holder_aus$disease_rate <- paste(place_holder_aus$rates, place_holder_aus$disease, sep = "_")
+# place_holder_aus2 <- place_holder_aus %>% pivot_wider(id_cols = c(area, gender, model, year), names_from = disease_rate, values_from = c(med, lower95, upper95))
+# names(place_holder_aus2) = gsub(pattern = "med_", replacement = "", x = names(place_holder_aus2))
+# 
+# disbayes_output <- place_holder_aus2 %>%
+#   dplyr::rename(sex = gender) %>%
+#   mutate_if(is.factor, as.character)
+# disbayes_output$year <- disbayes_output$year %>% as.numeric(disbayes_output$year)
+# ## Change year to match mslt dataframe (0 to 100 years)
+# disbayes_output$year[1:101] <- 0:100
+# 
+# disbayes_output$sex_age_area_cat <- paste(disbayes_output$sex,disbayes_output$year, disbayes_output$area, sep = "_"  )
+# 
+# 
+# # ---- chunk 1.7 ---- HERE WE SHOULD USE POPULATION FOR MELBOURNE AND DEATH RATES FOR VICTORIA CALCULATES IN death_rate_prep
+# 
+# areas <- unique(disbayes_output$area)
+# i_sex <- c('male', 'female')
+# 
+# mslt_df <- as.data.frame(NULL)
+# 
+# mslt_df_list <- list()
+# 
+# index <- 1
+# 
+# for (a in areas) {
+#   
+#   ### selected data here should be gbd_data with all data, see how the code works with it 
+#   
+#   data_1 <-  dplyr::filter(gbd_data, area == a)
+#   data_2 <- dplyr::filter(disbayes_output, area == a)
+#   
+#   mslt_df_list[[index]] <- GenMSLTDF(data_1, data_2)
+#   mslt_df_list[[index]]<- replace(mslt_df_list[[index]], is.na(mslt_df_list[[index]]), 0)
+#   
+#   
+#   ### Change names to match with Rob's injury code
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_pdri"] <- "deaths_rate_pedestrian"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_pdri"] <- "ylds_rate_pedestrian"
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_cyri"] <- "deaths_rate_cyclist"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_cyri"] <- "ylds_rate_cyclist"
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_mtri"] <- "deaths_rate_motorcyclist"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_mtri"] <- "ylds_rate_motorcyclist"
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_mvri"] <- "deaths_rate_motor"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_mvri"] <- "ylds_rate_motor"
+#   
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_otri"] <- "deaths_rate_other"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_otri"] <- "ylds_rate_other"
+#   
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "deaths_rate_lwri"] <- "deaths_rate_lri"
+#   names(mslt_df_list[[index]])[names(mslt_df_list[[index]]) == "ylds (years lived with disability)_rate_lwri"] <- "ylds_rate_lri"
+#   
+#   mslt_df_list[[index]]$sex <- as.character(mslt_df_list[[index]]$sex)
+#   
+#   index <- index + 1
+#   
+# }
+
