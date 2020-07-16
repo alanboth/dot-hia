@@ -21,16 +21,16 @@ calculateInjuries <- function(accident_location,accident_event_location,person_l
   # person_location="Data/VicRoads Road Injuries/Original_PERSON.csv"
   # vehicle_location="Data/VicRoads Road Injuries/Original_VEHICLE.csv"
   
-  ACCIDENT <- read.csv(accident_location,as.is=T) %>%
+  ACCIDENT <- read.csv(accident_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     select(ACCIDENT_NO, ACCIDENTDATE, NO_OF_VEHICLES, Accident.Type.Desc)
   
-  ACCIDENT_EVENT <- read.csv(accident_event_location,as.is=T)
+  ACCIDENT_EVENT <- read.csv(accident_event_location,as.is=T,fileEncoding="UTF-8-BOM")
   
-  PERSON <- read.csv(person_location,as.is=T) %>%
+  PERSON <- read.csv(person_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     select(ACCIDENT_NO, PERSON_ID, VEHICLE_ID, SEX, AGE, Age.Group,
            Inj.Level.Desc, Road.User.Type.Desc)
   
-  VEHICLE <- read.csv(vehicle_location,as.is=T) %>%
+  VEHICLE <- read.csv(vehicle_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     select(ACCIDENT_NO, VEHICLE_ID, vehicle_type=Vehicle.Type.Desc) %>%
     mutate(vehicle_type = case_when(vehicle_type == "Motor Cycle" ~ 'motorcycle',
                                     vehicle_type == "Light Commercial Vehicle (Rigid) <= 4.5 Tonnes GVM" ~ 'lightcom',
