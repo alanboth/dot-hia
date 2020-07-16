@@ -15,9 +15,9 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 # Generate trips_melbourne.csv
 source("Scripts/data_prep/trips_prep.R")
 trips_melbourne <- calculateVistaTrips(
-  hh_VISTA_location="Data/Travel survey/VISTA 12-18/H_VISTA_1218_V1.csv",
-  person_VISTA_location="Data/Travel survey/VISTA 12-18/P_VISTA1218_V1.csv",
-  trip_VISTA_location="Data/Travel survey/VISTA 12-18/T_VISTA1218_V1.csv"
+  hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv",
+  person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv",
+  trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
 )
 write.csv(trips_melbourne, "Data/Processed/trips_melbourne.csv", row.names=F, quote=F)
 saveRDS(trips_melbourne, "Data/Processed/trips_melbourne.Rds")
@@ -34,9 +34,9 @@ saveRDS(scenario, "Data/Processed/trips_melbourne_scenarios.Rds")
 
 source("Scripts/data_prep/synthetic_pop.R")
 travel_data <- calculateTravelData(
-  hh_VISTA_location="Data/Travel survey/VISTA 12-18/H_VISTA_1218_V1.csv",
-  person_VISTA_location="Data/Travel survey/VISTA 12-18/P_VISTA1218_V1.csv",
-  ses_index_location="Data/Travel survey/ABS SEIFA/ses.csv"
+  hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv",
+  person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv",
+  ses_index_location="Data/Travelsurvey/ABS SEIFA/ses.csv"
 )
 # need quotes on since some industry_cat entries have commas 
 # e.g.: 'Professional, Scientific and Technical Services'

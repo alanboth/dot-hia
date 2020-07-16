@@ -25,14 +25,14 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
   # person_VISTA_location="Data/Travel survey/VISTA 12-18/P_VISTA1218_V1.csv"
   # ses_index_location="Data/Travel survey/ABS SEIFA/ses.csv"
   
-  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T) %>%
+  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     select(HHID,SurveyPeriod,HomeSubRegion,HOMEPC) %>%
     filter(HHID!="") # some rows were completely blank
-  person_VISTA <- read.csv(person_VISTA_location,as.is=T) %>%
+  person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
            ANZSIC1, WDPERSWGT, WEPERSWGT)
   ## Add SEIFA-IRSD
-  ses_index <- read.csv(ses_index_location,as.is=T) %>% 
+  ses_index <- read.csv(ses_index_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
   
@@ -112,9 +112,9 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   # travel_data_location="Data/Processed/travel_data.csv"
   # scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
   
-  travel_data <- read.csv(travel_data_location,as.is=T)
+  travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
   
-  trips_melbourne <- read.csv(scenario_location,as.is=T) %>%
+  trips_melbourne <- read.csv(scenario_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     mutate(persid=toupper(persid))
   
   ### Create total duration and distance for all modes, rather long process here. 
@@ -191,12 +191,12 @@ calculatePersonsPA <- function(pa_location,hh_location) {
   # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
   # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 
-  pa <- read.csv(pa_location,as.is=T) %>%
+  pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
            EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
            EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH)
   
-  hh <- read.csv(hh_location,as.is=T) %>% 
+  hh <- read.csv(hh_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
     select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
   
   persons_pa <- left_join(pa, hh, by="ABSHIDB") %>%
@@ -301,8 +301,8 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # pa_location="Data/Processed/persons_pa.csv"
   # persons_travel_location="Data/Processed/persons_travel.csv"
   
-  persons_pa <- read.csv(pa_location,as.is=T)
-  persons_travel <- read.csv(persons_travel_location,as.is=T)
+  persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
+  persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
   # sort(unique(persons_pa$age_group))
   # sort(unique(persons_travel$age_group))
