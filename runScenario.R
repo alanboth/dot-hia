@@ -6,7 +6,53 @@
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
+library(devtools)
+
 # ltpa= leisure time physical activity
+
+
+# Generate death rates for the population
+source("Scripts/data_prep/death_rates_prep.R")
+death_rates <- calculateDeathRates(
+  population_deaths_location="Data/Population and deaths/population_deaths.csv"
+)
+write.csv(death_rates,"Data/Processed/deaths_melbourne.csv", row.names=F, quote=F)
+
+
+source("Scripts/data_prep/ithim_gbd_prep.R")
+# this outputs a list containing gbd_melbourne and population_melbourne
+GBDandPopulation <- calculateGBDandPopulation(
+  gbd_melbourne_ithimr_location="Data/gbd/gbd_melbourne_ithimr.csv",
+  population_melbourne_abs_location="Data/Processed/population_melbourne_abs.csv"
+)
+gbd_melbourne <- GBDandPopulation[[1]]
+population_melbourne <- GBDandPopulation[[2]]
+write.csv(gbd_melbourne,"Data/Processed/gbd_melbourne.csv", row.names=F, quote=T)
+write.csv(population_melbourne,"Data/Processed/population_melbourne.csv", row.names=F, quote=T)
+
+source("Scripts/data_prep/mslt_gbd_prep.R")
+# I don't think this is actually needed anymore
+disease_names <- calculateDiseaseNames(
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv",
+  disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
+)
+write.csv(disease_names, "Data/Processed/disease_names.csv", row.names=F, quote=T)
+
+gbd_wider <- calculateGBDwider(
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+)
+write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
+
+# This function needs a good look, I don't understand enough of about health calculations
+mslt <- calculateMSLT(
+  population_melbourne_location="Data/Processed/population_melbourne.csv",
+  deaths_melbourne_location="Data/Processed/deaths_melbourne.csv",
+  gbd_wider_location="Data/Processed/gbd_wider.csv"
+)
+write.csv(mslt, "Data/Processed/mslt.csv", row.names=F, quote=T)
+
+
+
 
 
 
@@ -67,13 +113,6 @@ saveRDS(persons_matched, "Data/Processed/matched_pop.Rds")
 
 
 # OTHER FUNCTIONS, NOT YET REFERENCED IN MAIN CODE
-# Generate death rates for the population
-source("Scripts/data_prep/death_rates_prep.R")
-death_rates <- calculateDeathRates(
-  population_deaths_location="Data/Population and deaths/population_deaths.csv"
-)
-write.csv(death_rates,"Data/Processed/deaths_melbourne.csv", row.names=F, quote=F)
-
 source("Scripts/data_prep/injuries_prep.R")
 injuries_melbourne <- calculateInjuries(
   accident_location="Data/VicRoads Road Injuries/Original_ACCIDENT.csv",

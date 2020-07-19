@@ -23,7 +23,7 @@ calculateScenario <- function(trips_melbourne_location) {
   
   # trips_melbourne_location="Data/Processed/trips_melbourne.csv"
   
-  trips_melbourne <- read.csv(trips_melbourne_location,as.is=T)
+  trips_melbourne <- read.csv(trips_melbourne_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   trips_melbourne_scenarios <- trips_melbourne %>%  
     dplyr::rename(trip_mode_base = trip_mode,
