@@ -61,12 +61,21 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
   
   
+<<<<<<< HEAD
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
     filter(HHID!="") # some rows were completely blank
   person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
   trip_VISTA <- read.csv(trip_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+=======
+  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
+    filter(HHID!="") # some rows were completely blank
+  person_VISTA <- read.csv(person_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
+  trip_VISTA <- read.csv(trip_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+>>>>>>> 104a6d303f290af1e7bc9567dac7adf43147c6b8
     dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
                   TRIPPURP,LINKMODE,
                   MODE1,MODE2,MODE3,MODE4,MODE5,MODE6,MODE7,MODE8,MODE9,
