@@ -57,7 +57,7 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
 # ---- chunk-1.2.2: Clean data ----
 
 calculateGBDwider <- function(gbd_location) {
-  # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+ # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
   
   gbd <-  read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -116,8 +116,11 @@ calculateGBDwider <- function(gbd_location) {
                 values_from = c(rate, number), names_from = c(measure, disease),
                 names_glue = "{measure}_{.value}_{disease}") %>%
     left_join(gbd_pop, by = c("age", "sex")) %>% 
-    mutate(sex = tolower(sex))
+    mutate(sex = tolower(sex)) %>%
+    arrange(sex, age_cat)
   # `names<-`(tolower(names(.)))
+  ## BZ: added order data by age and sex
+  # gbd_wider <- gbd_wider[order("sex", "age_cat"),]
   
   return(gbd_wider)
   
