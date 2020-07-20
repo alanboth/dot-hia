@@ -127,11 +127,10 @@ calculateGBDwider <- function(gbd_location) {
 }  
 
 calculateMSLT <- function(population_melbourne_location,deaths_melbourne_location,gbd_wider_location) {
-  ### BELEN: comment out after checking function
   
- population_melbourne_location="Data/Processed/population_melbourne.csv"
- deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
- gbd_wider_location="Data/Processed/gbd_wider.csv"
+ # population_melbourne_location="Data/Processed/population_melbourne.csv"
+ # deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
+ # gbd_wider_location="Data/Processed/gbd_wider.csv"
 
   ### From here we used data as inputs for disbayes and to create 1-yr frame for mslt
   
@@ -239,7 +238,8 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
     age_group=age_group %>% .[!is.na(.)]
     valuesToInterpolate=valuesToInterpolate %>% .[!is.na(.)]
     # make the interpolation function
-    InterFunc <- stats::splinefun(age_group, valuesToInterpolate,
+    # BZ: added log, rates as are cannot be interpolated (get negative values). We interpolate the log and then but with exp function for results
+    InterFunc <- stats::splinefun(age_group, log(valuesToInterpolate),
                                   method="monoH.FC", ties=mean)
     # return interpolated values
     return(InterFunc(0:100))
@@ -262,12 +262,12 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
     arrange(disease,sex,age) %>%
     group_by(disease,sex) %>%
     # interpolate dw_adj
-    mutate(dw_adj=interpolateFunction(dw_adj)) %>%
+    mutate(dw_adj=exp(interpolateFunction(dw_adj))) %>%
     ## Interpolate mortality and ylds (all cause mortality is from Melbourne data)
-    mutate(deaths_rate=interpolateFunction(deaths_rate)) %>%
-    mutate(ylds_rate=interpolateFunction(ylds_rate)) %>%
+    mutate(deaths_rate=exp(interpolateFunction(deaths_rate))) %>%
+    mutate(ylds_rate=exp(interpolateFunction(ylds_rate))) %>%
     ## not sure if we were supposed to interpolate this one
-    mutate(ylds_rate_allc_adj_1=interpolateFunction(ylds_rate_allc_adj_1)) %>%
+    mutate(ylds_rate_allc_adj_1=exp(interpolateFunction(ylds_rate_allc_adj_1))) %>%
     ungroup()
 
   mslt_df_wider <- mslt_df_by_disease %>%
