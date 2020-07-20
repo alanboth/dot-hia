@@ -127,9 +127,11 @@ calculateGBDwider <- function(gbd_location) {
 }  
 
 calculateMSLT <- function(population_melbourne_location,deaths_melbourne_location,gbd_wider_location) {
-  # population_melbourne_location="Data/Processed/population_melbourne.csv"
-  # deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
-  # gbd_wider_location="Data/Processed/gbd_wider.csv"
+  ### BELEN: comment out after checking function
+  
+ population_melbourne_location="Data/Processed/population_melbourne.csv"
+ deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
+ gbd_wider_location="Data/Processed/gbd_wider.csv"
 
   ### From here we used data as inputs for disbayes and to create 1-yr frame for mslt
   
@@ -202,6 +204,7 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
 
   # Adjust all cause ylds for included diseases and injuries (exclude all cause ). From here just med 
   # AB: Belen, please check that I've got this part working correctly.
+  # BZ: checked, this code substracts ylds from all included causes to ylds for all cause and calculates the rate per one.
   gbd_df <- gbd_df %>%
     mutate(ylds_rate_allc_adj_1 = (ylds_number_allc - all_ylds_count)/pop)
 
@@ -227,7 +230,7 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
  
   # interpolate a measure across 0-100 years
   # try the following code to test the function (interpolates dw_adj for males with allc):
-  # mslt_df_by_disease%>%filter(sex=="male"&disease=="allc")%>%pull(dw_adj)%>%interpolateFunction()
+  # mslt_df_by_disease%>%filter(sex=="female"&disease=="ishd")%>%pull(ylds_rate)%>%interpolateFunction()
   interpolateFunction <- function(valuesToInterpolate){
     age_group=0:100
     # only use ages where there is a value present
@@ -274,6 +277,7 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
                 names_from=disease,
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
     # AB: I might have this wrong
+    # BZ: this is correct
     rename(pyld_rate=ylds_rate_allc_adj_1)
   
   return(mslt_df_wider)
