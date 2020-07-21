@@ -14,6 +14,7 @@ library(zoo)
 library(stringi)
 library(tidyverse)
 library(rlist)
+library(ithimr)
 if (interactive()) {
   library(conflicted)
 }
@@ -85,6 +86,7 @@ mmets_pp <- synth_pop %>% dplyr::select(participant_id, sex, age, dem_index, sta
 ### SECOND WE CALCULATE RRS PER PERSON FROM MMET PER PERSON AND RRS DATA FROM ITHIMR
 #### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
 #### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortatlity)  
+#### TO DO: check in source formula which RRs are applied (all, mortality, incidence)
 RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
 
 ### CALCULTE PIFS BY AGE AND SEX GROUP
