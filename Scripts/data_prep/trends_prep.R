@@ -5,8 +5,8 @@
 ### cHECK TRENDS IN nz bode STUDIES AND AUS STUDIES
 ### Not data for colon cancer
 
-### incidence trends done: breast, uterine and lung cancers
-### incidence trends to do: colon cancer, ihd, stroke, t2d and copd
+### incidence and mortality trends done: breast, uterine and lung cancers
+### incidence and mortality trends to do: colon cancer (only incidence), ihd, stroke, t2d and copd
 ### mortality trends
 
 
