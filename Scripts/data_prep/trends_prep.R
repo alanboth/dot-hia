@@ -1,237 +1,266 @@
-## Trends preparation
-### Trends for incidence and case fatality and all cause mortality
-### Cancers: Breast cancer (females only), uterine cancer (female only), colon cancer, lung cancer
-### Non-cancers: ischemic heart disease, stroke, type 2 diabetes, copd
-### cHECK TRENDS IN nz bode STUDIES AND AUS STUDIES
-### Not data for colon cancer
-
-### incidence and mortality trends done: breast, uterine and lung cancers
-### incidence and mortality trends to do: colon cancer (only incidence), ihd, stroke, t2d and copd
-### mortality trends
+# Prepared all causes, diseases and injuries trends for: 1) Mortaity for all cause mortality, 
+# 2) Incidence and case fatality for diseases and 3) Deaths and YLDs for injuries
+### Check that for females all cancer rates are increasing
 
 
-### TO DO: bind all columns and save
 suppressPackageStartupMessages(library(readxl)) # for reading excel files
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
+### Data
 
 incidence_trends_cancers="Data/aihw/trends/cancers_trends_incidence_aihw.xls"
 mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls"
+trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx"
+trends_copd="Data/aihw/trends/grim_books.csv"
 
-### CANCER INCIDENCE TRENDS
-#### BREAST CANCER FEMALES
 
-incidence_trends_breast_cancer_f <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S5", range = "B6:L26") %>%
-                                    mutate(incidence_trend_brsc = log(`2020`/`2011`)/(2020-2011)) %>%
-                                    extract(`Age group`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-                                    mutate(from_age = as.numeric(case_when(`Age group`== "95+"  ~  "95",
-                                    TRUE  ~  from_age)),
-                                    to_age = as.numeric(case_when(`Age group`=="95+"  ~  "99",
-                                    TRUE  ~  to_age)),
-                                    agediff = to_age - from_age + 1,  # this will equal 5 
-                                    brsc = incidence_trend_brsc) %>%
-                                    rename(agegroup = `Age group`)
+### INCIDENCE TRENDS CANCERS
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(incidence_trends_breast_cancer_f), incidence_trends_breast_cancer_f$agediff)
-incidence_trends_breast_cancer_f_yr <- incidence_trends_breast_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(incidence_trends_breast_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, brsc, year)
+### Breast
+data <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S5", range = "B32:L34",  
+                                                     col_names = c("ASR", as.character(2011:2020)))
 
-#### UTERINE CANCERS FEMALES
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+                        (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
 
-#### CHECK, GENERALLY INCREASING TRENDS
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+                            mutate(brsc = ifelse(year <= values[2], 
+                                                 exp(values[1]* year),
+                                                 exp(values[1] * values[2])))
+incidence_trends_f <- data_2
 
-incidence_trends_uterine_cancer_f <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S21", range = "B6:L26") %>%
-  mutate(incidence_trend_endo = log(`2020`/`2011`)/(2020-2011)) %>%
-  extract(`Age group`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group`== "95+"  ~  "95",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group`=="95+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         utrc = incidence_trend_endo) %>%
-  rename(agegroup = `Age group`)
+### Uterine
+data <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S21", range = "B32:L34",
+  col_names = c("ASR", as.character(2011:2020)))
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(incidence_trends_uterine_cancer_f), incidence_trends_uterine_cancer_f$agediff)
-incidence_trends_uterine_cancer_f_yr <- incidence_trends_uterine_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(incidence_trends_uterine_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, utrc, year)
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+                                                            (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+  mutate(utrc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
 
+incidence_trends_f <- merge(incidence_trends_f, uterine_cancer_f_expanded, by = c("year", "sex"))
   
-#### LUNG CANCERS FEMALES
+### Lung 
+#### Females
+data <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S10b", range = "B32:L34", 
+                                  col_names = c("ASR", as.character(2011:2020))) 
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+            (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+  mutate(tbalc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
 
-#### CHECK, GENERALLY INCREASING TRENDS
+incidence_trends_f <- merge(incidence_trends_f, lung_cancer_f_expanded, by = c("year", "sex"))
 
-incidence_trends_lung_cancer_f <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S10b", range = "B6:L26") %>%
-  mutate(incidence_trend_lung = log(`2020`/`2011`)/(2020-2011)) %>%
-  extract(`Age group`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group`== "95+"  ~  "95",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group`=="95+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         tbalc = incidence_trend_lung) %>%
-  rename(agegroup = `Age group`)
+#### Males
+data<- readxl::read_xls(incidence_trends_cancers, sheet = "Table S10a", range = "B32:L34", 
+                                  col_names = c("ASR", as.character(2011:2020)))
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(incidence_trends_lung_cancer_f), incidence_trends_lung_cancer_f$agediff)
-incidence_trends_lung_cancer_f_yr <- incidence_trends_lung_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(incidence_trends_lung_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, tbalc, year)
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+              (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+  mutate(tbalc = ifelse(year <= values[2], 
+                        exp(values[1]* year),
+                        exp(values[1] * values[2])))
 
-#### LUNG CANCER MALES
+incidence_trends_m <- data_2
+
+### Colorectal
+#### Females
+data <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S3b", range = "B32:L34", 
+                         col_names = c("ASR", as.character(2011:2020))) 
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+            (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+  mutate(carc = ifelse(year <= values[2], 
+                        exp(values[1]* year),
+                        exp(values[1] * values[2])))
+
+incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+
+#### Males
+data <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S3a", range = "B32:L34", 
+                                        col_names = c("ASR", as.character(2011:2020)))
+
+values <- c(log(data[[11]]/data[[2]]) /(as.numeric(colnames(data[11])) - as.numeric(as.numeric(colnames(data[2])))), 
+            (as.numeric(colnames(data[11])) - as.numeric(colnames(data[2]))))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+  mutate(carc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
+
+incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
+
+### INCIDENCE TRENDS CARDIOVASCULAR (apply to IHD and stroke)
+### Hospitalisations and as a proportion of deaths rates trend
+
+### Females
+
+data <- readxl::read_xlsx(trends_cvd, sheet = "Table 2.9", range = "B8:H26") %>%
+  extract("Year", c("Year", "discard"), "(.+)–(.+)", remove=FALSE) %>%
+  mutate(Year = as.numeric(Year))
+
+values <- c(log(data[[18,7]]/data[[1,7]])/(data[[18,2]] -data[[1,2]]), data[[18,2]] -data[[1,2]])
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+  mutate(ishd = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2]))) %>%
+  mutate(strk = ishd)
+
+incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+
+### Males
+
+data <- readxl::read_xlsx(trends_cvd, sheet = "Table 2.9", range = "B8:H26") %>%
+  extract("Year", c("Year", "discard"), "(.+)–(.+)", remove=FALSE) %>%
+  mutate(Year = as.numeric(Year))
+
+values <- c(log(data[[18,6]]/data[[1,6]])/(data[[18,2]] -data[[1,2]]), data[[18,2]] -data[[1,2]])
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+  mutate(ishd = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2]))) %>%
+  mutate(strk = ishd)
+
+incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
+
+### Check values of incidence as 58% of mortality trend, significantly lower
+### Females
+
+data <- readxl::read_xlsx(trends_cvd, sheet = "Table 3.6", range = "B7:E45")
+
+values <- c((log(data[[38,3]]/data[[21,3]])/(data[[38,1]] -data[[21,1]]))*0.58, data[[38,1]] -data[[21,1]])
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
+  mutate(ishd_2 = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2]))) %>%
+  mutate(strk_2 = ishd_2)
+
+incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+
+### Males
+
+data <- readxl::read_xlsx(trends_cvd, sheet = "Table 3.6", range = "B7:E45")
+
+values <- c((log(data[[38,2]]/data[[21,2]])/(data[[38,1]] -data[[21,1]]))*0.58, data[[38,1]] -data[[21,1]])
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+  mutate(ishd_2 = ifelse(year <= values[2], 
+                         exp(values[1]* year),
+                         exp(values[1] * values[2]))) %>%
+  mutate(strk_2 = ishd_2)
+
+incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
+
+### INCIDENCE TRENDS COPD
+### females
+data <- read.csv(trends_copd, as.is=T) %>%
+  filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2010, 
+         cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") 
+data_f <- data %>% filter(SEX == "Females")
+
+values <- c((log(data_f[[2,8]]/data_f[[1,8]])/(data_f[[2,3]] - data_f[[1,3]])), data_f[[2,3]] - data_f[[1,3]])
+
+data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
+  mutate(copd = ifelse(year <= values[2], 
+                         exp(values[1]* year),
+                         exp(values[1] * values[2])))
+
+incidence_trends_f <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 
 
-incidence_trends_lung_cancer_m <- readxl::read_xls(incidence_trends_cancers, sheet = "Table S10a", range = "B6:L26") %>%
-  mutate(incidence_trend_lung = log(`2020`/`2011`)/(2020-2011)) %>%
-  extract(`Age group`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group`== "95+"  ~  "95",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group`=="95+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         tbalc = incidence_trend_lung) %>%
-  rename(agegroup = `Age group`)
+### TO DO LAST (TO DO: ADD NON Cancers)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(incidence_trends_lung_cancer_m), incidence_trends_lung_cancer_m$agediff)
-incidence_trends_lung_cancer_m_yr <- incidence_trends_lung_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(incidence_trends_lung_cancer_m$agediff) - 1) %>%
-  mutate(sex = "male") %>% 
-  select(sex, tbalc, year)
+incidence_trends <- dplyr::bind_rows(incidence_trends_f, incidence_trends_m) %>%
+  arrange(sex, year)
 
-#### COLON CANCERS FEMALES
-#### COLON CANCR MALES
 
-#### BIND mortality trends separetley from incidence trends
-### CANCER MORTALITY TREND
-### Breast cancer females
+### MORTALITY TRENDS CANCERS
 
-mortality_trends_breast_cancer_f <- readxl::read_xls(mortality_trends_cancers, sheet = "Breast", range = "B6:N44") 
-mortality_trends_breast_cancer_f <- mortality_trends_breast_cancer_f[-c(1:20), ] %>% ### Delete males' observations
-  mutate(mortality_trend_breast = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         brcs = mortality_trend_breast) %>%
-  rename(agegroup = `Age group (years)`)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Breast", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_breast_cancer_f), mortality_trends_breast_cancer_f$agediff)
-mortality_trends_breast_cancer_f <- mortality_trends_breast_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_breast_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, brcs, year)
+values <- c(log(data[[13,8]]/data[[2,8]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(brsc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
+
+mortality_trends_f <- data_2
 
 ### Uterine cancer females
-mortality_trends_uterine_cancer_f <- readxl::read_xls(mortality_trends_cancers, sheet = "Uterine", range = "B6:N44") 
-mortality_trends_uterine_cancer_f <- mortality_trends_uterine_cancer_f[-c(1:20), ] %>% ### Delete males' observations
-  mutate(mortality_trend_uterine = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         endo = mortality_trend_uterine) %>%
-  rename(agegroup = `Age group (years)`)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_uterine_cancer_f), mortality_trends_uterine_cancer_f$agediff)
-mortality_trends_uterine_cancer_f <- mortality_trends_uterine_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_uterine_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, endo, year)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Uterine", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
+
+values <- c(log(data[[13,8]]/data[[2,8]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(utrc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
+
+mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
 
 ### Lung cancer females
-mortality_trends_lung_cancer_f <- readxl::read_xls(mortality_trends_cancers, sheet = "Lung", range = "B6:N44") 
-mortality_trends_lung_cancer_f <- mortality_trends_lung_cancer_f[-c(1:20), ] %>% ### Delete males' observations
-  mutate(mortality_trend_lung = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         tbalc = mortality_trend_lung) %>%
-  rename(agegroup = `Age group (years)`)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Lung", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_lung_cancer_f), mortality_trends_lung_cancer_f$agediff)
-mortality_trends_lung_cancer_f <- mortality_trends_lung_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_lung_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, tbalc, year)
+values <- c(log(data[[13,8]]/data[[2,8]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(tbalc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
+
+mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
+
 
 ### Lung cancer males
-mortality_trends_lung_cancer_m <- readxl::read_xls(mortality_trends_cancers, sheet = "Lung", range = "B6:N25") 
-mortality_trends_lung_cancer_m <- mortality_trends_lung_cancer_m[-c(1), ] %>% ### Delete first row
-  mutate(mortality_trend_lung = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         tbalc = mortality_trend_lung) %>%
-  rename(agegroup = `Age group (years)`)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_lung_cancer_m), mortality_trends_lung_cancer_m$agediff)
-mortality_trends_lung_cancer_m <- mortality_trends_lung_cancer_m[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_lung_cancer_m$agediff) - 1) %>%
-  mutate(sex = "male") %>% 
-  select(sex, tbalc, year)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Lung", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
+
+values <- c(log(data[[13,3]]/data[[2,3]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(tbalc = ifelse(year <= values[2], 
+                        exp(values[1]* year),
+                        exp(values[1] * values[2])))
+
+mortality_trends_m <- data_2
 
 ### Colorectal cancer
 
 ### Colorectal cancer females
-mortality_trends_colorectal_cancer_f <- readxl::read_xls(mortality_trends_cancers, sheet = "Colorectal", range = "B6:N44") 
-mortality_trends_colorectal_cancer_f <- mortality_trends_colorectal_cancer_f[-c(1:20), ] %>% ### Delete males' observations
-  mutate(mortality_trend_colorectal = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         carc = mortality_trend_colorectal) %>%
-  rename(agegroup = `Age group (years)`)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Colorectal", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_colorectal_cancer_f), mortality_trends_colorectal_cancer_f$agediff)
-mortality_trends_colorectal_cancer_f <- mortality_trends_colorectal_cancer_f[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_colorectal_cancer_f$agediff) - 1) %>%
-  mutate(sex = "female") %>% 
-  select(sex, carc, year)
+values <- c(log(data[[13,8]]/data[[2,8]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
+
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(utrc = ifelse(year <= values[2], 
+                       exp(values[1]* year),
+                       exp(values[1] * values[2])))
+
+mortality_trends_f <- merge(mortality_trends_f, data_2, by = c("year", "sex"))
 
 ### Colorectal cancer males
-mortality_trends_colorectal_cancer_m <- readxl::read_xls(mortality_trends_cancers, sheet = "Colorectal", range = "B6:N25") 
-mortality_trends_colorectal_cancer_m <- mortality_trends_colorectal_cancer_m[-c(1), ] %>% ### Delete first row
-  mutate(mortality_trend_colorectal = log(`2025`/`2015`)/(2025-2015)) %>%
-  extract(`Age group (years)`, c("from_age", "to_age"), "(.+)–(.+)", remove=FALSE) %>% #Expand to one yr age groups
-  mutate(from_age = as.numeric(case_when(`Age group (years)` == "85+"  ~  "85",
-                                         TRUE  ~  from_age)),
-         to_age = as.numeric(case_when(`Age group (years)` =="85+"  ~  "99",
-                                       TRUE  ~  to_age)),
-         agediff = to_age - from_age + 1,  # this will equal 5 
-         carc = mortality_trend_colorectal) %>%
-  rename(agegroup = `Age group (years)`)
+data <- readxl::read_xls(mortality_trends_cancers, sheet = "Colorectal", range = "P6:Y19")  %>% mutate_if(is.character,as.numeric)
 
-## Now stretch the data out using an index, to create a data frame with 1 row per year of age and create a variable for year of age. 
-index <- rep(1:nrow(mortality_trends_colorectal_cancer_m), mortality_trends_colorectal_cancer_m$agediff)
-mortality_trends_colorectal_cancer_m <- mortality_trends_colorectal_cancer_m[index,] %>%
-  mutate(year = from_age + sequence(mortality_trends_colorectal_cancer_m$agediff) - 1) %>%
-  mutate(sex = "male") %>% 
-  select(sex, carc, year)
+values <- c(log(data[[13,3]]/data[[2,3]])/(data[[13,1]]-data[[2,1]]), (data[[13,1]]-data[[2,1]]))
 
+data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
+  mutate(tbalc = ifelse(year <= values[2], 
+                        exp(values[1]* year),
+                        exp(values[1] * values[2])))
+
+mortality_trends_m <- merge(mortality_trends_m, data_2, by = c("year", "sex"))
+
+
+### Injuries trends (from GBD??)

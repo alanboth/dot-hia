@@ -1,5 +1,7 @@
 
-### Generate incidence and mortality inputs from AIHW data for dismod/disbayes processing
+# Generate incidence and mortality inputs from AIHW data for dismod/disbayes processing
+# Data sources: 
+# Methods: 
 
 suppressPackageStartupMessages(library(readxl)) # for reading excel files
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
