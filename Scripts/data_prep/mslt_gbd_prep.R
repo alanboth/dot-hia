@@ -189,6 +189,8 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
   
   mslt_df <- left_join(mslt_df, deaths_melbourne)
   
+  ### Add dismod outputs rates per one
+  
   ### Interpolate rates  
   
   gbd_df <- read.csv(gbd_wider_location, as.is=T, fileEncoding="UTF-8-BOM")

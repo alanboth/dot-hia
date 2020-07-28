@@ -11,6 +11,7 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 incidence_AIHW="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx"
 mortality_AIHW="Data/aihw/cancer_mortality_AIHW_with_projections.xlsx"
+population_deaths_location="Data/Population and deaths/population_deaths.csv"
 
 ### Incidence
   incidence_AIHW <- readxl::read_xlsx(incidence_AIHW, sheet = 2, range = cell_rows(6:137937)) %>%
@@ -51,13 +52,19 @@ incidence_AIHW <- incidence_AIHW %>%
               names_glue = "{names_prefix}_{.value}_{disease}") %>%
               filter(sex != "Persons") %>%
               mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
-              mutate(sex_age_cat = paste(tolower(sex), age_cat, sep = "_"))
+              mutate(sex_age_cat = paste(tolower(sex), age_cat, sep = "_")) 
+
+
 
 ### Year 2017 only for dismod and compare with GBD.
 ### Alan, the pivot wider generates NAs, any way to delete them?
 
-incidence_AIHW_dismod <- filter(incidence_AIHW, year == 2017)
+incidence_AIHW_dismod <- filter(incidence_AIHW, year == 2017) %>%
+  group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
+  summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
 
+
+write.csv(incidence_AIHW_dismod, "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
 
 ### Mortality 
 
@@ -101,7 +108,31 @@ mortality_AIHW <- mortality_AIHW %>%
   mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
   mutate(sex_age_cat = paste(tolower(sex), age_cat, sep = "_"))
 
-### Year 2017 only for dismod and compare with GBD.
-### Alan, the pivot wider generates NAs, any way to delete them?
 
-mortality_AIHW_dismod <- filter(mortality_AIHW, year == 2017)
+mortality_AIHW_dismod <- filter(mortality_AIHW, year == 2017) %>%
+  group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
+  summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
+write.csv(mortality_AIHW_dismod, "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
+
+## Population and deaths data for Australia for Dismod collection for cancers AIHW modelling
+
+population_and_deaths <- read.csv(population_deaths_location,fileEncoding="UTF-8-BOM")
+
+population_and_deaths <- population_and_deaths %>%
+  ### Ages to numeric. Need to convert to a character first
+  mutate(Age=as.numeric(as.character(Age)))
+
+### Keep data for Victoria, one year age intervals, last three years of data,
+### population numbers and deaths numbers
+
+population_and_deaths <- population_and_deaths %>% 
+  dplyr::filter(States.and.Territories == "Australia",
+                Measure %in% c("Population", "Deaths"),
+                Age %in% c(0:99),
+                Time %in% c(2017), 
+                Sex != "Persons") %>%
+                pivot_wider(id_cols = c(Measure, Sex, Age, Value), 
+                values_from = c(Value), names_from = c(Measure)) %>%
+                mutate(rate=Deaths/Population) %>% 
+                arrange(Sex, Age)
+write.csv(population_and_deaths , "Data/Processed/mortality_pop_AIHW.csv", row.names=F, quote=T)

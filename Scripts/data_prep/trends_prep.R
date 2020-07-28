@@ -7,7 +7,7 @@ suppressPackageStartupMessages(library(readxl)) # for reading excel files
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
-
+suppressPackageStartupMessages(library(forecast)) # for forecast of future trends in incidence and case fatality
 ### Data
 
 incidence_trends_cancers="Data/aihw/trends/cancers_trends_incidence_aihw.xls"
@@ -15,7 +15,11 @@ mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls"
 trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx"
 trends_copd="Data/aihw/trends/grim_books.csv"
 
-
+### Methods
+### 1) For data with future trends (incidence and mortality cancers): calculate annual change as ln(data(t1)/data(t0))/diff(t1,t0)
+### 2) TBD, depends on data available from AIHW.
+### For data without future trends (mortality cardiovascular, COPD and diabetes): calculate future trend for 10 years and derive
+#### annual change as for data with trends. 
 ### INCIDENCE TRENDS CANCERS
 
 ### Breast
@@ -97,6 +101,14 @@ data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
 
 incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 
+
+
+#### Cardiovascular, COPD and diabetes
+### Derive trends
+# Derive future trends using forecast package and auto.arima function.
+# Used for stationary time series: 
+# Interpretation of model: ARIMA(p,d,q) =  ARIMA(Autoregressive (AR) model of order p, number of differences: d, Moving Average (MA) model of order q)
+
 ### INCIDENCE TRENDS CARDIOVASCULAR (apply to IHD and stroke)
 ### Hospitalisations and as a proportion of deaths rates trend
 
@@ -105,6 +117,18 @@ incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 data <- readxl::read_xlsx(trends_cvd, sheet = "Table 2.9", range = "B8:H26") %>%
   extract("Year", c("Year", "discard"), "(.+)–(.+)", remove=FALSE) %>%
   mutate(Year = as.numeric(Year))
+
+tsData = ts(data[1:17,7], start = (2001),  frequency = 1)
+plot(tsData)
+
+arma_fit <- auto.arima(tsData)
+arma_forecast <- forecast(arma_fit, h = 10, level=c(2.5, 97.5))
+arma_fit_accuracy <- accuracy(arma_forecast, test)
+arma_fit; arma_forecast; arma_fit_accuracy
+plot(arma_forecast, ylim=c(0,100))
+lines(data[1:18,7])
+print(summary(arma_forecast))
+
 
 values <- c(log(data[[18,7]]/data[[1,7]])/(data[[18,2]] -data[[1,2]]), data[[18,2]] -data[[1,2]])
 
@@ -139,6 +163,18 @@ data <- readxl::read_xlsx(trends_cvd, sheet = "Table 3.6", range = "B7:E45")
 
 values <- c((log(data[[38,3]]/data[[21,3]])/(data[[38,1]] -data[[21,1]]))*0.58, data[[38,1]] -data[[21,1]])
 
+
+tsData = ts(data[28:38,3], start = (2008),  frequency = 1)
+plot(tsData)
+
+arma_fit <- auto.arima(tsData)
+arma_forecast <- forecast(arma_fit, h = 5, level=c(2.5, 97.5))
+arma_fit_accuracy <- accuracy(arma_forecast, test)
+arma_fit; arma_forecast; arma_fit_accuracy
+plot(arma_forecast, ylim=c(0,100))
+lines(data[1:18,7])
+print(summary(arma_forecast))
+
 data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
   mutate(ishd_2 = ifelse(year <= values[2], 
                        exp(values[1]* year),
@@ -161,12 +197,48 @@ data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
 
 incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 
+
+
 ### INCIDENCE TRENDS COPD
 ### females
 data <- read.csv(trends_copd, as.is=T) %>%
-  filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2010, 
+  filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2010,
          cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") 
 data_f <- data %>% filter(SEX == "Females")
+
+
+### Exploratory
+
+tsData = ts(data_f[1:8,8], start = (2010),  frequency = 1)
+plot(tsData)
+components.ts = decompose(tsData)
+plot(components.ts)
+
+
+#### Moving average
+
+moving_average = forecast(ma(data_f[1:8,8], order=2), h=10, allow.multiplicative.trend = TRUE)
+moving_average_accuracy = accuracy(moving_average, data_f[1:8,8])
+moving_average; moving_average_accuracy
+plot(moving_average, ylim=c(0,30))
+lines(data_f[1:8, 8])
+
+### Exponential
+
+exp <- ses(data_f[1:8,8], 10, initial="simple")
+
+### Select best model
+### Gives prediction intervals, not confidence intervals. Attention how to use them if used in uncertainty.
+
+train = data_f[1:8,8]
+test = data_f[3:8,8]
+arma_fit <- auto.arima(tsData)
+arma_forecast <- forecast(arma_fit, h = 10, level=c(2.5, 97.5))
+arma_fit_accuracy <- accuracy(arma_forecast, test)
+arma_fit; arma_forecast; arma_fit_accuracy
+plot(arma_forecast, ylim=c(0,30))
+lines(data_f[1:8,8])
+print(summary(arma_forecast))
 
 values <- c((log(data_f[[2,8]]/data_f[[1,8]])/(data_f[[2,3]] - data_f[[1,3]])), data_f[[2,3]] - data_f[[1,3]])
 
