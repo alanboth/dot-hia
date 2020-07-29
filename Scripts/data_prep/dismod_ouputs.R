@@ -67,6 +67,9 @@ for (i in 1:length(cancers_list)){
                                          paste0("remission_", name),
                                          paste0("case_fatality_", name), "sex", "disease", "age", "sex_age_cat")
   cancers_list[[index]] <- cancers_list[[index]][ -c(5,6,7) ]
+  
+  ## prevalence and case fatality cannot have values unless incidnece has values
+  ### TO DO
   #  
 
 index <-  index + 1}
@@ -129,6 +132,9 @@ for (i in 1:length(non_cancers_list)){
                                         paste0("remission_", name),
                                         paste0("case_fatality_", name), "sex", "disease", "age", "sex_age_cat")
   non_cancers_list[[index]] <- non_cancers_list[[index]][ -c(5,6,7) ]
+  
+  ## prevalence and case fatality cannot have values unless incidnece has values
+  ### TO DO
   index <-  index + 1}
 
 non_cancers_df <- plyr::ldply(non_cancers_list, rbind) %>%
