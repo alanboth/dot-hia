@@ -41,12 +41,12 @@ incidence_97 <- filter(incidence_AIHW, age_cat == 92) %>%
 
  ### cbind to incidence_AIHW, keep variables of interest and pivot wider
 incidence_AIHW <- incidence_AIHW %>%
-  mutate(Count = Count/2) %>%
+  mutate(Count=replace(Count, age_cat== 92, Count/2)) %>% ## divide age 92 counts by 2
   rbind(incidence_97) %>%
   select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
   rename(number = Count) %>%
   `names<-`(tolower(names(.))) %>%
-  pivot_wider(id_cols = c(sex, year, disease, age_cat, number, rate, `icd10 codes`), 
+  pivot_wider(id_cols = c(sex, year, disease, age_cat, number, rate, `icd10 codes`), ### ALAN: Pivot wider is doing something funny with age_cat
               values_from = c(rate, number), names_from = c(disease),
               names_prefix = "incidence_aihw", 
               names_glue = "{names_prefix}_{.value}_{disease}") %>%
@@ -95,7 +95,7 @@ mortality_97 <- filter(mortality_AIHW, age_cat == 92) %>%
 
 ### cbind to mortality_AIHW, keep variables of interest and pivot wider
 mortality_AIHW <- mortality_AIHW %>%
-  mutate(Count = Count/2) %>%
+  mutate(Count=replace(Count, age_cat== 92, Count/2)) %>%
   rbind(mortality_97) %>%
   select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
   rename(number = Count) %>%
@@ -128,7 +128,7 @@ population_and_deaths <- population_and_deaths %>%
 population_and_deaths <- population_and_deaths %>% 
   dplyr::filter(States.and.Territories == "Australia",
                 Measure %in% c("Population", "Deaths"),
-                Age %in% c(0:99),
+                Age %in% c(0:100),
                 Time %in% c(2017), 
                 Sex != "Persons") %>%
                 pivot_wider(id_cols = c(Measure, Sex, Age, Value), 
