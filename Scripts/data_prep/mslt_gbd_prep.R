@@ -128,11 +128,11 @@ calculateGBDwider <- function(gbd_location) {
 
 calculateMSLT <- function(population_melbourne_location,deaths_melbourne_location,gbd_wider_location) {
   
-  population_melbourne_location="Data/Processed/population_melbourne.csv"
-  deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
-  gbd_wider_location="Data/Processed/gbd_wider.csv"
-  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv"
-  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
+  # population_melbourne_location="Data/Processed/population_melbourne.csv"
+  # deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
+  # gbd_wider_location="Data/Processed/gbd_wider.csv"
+  # dismod_output_cancers="Data/Processed/dismod_output_cancers.csv"
+  # dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
 
   ### From here we used data as inputs for disbayes and to create 1-yr frame for mslt
   
