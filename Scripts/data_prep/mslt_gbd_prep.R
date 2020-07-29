@@ -128,9 +128,11 @@ calculateGBDwider <- function(gbd_location) {
 
 calculateMSLT <- function(population_melbourne_location,deaths_melbourne_location,gbd_wider_location) {
   
- # population_melbourne_location="Data/Processed/population_melbourne.csv"
- # deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
- # gbd_wider_location="Data/Processed/gbd_wider.csv"
+  population_melbourne_location="Data/Processed/population_melbourne.csv"
+  deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
+  gbd_wider_location="Data/Processed/gbd_wider.csv"
+  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv"
+  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
 
   ### From here we used data as inputs for disbayes and to create 1-yr frame for mslt
   
@@ -183,13 +185,18 @@ calculateMSLT <- function(population_melbourne_location,deaths_melbourne_locatio
   
   deaths_melbourne <- read.csv(deaths_melbourne_location, as.is=T, fileEncoding="UTF-8-BOM") %>%
     mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
-    mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>% 
+    mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
     rename(mx = rate) %>%
     select(sex_age_cat, mx)
   
   mslt_df <- left_join(mslt_df, deaths_melbourne)
   
   ### Add dismod outputs rates per one
+  dismod_cancers <- read.csv(dismod_output_cancers, as.is=T, fileEncoding="UTF-8-BOM")
+  dismod_non_cancers <- read.csv(dismod_output_non_cancers, as.is=T, fileEncoding="UTF-8-BOM")
+  
+  mslt_df <- left_join(mslt_df, dismod_cancers) 
+  mslt_df <- left_join(mslt_df, dismod_non_cancers)
   
   ### Interpolate rates  
   
