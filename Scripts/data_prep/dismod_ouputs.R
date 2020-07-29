@@ -49,7 +49,7 @@ for (i in 1:length(cancers_list)){
   ## extract outputs from dismod and convert to numeric
   cancers_list[[index]] <- cancers_list[[i]][,5:8] %>%
   janitor::row_to_names(3)  %>%
-  mutate_if(is.character,as.numeric)
+  mutate_if(is.character,as.numeric) 
  
   ## add sex, disease and age columns
   names[[index]] <- strsplit(files_names[[index]], ("[[:punct:][:space:]]+")) %>% unlist()
@@ -112,6 +112,7 @@ for (i in 1:length(non_cancers_list)){
   non_cancers_list[[index]] <- non_cancers_list[[i]][,6:9] %>%
     janitor::row_to_names(3)  %>%
     mutate_if(is.character,as.numeric)
+
   
   ## add sex, disease and age columns
   names[[index]] <- strsplit(files_names[[index]], ("[[:punct:][:space:]]+")) %>% unlist()
