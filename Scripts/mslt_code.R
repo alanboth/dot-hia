@@ -60,7 +60,7 @@ global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/gl
 ## for windows??
 global_path <- paste0(global_path, "/")
 
-file_name <- paste0(getwd(), "Data/Processed/disease_outcomes_lookup.csv")
+file_name <- paste0(getwd(), "/Data/Processed/disease_outcomes_lookup.csv")
 DISEASE_INVENTORY <-  read_csv(file_name)
 list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata/"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
 for (i in 1:length(list_of_files)){
