@@ -5,7 +5,7 @@
 # suppressPackageStartupMessages(library(readr)) # for reading/writing data
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
-
+rm(list = ls())
 library(devtools)
 
 # ltpa= leisure time physical activity
@@ -47,7 +47,9 @@ write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
 mslt <- calculateMSLT(
   population_melbourne_location="Data/Processed/population_melbourne.csv",
   deaths_melbourne_location="Data/Processed/deaths_melbourne.csv",
-  gbd_wider_location="Data/Processed/gbd_wider.csv"
+  gbd_wider_location="Data/Processed/gbd_wider.csv",
+  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
+  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
 )
 write.csv(mslt, "Data/Processed/mslt.csv", row.names=F, quote=T)
 
