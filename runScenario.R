@@ -66,7 +66,7 @@ trips_melbourne <- calculateVistaTrips(
   trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
 )
 write.csv(trips_melbourne, "Data/Processed/trips_melbourne.csv", row.names=F, quote=F)
-saveRDS(trips_melbourne, "Data/Processed/trips_melbourne.Rds")
+
 
 
 # Generate trips_melbourne_scenarios.csv
@@ -75,7 +75,7 @@ scenario <- calculateScenario(
   trips_melbourne_location="Data/Processed/trips_melbourne.csv"
 )
 write.csv(scenario, "Data/Processed/trips_melbourne_scenarios.csv", row.names=F, quote=F)
-saveRDS(scenario, "Data/Processed/trips_melbourne_scenarios.Rds")
+
 
 
 source("Scripts/data_prep/synthetic_pop.R")
@@ -105,7 +105,6 @@ persons_matched <- calculatePersonsMatch(
   persons_travel_location="Data/Processed/persons_travel.csv"
 )
 write.csv(persons_matched, "Data/Processed/matched_pop.csv", row.names=F, quote=T)
-saveRDS(persons_matched, "Data/Processed/matched_pop.Rds")
 
 
 
