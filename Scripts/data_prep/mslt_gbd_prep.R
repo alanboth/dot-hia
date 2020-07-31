@@ -4,8 +4,8 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 
 calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
-  # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
-  # disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+  disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
   
   gbd <- read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -38,7 +38,11 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
       females = ifelse(disease %in% "prostate cancer", 0, 1),
       sname = gsub("'", '', sname),
       # this part won't work since all injuries have had their acronym set to their disease
-      acronym = ifelse(is.na(acronym), "no_pif", acronym))
+      acronym = ifelse(is.na(acronym), str_extract(disease, "[ ^]+$"), acronym))  ###BZ: added column to acronyms to match mslt code
+      
+    
+  
+      
   
   return(DISEASE_SHORT_NAMES)
   ### Alan, what is best? save as RDS or csv? This file is needed to run MSLT code
@@ -190,12 +194,6 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   
   mslt_df <- left_join(mslt_df, deaths_melbourne)
   
-  ### Add dismod outputs rates per one
-  dismod_cancers <- read.csv(dismod_output_cancers, as.is=T, fileEncoding="UTF-8-BOM")
-  dismod_non_cancers <- read.csv(dismod_output_non_cancers, as.is=T, fileEncoding="UTF-8-BOM")
-  
-  mslt_df <- left_join(mslt_df, dismod_cancers) 
-  mslt_df <- left_join(mslt_df, dismod_non_cancers)
   
   ### Interpolate rates  
   
@@ -287,6 +285,17 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     # AB: I might have this wrong
     # BZ: this is correct
     rename(pyld_rate=ylds_rate_allc_adj_1)
+  
+  ## Rename population to match run_life table code
+  
+  mslt_df_wider$population_number <- mslt_df_wider$population
+  
+  ### Add dismod outputs rates per one
+  dismod_cancers <- read.csv(dismod_output_cancers, as.is=T, fileEncoding="UTF-8-BOM")
+  dismod_non_cancers <- read.csv(dismod_output_non_cancers, as.is=T, fileEncoding="UTF-8-BOM")
+  
+  mslt_df_wider <- left_join(mslt_df_wider, dismod_cancers) 
+  mslt_df_wider <- left_join(mslt_df_wider, dismod_non_cancers)
   
   return(mslt_df_wider)
 }
