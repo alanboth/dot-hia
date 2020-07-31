@@ -27,6 +27,7 @@ calculateDeathRates <- function(population_deaths_location) {
   
   ### Keep data for Victoria, one year age intervals, last three years of data,
   ### population numbers and deaths numbers
+  ### Add age group 100 and repeat value for 99, Victoria data has no deaths data for 100.
   
   deaths_rates <- deaths_rates %>% 
     dplyr::filter(States.and.Territories == "Victoria",
@@ -52,7 +53,16 @@ calculateDeathRates <- function(population_deaths_location) {
     left_join(deaths, by = "age_sex") %>% 
     dplyr::mutate(rate = average.y/average.x) %>%
     dplyr::select(age=Age.x, sex=Sex.x, rate)
+  
+  ### Add repeated column for age 100 (when doing Aus wide not needed as data has age 100)
 
+  deaths_rates_final_add_row <- deaths_rates_final %>%
+    filter(age==99) 
+  deaths_rates_final_add_row$age <- 100
+  
+  deaths_rates_final <- deaths_rates_final %>% rbind(deaths_rates_final_add_row) 
+    
+    
   return(deaths_rates_final)
 }
 # write.csv(deaths_rates_final, "Data/Processed/deaths_melbourne.csv",
