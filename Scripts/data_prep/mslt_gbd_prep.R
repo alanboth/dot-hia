@@ -4,8 +4,8 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 
 calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
-  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
-  disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
+  # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+  # disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
   
   gbd <- read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -38,7 +38,7 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
       females = ifelse(disease %in% "prostate cancer", 0, 1),
       sname = gsub("'", '', sname),
       # this part won't work since all injuries have had their acronym set to their disease
-      acronym = ifelse(is.na(acronym), str_extract(disease, "[ ^]+$"), acronym))  ###BZ: added column to acronyms to match mslt code
+      acronym = ifelse(is.na(acronym), sapply(strsplit(disease, " "), head, 1), acronym))  ###BZ: added column to acronyms to match mslt code
       
     
   
