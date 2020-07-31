@@ -1,24 +1,24 @@
 # ---- chunk-intro ----
 
-library(ggpubr)
-library(ggplot2)
-library(arsenal)
-library(janitor)
+# library(ggpubr)
+# library(ggplot2)
+# library(arsenal)
+# library(janitor)
 library(dplyr)
 library(readr)
-library(conflicted)
-library(rlist)
-library(reshape)
-library(reshape2)
-library(zoo)
-library(stringi)
-library(tidyverse)
-library(rlist)
-library(ithimr)
-if (interactive()) {
-  library(conflicted)
-}
-conflict_prefer("filter", "dplyr")
+# library(conflicted)
+# library(rlist)
+# library(reshape)
+# library(reshape2)
+# library(zoo)
+# library(stringi)
+# library(tidyverse)
+# library(rlist)
+# library(ithimr)
+# if (interactive()) {
+#   library(conflicted)
+# }
+# conflict_prefer("filter", "dplyr")
 rm (list = ls())
 options(scipen=999)
 source("Scripts/functions_mslt.R")
@@ -108,9 +108,9 @@ pif_expanded <- read_csv(paste0(paste0(getwd(),"/Data/Processed/pif_expanded.csv
 # PLACE HOLDER
 DISEASE_SHORT_NAMES <-  read_csv(paste0(paste0(getwd(),"/Data/Processed/disease_names.csv")))
 
-### PLACE HOLDER
+### MELB DATA
 
-MSLT_DF <- read_csv(paste0(getwd(), "/Data/Processed/placeholder_England.csv"))
+MSLT_DF <- read_csv(paste0(getwd(), "/Data/Processed/mslt.csv"))
 
 ## Parameters
 
@@ -193,7 +193,6 @@ for (iage in i_age_cohort){
 ## Create non_disease lists, these are by age and sex for road injuries and lwri baseline and scenario, including calculation of difference in rates. 
 ## Different calculation for scenario deaths and ylds for lri and injuries. 
 
-
 non_disease_list <- list()
 index <- 1
 
@@ -219,7 +218,7 @@ for (iage in i_age_cohort){
         
         # pif_non_disease[,3] <- pif_non_disease[,3] * sc_duration
         
-        non_disease_list[[index]] <-  RunNonDisease (td1, in_sex = isex, in_mid_age = iage, in_non_disease = DISEASE_SHORT_NAMES$acronym[d])
+        non_disease_list[[index]] <-  RunNonDisease (td1, in_non_disease = DISEASE_SHORT_NAMES$acronym[d])
         
         non_disease_list[[index]]$non_disease <- DISEASE_SHORT_NAMES$acronym[d]
         
@@ -277,7 +276,6 @@ for (iage in i_age_cohort){
     }
   }  
 }
-
 # ---- chunk-5 ----
 
 ## Create scenario life tables with new pifs,includes Diabetes loop. 
