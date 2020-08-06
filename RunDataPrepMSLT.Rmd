@@ -2,21 +2,27 @@
 title: "Prepare data inputs for the proportional multi-state life table model"
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, a.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-header-includes:
-    - \usepackage{setspace}\onehalfspacing
-    - \usepackage{float}
-    - \usepackage{pdflscape}
-    - \newcommand{\blandscape}{\begin{landscape}}
-    - \newcommand{\elandscape}{\end{landscape}}
 output:
-   pdf_document: 
-     toc: true
-     toc_depth: 3
-     number_sections: true
-     df_print: kable
-   fontsize: 12 pt
-   geometry: margin=1in
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '3'
+  geometry: margin=1in
+  fontsize: 12 pt
+  pdf_document:
+    df_print: kable
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+header-includes:
+- \usepackage{setspace}\onehalfspacing
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 bibliography: DoT.bib
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -41,34 +47,125 @@ suppressPackageStartupMessages(library(knitr))
 
 ## Data inputs
 
-Data inputs for the proportional multi-state life table model (MSLT) include inputs for: general life table (population and mortality rates), diseases life tables (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used nationally representative inputs. Table 1 describes all data inputs for the MSLT.
+Data inputs for the proportional multi-state life table model (MSLT) include inputs for: general life table (population, mortality rates and years lived with disability rates for all causes (YLD)), diseases life tables (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used nationally representative inputs. Table 1 describes all data inputs for the MSLT.
 
-``````{r, echo=FALSE}
+```{r, echo=FALSE}
 
 pmslt_inputs <- tribble(
-~Input, ~Source, ~Comments, 
-"Life table", "Synthetic population per sex and age group", "Age grouping in life table to match synthetic population", 
-"Life table", "Synthetic population per sex and one-year age group", "If one year age group is not avabilable it can be derive using interpolation from age groups data", 
-"Life table", "Global Burden of Disease (GBD) study per one-year age group and sex", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
-"Disease life table", "GBD data for prevalence, incidence and mortality and DISMOD II", "Two step process. First obtain disease and population data from GBD. Second, use Dismod II to derive internally consistent estimates for incidence and case fatality (PMSLT disease life table iputs)", 
-"Disease life table", "Derive from disease prevalence and years lived with disability from GBD", "Adjustments for comorbidities in later years of life to be applied"
+~Component, ~"Data needs", ~"Input data", ~"Data processing",
+"General life table", "Population numbers and mortality rates", "Population Greater Melbourne (@RN2) by 5-year age groups and sex and death rates by single year of age and sex (@RN1)", "Mortality rates were averaged over three years (2016-2018)", 
+"General life table", "All-cause YLDs", "Global Burden of Disease (GBD) study by 5-year age groups and sex (@RN8)", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
+"Disease life table", "Incidence, case fatality and disease disability weights", "Incidence and case fatality were derived using DISMOD II  and disability weights were derived from disease specific YLDs (@RN8) and Prevalence (@RN8)", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
+"Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence (@RN3), mortality (@RN4). Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not avaiable. These were derived from past data (@RN5, @RN6, @RN7)", "Explained in sections Trends"
 )
 
-kable(pmslt_inputs,"latex", booktabs = T, caption = "PMSLT inputs") %>%
+kable(pmslt_inputs, booktabs = T, caption = "PMSLT inputs") %>%
  kable_styling(latex_options = c("striped", "hold position"),
                full_width = F)%>%
   column_spec(2, width = "15em") %>%
   column_spec(3, width = "15em") %>%
   row_spec(0, bold = T)
 ```
+
+
+### Prorcessing of inputs for MSLT
+
+#### Population numbers and mortality rates
+
+Get population data for Melbourne and generate mortality rates.
+
+```{r,eval=FALSE}
+ population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
+                         fileEncoding="UTF-8-BOM") %>%
+    # population should be numeric
+    mutate(population = as.numeric(gsub(",", "", population))) %>%
+    # some ages have space at the end
+    mutate(age = gsub(" ", "", age)) %>%
+    mutate(age = gsub("-", " to ", age)) %>%
+    mutate(sex = tolower(sex))
+
+source("Scripts/data_prep/death_rates_prep.R")
+death_rates <- calculateDeathRates(
+  population_deaths_location="Data/Population and deaths/population_deaths.csv"
+)
 ```
 
-## Including Plots
+#### Prepare Global Burden of disease data
 
-You can also embed plots, for example:
+Sort out data to then use as inputs in dismod for non cancers and to generate the mslt data frame. 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r,eval=FALSE}
+source("Scripts/data_prep/mslt_gbd_prep.R")
+gbd_wider <- calculateGBDwider(
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#### Prepare Australian Institute of Health and Welfare data for processing in Dismod 
+
+Sort out data for processing in Dismod II. This process is external, and explained below (TO DO).
+
+```{r,eval=FALSE}
+source("Scripts/data_prep/mslt_gbd_prep.R")
+gbd_wider <- calculateGBDwider(
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+)
+```
+
+#### Calculate diseases trends 
+
+Table 2 outlines methods used to derive diseases and injuries trends (TO DO) followed by the code to obtain diseases trends from the source data. 
+
+```{r, echo=FALSE}
+
+trends_diseases <- tribble(
+~"MSLT component", ~"Inputs", ~"Assumptions", ~"Data processing",
+"General life table: all cause mortality", "TO DO", "1. Age-standardised trends by sex applied to all groups, and 2. Number of years trends applied into the future equivalent to the original trends forecast (e.g. if from 2017 to 2020, then trends were applied for 3 years and then stabilised", "TO DO", 
+"Disease life table: incidence cancers", "@RN3 forecast from 2017 to 2020", "Same above", "We derive an annual trend as the log difference between the age standardised rate in 2020 and 2017 divided by the diffence in years",
+"Disease life table: case fatality cancers", "@RN4 forecast from 2014 to 2024 for mortality", "Same above", "Same above",
+"Disease life table: cardiovascular diseases incidence", "@RN5 hospitallization past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)", 
+"Disease life table: cardivarcular disease case fatality", "@RN5 mortality past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)",
+"Disease life table: diabetes incidence", "@RN6 mortality past trends from years 1997 to 2023 for diabetes as the underlying or associated cause of death", "Same as above and trends only applied to incidence", "Same as above with forecast up to year 2023", 
+"Disease life table: Chronic obstructive pulmonary disease incidence", "@RN7 mortality past trends from year 2005 to 2018", "Same as above", "Same as above"
+)
+
+kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mortality, diseases and injuries") %>%
+ kable_styling(latex_options = c("striped", "hold position"),
+               full_width = F)%>%
+  column_spec(2, width = "15em") %>%
+  column_spec(3, width = "15em") %>%
+  row_spec(0, bold = T)
+```
+
+```{r,eval=FALSE}
+
+source("Scripts/data_prep/trends_prep.R")
+  trends_diseases <- calculateDiseaseTrends(
+  incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+  mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
+  trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
+  grim_books="Data/aihw/trends/grim_books.csv",
+  trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
+)
+
+write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
+
+```
+#### Generate multi-state life table dataframe
+
+Generate final data set for the MSLT and save for use when running mslt_code.
+
+```{r,eval=FALSE}
+source("Scripts/data_prep/mslt_gbd_prep.R")
+mslt <- calculateMSLT(
+  population_melbourne= population,
+  deaths_melbourne= death_rates,
+  gbd_wider= gbd_wider,
+  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
+  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
+  write.csv(mslt, "Data/Processed/mslt/mslt_df.csv", row.names=F, quote=T)
+)
+```

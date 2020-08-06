@@ -42,7 +42,7 @@ write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
 
 # This function needs a good look, I don't understand enough of about health calculations
 mslt <- calculateMSLT(
-  population_melbourne_location="Data/Processed/population_melbourne.csv",
+  population_melbourne="Data/Processed/population_melbourne.csv",
   deaths_melbourne_location="Data/Processed/deaths_melbourne.csv",
   gbd_wider_location="Data/Processed/gbd_wider.csv",
   dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
