@@ -1,0 +1,74 @@
+---
+title: "Prepare data inputs for the proportional multi-state life table model"
+author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, a.both@rmit.edu.au"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+    - \usepackage{setspace}\onehalfspacing
+    - \usepackage{float}
+    - \usepackage{pdflscape}
+    - \newcommand{\blandscape}{\begin{landscape}}
+    - \newcommand{\elandscape}{\end{landscape}}
+output:
+   pdf_document: 
+     toc: true
+     toc_depth: 3
+     number_sections: true
+     df_print: kable
+   fontsize: 12 pt
+   geometry: margin=1in
+bibliography: DoT.bib
+---
+
+```{r setup, include=FALSE}
+
+## Global options
+knitr::opts_chunk$set(echo = TRUE, width = 75)
+options(knitr.table.format = 'latex')
+knitr::opts_chunk$set(fig.cap = FALSE, fig.align = "center", fig.pos = "H", fig.scap = TRUE) 
+
+## The work in this document requires the following packages (code, rmarkdown and citing packages):
+
+suppressPackageStartupMessages(library(dplyr)) # for manipulating data
+suppressPackageStartupMessages(library(tidyr)) # for pivoting data
+suppressPackageStartupMessages(library(kableExtra)) # for creating tables for presentation
+suppressPackageStartupMessages(library(tibble)) # for creating tables for presentation
+suppressPackageStartupMessages(library(knitr))
+
+
+```
+
+\newpage
+
+## Data inputs
+
+Data inputs for the proportional multi-state life table model (MSLT) include inputs for: general life table (population and mortality rates), diseases life tables (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used nationally representative inputs. Table 1 describes all data inputs for the MSLT.
+
+``````{r, echo=FALSE}
+
+pmslt_inputs <- tribble(
+~Input, ~Source, ~Comments, 
+"Life table", "Synthetic population per sex and age group", "Age grouping in life table to match synthetic population", 
+"Life table", "Synthetic population per sex and one-year age group", "If one year age group is not avabilable it can be derive using interpolation from age groups data", 
+"Life table", "Global Burden of Disease (GBD) study per one-year age group and sex", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
+"Disease life table", "GBD data for prevalence, incidence and mortality and DISMOD II", "Two step process. First obtain disease and population data from GBD. Second, use Dismod II to derive internally consistent estimates for incidence and case fatality (PMSLT disease life table iputs)", 
+"Disease life table", "Derive from disease prevalence and years lived with disability from GBD", "Adjustments for comorbidities in later years of life to be applied"
+)
+
+kable(pmslt_inputs,"latex", booktabs = T, caption = "PMSLT inputs") %>%
+ kable_styling(latex_options = c("striped", "hold position"),
+               full_width = F)%>%
+  column_spec(2, width = "15em") %>%
+  column_spec(3, width = "15em") %>%
+  row_spec(0, bold = T)
+```
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

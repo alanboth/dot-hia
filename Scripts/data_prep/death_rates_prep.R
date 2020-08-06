@@ -2,13 +2,6 @@
 ### Data is from: https://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/3302.02018?OpenDocument
 ### Compare rates to those generated in life tables for Victoria
 
-# rm (list = ls())
-# options(scipen=999)
-# # library(readr)
-# library(dplyr)
-# # library(stringr)
-# library(ggplot2)
-
 ### Get data
 ### The same can be done with GBD data over three years to reproduce life tables
 ### Need to add trends in deaths rates
@@ -65,14 +58,3 @@ calculateDeathRates <- function(population_deaths_location) {
     
   return(deaths_rates_final)
 }
-# write.csv(deaths_rates_final, "Data/Processed/deaths_melbourne.csv",
-#           row.names=F, quote=F)
-
-### Graph to check data
-# dat_males <- filter(deaths_rates_final, sex == "Males")
-# 
-# ggplot(dat_males, aes(x=age, y=rate, group=1)) +
-#   geom_line()
-
-  
-
