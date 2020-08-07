@@ -30,8 +30,8 @@ calculateDeathRates <- function(population_deaths_location) {
                   Sex != "Persons")
   
   deaths_rates_ave <- deaths_rates %>%
-    group_by(Age, Sex, Measure)  %>%
-    summarize(average = mean(Value))  
+    dplyr::group_by(Age, Sex, Measure)  %>%
+    dplyr::summarize(average = mean(Value))  
   
   population <- deaths_rates_ave %>%
     dplyr::filter(Measure %in% "Population") %>%
@@ -48,13 +48,15 @@ calculateDeathRates <- function(population_deaths_location) {
     dplyr::select(age=Age.x, sex=Sex.x, rate)
   
   ### Add repeated column for age 100 (when doing Aus wide not needed as data has age 100)
-
+  
   deaths_rates_final_add_row <- deaths_rates_final %>%
     filter(age==99) 
   deaths_rates_final_add_row$age <- 100
   
   deaths_rates_final <- deaths_rates_final %>% rbind(deaths_rates_final_add_row) 
-    
-    
+  
+  
   return(deaths_rates_final)
+    
+
 }
