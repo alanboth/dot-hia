@@ -11,7 +11,7 @@ library(devtools)
 # Generate death rates for the population
 source("Scripts/data_prep/death_rates_prep.R")
 death_rates <- calculateDeathRates(
-  population_deaths_location="Data/Population and deaths/population_deaths.csv"
+  population_deaths="Data/Population and deaths/population_deaths.csv"
 )
 write.csv(death_rates,"Data/Processed/deaths_melbourne.csv", row.names=F, quote=F)
 
@@ -43,8 +43,8 @@ write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
 # This function needs a good look, I don't understand enough of about health calculations
 mslt <- calculateMSLT(
   population_melbourne="Data/Processed/population_melbourne.csv",
-  deaths_melbourne_location="Data/Processed/deaths_melbourne.csv",
-  gbd_wider_location="Data/Processed/gbd_wider.csv",
+  deaths_melbourne="Data/Processed/deaths_melbourne.csv",
+  gbd_wider="Data/Processed/gbd_wider.csv",
   dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
   dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
 )

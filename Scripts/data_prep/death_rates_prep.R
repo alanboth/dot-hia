@@ -10,42 +10,43 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
 calculateDeathRates <- function(population_deaths_location) {
-  # population_deaths_location="Data/Population and deaths/population_deaths.csv"
+   # population_deaths_location="Data/Population and deaths/population_deaths.csv"
   
-  population_deaths <- read.csv(population_deaths_location,fileEncoding="UTF-8-BOM")
+    population_deaths <- read.csv(population_deaths_location,fileEncoding="UTF-8-BOM")
   
-  deaths_rates <- population_deaths %>%
-    ### Ages to numeric. Need to convert to a character first
-    mutate(Age=as.numeric(as.character(Age)))
+  # deaths_rates <- population_deaths %>%
+  #   ### Ages to numeric. Need to convert to a character first
+  #   mutate(Age=as.numeric(as.character(Age)))
   
   ### Keep data for Victoria, one year age intervals, last three years of data,
   ### population numbers and deaths numbers
   ### Add age group 100 and repeat value for 99, Victoria data has no deaths data for 100.
   
-  deaths_rates <- deaths_rates %>% 
+  deaths_rates <- population_deaths %>% 
     dplyr::filter(States.and.Territories == "Victoria",
                   Measure %in% c("Population", "Deaths"),
                   Age %in% c(0:99),
                   Time %in% c(2016:2018), 
-                  Sex != "Persons")
+                  Sex != "Persons") %>%
+    ### Ages to numeric. Need to convert to a character first
+    mutate(Age=as.numeric(as.character(Age)))
   
-  deaths_rates_ave <- deaths_rates %>%
-    dplyr::group_by(Age, Sex, Measure)  %>%
-    dplyr::summarize(average = mean(Value))  
+  deaths_rates_ave <- deaths_rates  %>%
+    dplyr::filter(Measure %in% "Deaths") %>%
+    dplyr::group_by(Age, Sex)  %>%
+    dplyr::summarize(average = mean(Value)) %>% 
+    dplyr::mutate(age_sex = paste(Age, Sex, sep = "_")) 
   
-  population <- deaths_rates_ave %>%
-    dplyr::filter(Measure %in% "Population") %>%
-    dplyr::mutate(age_sex = paste(Age, Sex, sep = "_"))
-  
-  deaths <- deaths_rates_ave %>%
-    dplyr::filter(Measure %in% "Deaths") %>% 
-    dplyr::mutate(age_sex = paste(Age, Sex, sep = "_"))
+  population <- deaths_rates %>%
+    dplyr::filter(Measure %in% "Population", Time %in% 2017) %>%
+    dplyr::mutate(age_sex = paste(Age, Sex, sep = "_")) %>% 
+    dplyr::select(Time, age_sex, Value) 
   
   
   deaths_rates_final <- population %>%
-    left_join(deaths, by = "age_sex") %>% 
-    dplyr::mutate(rate = average.y/average.x) %>%
-    dplyr::select(age=Age.x, sex=Sex.x, rate)
+    left_join(deaths_rates_ave, by = "age_sex") %>% 
+    dplyr::mutate(rate = average/Value) %>%
+    dplyr::select(age=Age, sex=Sex, rate)
   
   ### Add repeated column for age 100 (when doing Aus wide not needed as data has age 100)
   

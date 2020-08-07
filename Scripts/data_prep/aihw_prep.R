@@ -9,10 +9,10 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 calculateInputsDismodAIHW <- function(incidence_AIHW, mortality_AIHW, population_deaths_location) {
-
 # incidence_AIHW="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx"
 # mortality_AIHW="Data/aihw/cancer_mortality_AIHW_with_projections.xlsx"
 # population_deaths_location="Data/Population and deaths/population_deaths.csv"
+
 
 ### Incidence
   incidence_AIHW <- readxl::read_xlsx(incidence_AIHW, sheet = 2, range = cell_rows(6:137937)) %>%
@@ -65,9 +65,9 @@ incidence_AIHW_dismod <- filter(incidence_AIHW, year == 2017) %>%
   summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
 
 
-write.csv(incidence_AIHW_dismod, "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
+# write.csv(incidence_AIHW_dismod, "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
 
-return(incidence_AIHW_dismod)
+
 ### Mortality 
 
 mortality_AIHW <- readxl::read_xlsx(mortality_AIHW, sheet = 2, range = cell_rows(6:137937)) %>%
@@ -114,9 +114,9 @@ mortality_AIHW <- mortality_AIHW %>%
 mortality_AIHW_dismod <- filter(mortality_AIHW, year == 2017) %>%
   group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
   summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
-write.csv(mortality_AIHW_dismod, "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
+# write.csv(mortality_AIHW_dismod, "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
 
-return(mortality_AIHW_dismod)
+
 
 ## Population and deaths data for Australia for Dismod collection for cancers AIHW modelling
 
@@ -139,8 +139,7 @@ population_and_deaths <- population_and_deaths %>%
                 values_from = c(Value), names_from = c(Measure)) %>%
                 mutate(rate=Deaths/Population) %>% 
                 arrange(Sex, Age)
-write.csv(population_and_deaths , "Data/Processed/mortality_pop_AIHW.csv", row.names=F, quote=T)
+# write.csv(population_and_deaths , "Data/Processed/mortality_pop_AIHW.csv", row.names=F, quote=T)
 
-
-return(population_and_deaths)
+return(list(incidence_AIHW_dismod, mortality_AIHW_dismod, population_and_deaths))
 }

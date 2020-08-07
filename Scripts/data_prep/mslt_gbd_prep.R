@@ -39,10 +39,10 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
       sname = gsub("'", '', sname),
       # this part won't work since all injuries have had their acronym set to their disease
       acronym = ifelse(is.na(acronym), sapply(strsplit(disease, " "), head, 1), acronym))  ###BZ: added column to acronyms to match mslt code
-      
-    
   
-      
+  
+  
+  
   
   return(DISEASE_SHORT_NAMES)
   ### Alan, what is best? save as RDS or csv? This file is needed to run MSLT code
@@ -61,7 +61,7 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
 # ---- chunk-1.2.2: Clean data ----
 
 calculateGBDwider <- function(gbd_location) {
- # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+  # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
   
   gbd <-  read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -137,7 +137,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   # gbd_wider_location="Data/Processed/gbd_wider.csv"
   # dismod_output_cancers="Data/Processed/dismod_output_cancers.csv"
   # dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
-
+  
   ### From here we used data as inputs for disbayes and to create 1-yr frame for mslt
   
   # ---- chunk-1.2.4: Generate mslt inputs ----
@@ -159,7 +159,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     mutate(sex_age_cat = paste(tolower(sex), age_cat, sep="_")) %>%
     select(sex_age_cat, population)
   
-
+  
   mslt_df <- mslt_df %>% left_join(pop_melb, by = "sex_age_cat") %>%
     mutate(age_cat = case_when(age == 2 ~ 2,
                                age == 7  ~ 7,
@@ -198,7 +198,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   ### Interpolate rates  
   
   gbd_df <- read.csv(gbd_wider_location, as.is=T, fileEncoding="UTF-8-BOM")
-
+  
   gbd_df[is.na(gbd_df)] <- 0 
   #### Disability weights
   
@@ -206,16 +206,16 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   all_ylds_count <- select(gbd_df, contains("ylds_number")) %>%
     select(-ylds_number_allc) %>%
     rowSums()
-
+  
   # Adjust all cause ylds for included diseases and injuries (exclude all cause ). From here just med 
   # AB: Belen, please check that I've got this part working correctly.
   # BZ: checked, this code substracts ylds from all included causes to ylds for all cause and calculates the rate per one.
   gbd_df <- gbd_df %>%
     mutate(ylds_rate_allc_adj_1 = (ylds_number_allc - all_ylds_count)/pop)
-
   
-
-
+  
+  
+  
   
   # AB: Ignore, this was to test representing the gbd by age_sex and disease,
   # with everything else in columns. 
@@ -232,7 +232,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   #   mutate(dw_adj=(ylds_number/prevalence_number)/(1-ylds_rate_allc_adj_1) ) %>%
   #   mutate(dw_adj=ifelse(is.nan(dw_adj),0,dw_adj))
   # 
- 
+  
   # interpolate a measure across 0-100 years
   # try the following code to test the function (interpolates dw_adj for males with allc):
   # mslt_df_by_disease%>%filter(sex=="female"&disease=="ishd")%>%pull(ylds_rate)%>%interpolateFunction()
@@ -250,7 +250,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     # return interpolated values
     return(InterFunc(0:100))
   }
-   
+  
   # all values get their own column, expanding out to every age number
   mslt_df_longer <- mslt_df %>%
     left_join(gbd_df%>%select(-age,-age_sex)) %>%
@@ -275,7 +275,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     ## not sure if we were supposed to interpolate this one
     mutate(ylds_rate_allc_adj_1=exp(interpolateFunction(ylds_rate_allc_adj_1))) %>%
     ungroup()
-
+  
   mslt_df_wider <- mslt_df_by_disease %>%
     select(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1,
            disease,deaths_rate,ylds_rate,dw_adj)%>%

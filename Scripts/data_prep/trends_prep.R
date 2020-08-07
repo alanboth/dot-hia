@@ -1,7 +1,7 @@
 #### Preparation of trend data for diseases, all-cause mortality and injuries
 
-rm (list = ls())
-options(scipen=999)
+
+# options(scipen=999)
 suppressPackageStartupMessages(library(readxl)) # for reading excel files
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
@@ -13,13 +13,13 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
 
 
 ### Data
-
+# 
 # incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx"
 # mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls"
 # trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx"
 # grim_books="Data/aihw/trends/grim_books.csv"
 # trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
-# # trends_injuries= #TO DO
+# trends_injuries= #TO DO
 
 
 #### DISEASES
@@ -301,36 +301,40 @@ data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
 
 incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 
-### COPD 
-### Data for mortality up to year 2017, predict up to year 2022
+### COPD
+### Data for mortality up to year 2017, predict up to year 2023
 
-data <- read.csv(grim_books, as.is=T) %>%
-  filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2005,
+data <- read.csv(grim_books, as.is=T, fileEncoding="UTF-8-BOM") %>%
+  dplyr::filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2005,
          cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") %>%
-  select(YEAR, SEX, age_standardised_rate) %>%
-  pivot_wider(id_cols = c(YEAR, SEX, age_standardised_rate), 
-              values_from = c(age_standardised_rate), names_from = c(SEX))
+  dplyr::select(YEAR, SEX, age_standardised_rate)
+
+data_female <- data %>% dplyr::filter(SEX == "Females")
+
+data_female$YEAR <- as.numeric(gsub("\\.", "", data_female$YEAR))
+data_female$age_standardised_rate <- as.numeric(gsub("\\.", "", data_female$age_standardised_rate))
+
 
 #### Females
 # Run the regression
-Females<-lm(data$Females~data$YEAR, data=data)
+Females<-lm(data_female$age_standardised_rate~data_female$YEAR)
 
 # create the time trend sequence for use in the model to get predicted values in sampel and forecast for out of sample
 
-new_YEAR=data.frame(seq(2005,2022,1))   # creates a sequence for YEAR but include an additional 10 years
+new_YEAR=data.frame(seq(2005,2023,1))   # creates a sequence for YEAR but include an additional 10 years
 predictFem=Females$coefficients[1]+Females$coefficients[2]*new_YEAR
-predictFem
+
 
 FitFore.Fem<-data.frame(new_YEAR,predictFem)  # combines data into one dataframe so it's easier to plot
 
 # Use projectd data to derive annual change
 
-value_change=log(FitFore.Fem[[18,2]]/FitFore.Fem[[13,2]])
+value_change=log(FitFore.Fem[[19,2]]/FitFore.Fem[[13,2]])
 
-value_year=FitFore.Fem[[18,1]]-FitFore.Fem[[13,1]]
+value_year=FitFore.Fem[[19,1]]-FitFore.Fem[[13,1]]
 
 data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
-  mutate(copd = ifelse(year <= value_year, 
+  mutate(copd = ifelse(year <= value_year,
                         exp(value_change/value_year* year),
                         exp(value_change/value_year * value_year)))
 
@@ -339,13 +343,19 @@ incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
 
 
 #### Males
-Males<-lm(data$Males~data$YEAR, data=data)
+data_male <- data %>% filter(SEX == "Males")
+
+data_male$YEAR <- as.numeric(gsub("\\.", "", data_male$YEAR))
+data_male$age_standardised_rate <- as.numeric(gsub("\\.", "", data_male$age_standardised_rate))
+
+# Run the regression
+Males<-lm(data_male$age_standardised_rate~data_male$YEAR)
 
 # create the time trend sequence for use in the model to get predicted values in sampel and forecast for out of sample
 
 new_YEAR=data.frame(seq(2005,2022,1))   # creates a sequence for YEAR but include an additional 10 years
 predictMale=Males$coefficients[1]+Males$coefficients[2]*new_YEAR
-predictMale
+
 
 FitFore.Male<-data.frame(new_YEAR,predictMale)  # combines data into one dataframe so it's easier to plot
 
@@ -356,7 +366,7 @@ value_change=log(FitFore.Male[[18,2]]/FitFore.Male[[13,2]])
 value_year=FitFore.Male[[18,1]]-FitFore.Male[[13,1]]
 
 data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
-  mutate(copd = ifelse(year <= value_year, 
+  mutate(copd = ifelse(year <= value_year,
                        exp(value_change/value_year* year),
                        exp(value_change/value_year * value_year)))
 
@@ -502,11 +512,8 @@ mortality_trends_m <- mortality_trends_m %>% arrange(year)
 incidence_trends_f <- incidence_trends_f %>% arrange(year)
 incidence_trends_m <- incidence_trends_m %>% arrange(year)
 
+return(list(mortality_trends_f, mortality_trends_m, incidence_trends_f, incidence_trends_m))
 
-return(mortality_trends_f)
-return(mortality_trends_m)
-return(incidence_trends_f)
-return(incidence_trends_m)
 }
 
 ### Injuries trends (from GBD??)
