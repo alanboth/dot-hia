@@ -1655,6 +1655,7 @@ summary {
 <li><a href="#general-life-table-all-cause-prevalent-years-with-disability-pylds">General life table: All cause prevalent Years with Disability (pYLDs)</a></li>
 <li><a href="#disease-life-table-disability-weights">Disease life table: disability weights</a></li>
 <li><a href="#disease-life-table-incidence-and-case-fatality">Disease life table: incidence and case fatality</a></li>
+<li><a href="#generate-multi-state-life-table-dataframe">Generate multi-state life table dataframe</a></li>
 </ul></li>
 </ul>
 </div>
@@ -1947,7 +1948,7 @@ Remission set to zero
 </table>
 <div id="calculate-diseases-trends" class="section level4">
 <h4>Calculate diseases trends</h4>
-<p>Table 3 outlines methods used to derive diseases and injuries trends (TO DO) followed by the code to obtain diseases trends from the source data.</p>
+<p>Table 3 outlines methods used to derive all-cause mortality (TO DO), diseases and injuries trends (TO DO) followed by the code to obtain diseases trends from the source data (<em>calculateDiseaseTrends</em>). Trends are used in the main code to run the model (<em>HERE</em>) modifying corresponding inptus.</p>
 <table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <caption>
 Table 3: Forecast trends for all-cause mortality, diseases and injuries
@@ -1955,7 +1956,7 @@ Table 3: Forecast trends for all-cause mortality, diseases and injuries
 <thead>
 <tr>
 <th style="text-align:left;font-weight: bold;">
-MSLT component
+Input
 </th>
 <th style="text-align:left;font-weight: bold;">
 Inputs
@@ -2086,12 +2087,13 @@ write.csv(trends_diseases[[2]], &quot;Data/Processed/mslt/mortality_trends_m.csv
 write.csv(trends_diseases[[3]], &quot;Data/Processed/mslt/incidence_trends_f.csv&quot;, row.names=F, quote=T)
 write.csv(trends_diseases[[4]], &quot;Data/Processed/mslt/incidence_trends_m.csv&quot;, row.names=F, quote=T)</code></pre>
 </div>
-<div id="generate-multi-state-life-table-dataframe" class="section level4">
-<h4>Generate multi-state life table dataframe</h4>
-<p>Generate final data set for the MSLT and save for use when running mslt_code.</p>
+</div>
+<div id="generate-multi-state-life-table-dataframe" class="section level3">
+<h3>Generate multi-state life table dataframe</h3>
+<p>Finally, based on the above data preparation, we use <em>CalculateMSLT</em> to generate the input dataframe to run the PMSLT code (<em>HERE</em>).</p>
 <pre class="r"><code>source(&quot;Scripts/data_prep/mslt_gbd_prep.R&quot;)
 mslt &lt;- calculateMSLT(
-  population_melbourne_location = &quot;Data/Processed/population_melbourne.csv&quot;,
+  population_melbourne_location = &quot;Data/Processed/population_melbourne_abs.csv&quot;,
   deaths_melbourne_location= &quot;Data/Processed/deaths_melbourne.csv&quot;,
   gbd_wider_location= &quot;Data/Processed/gbd_wider.csv&quot;,
   dismod_output_cancers=&quot;Data/Processed/dismod_output_cancers.csv&quot;,
@@ -2127,7 +2129,6 @@ write.csv(mslt, &quot;Data/Processed/mslt/mslt_df.csv&quot;, row.names=F, quote=
 </div>
 <div id="ref-RN10">
 <p>James, Spencer L., Degu Abate, Kalkidan Hassen Abate, Solomon M. Abay, Cristiana Abbafati, Nooshin Abbasi, Hedayat Abbastabar, et al. 2018. “Global, Regional, and National Incidence, Prevalence, and Years Lived with Disability for 354 Diseases and Injuries for 195 Countries and Territories, 1990&amp;#x2013;2017: A Systematic Analysis for the Global Burden of Disease Study 2017.” Journal Article. <em>The Lancet</em> 392 (10159): 1789–1858. <a href="https://doi.org/10.1016/S0140-6736(18)32279-7">https://doi.org/10.1016/S0140-6736(18)32279-7</a>.</p>
-</div>
 </div>
 </div>
 </div>
