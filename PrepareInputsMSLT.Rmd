@@ -57,7 +57,7 @@ Data inputs for the proportional multi-state life table model (PMSLT) include in
 
 pmslt_inputs <- tribble(
 ~Component, ~"Data needs", ~"Input data", ~"Data processing",
-"General life table", "Population numbers and mortality rates", "Population Greater Melbourne (@RN2) by 5-year age groups and sex and death rates by single year of age and sex (@RN1)", "Mortality rates were calculated as the average of deaths over three years (2016-2018) divided by the population for the baseline year (2017) as per (@Carmichael2016)", 
+"General life table", "Population numbers and mortality rates", "Population Greater Melbourne (@RN2) by 5-year age groups and sex and death rates by single year of age and sex (@RN11)", "Population data is from the ABS 2016 Census. Mortality rates are for Victoria given that future projections for mortality were available for Vicotoria and not for Melbourne. Deaths rates projections were available by 1-year age intervals and sex from 2017 (baseline_to 2066)", 
 "General life table", "All-cause YLDs", "Global Burden of Disease (GBD) study by 5-year age groups and sex (@RN8)", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
 "Disease life table", "Disability weights, incidence and case fatality", "Disability weights were derived from disease specific YLDs (@RN8) and prevalence (@RN8). Incidence and case fatality were derived using DISMOD II  and ", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
 "Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence (@RN3), mortality (@RN4). Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not avaiable. These were derived from past data (@RN5, @RN6, @RN7)", "Explained in sections Trends"
@@ -74,23 +74,37 @@ kable(pmslt_inputs, booktabs = T, caption = "Table 1: PMSLT inputs") %>%
 
 ### General life table: population numbers and mortality rates
 
-For this study we used population data for Greater Melbourne (**check these data may change with Vista people data**) and no further calculations were requiered from the source data. The code to calculate death rates per one is providce below (*calculateDeathRates*) along with graphs to check results. 
+As outlined in Table 1, the PMSLT was parametrised with population data for Melbourne and mortality rates for Victoria. Below, Table 1 summarises population data by age and sex and Graphs 1 and 2 are deaths rates for each age and sex cohort. The function (*GetDeathsRates*) is used to sort out original ABS data to a suitable input format for this model.
 
 ```{r,echo=FALSE}
- # population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
- #                         fileEncoding="UTF-8-BOM") %>%
- #    # population should be numeric
- #    mutate(population = as.numeric(gsub(",", "", population))) %>%
- #    # some ages have space at the end
- #    mutate(age = gsub(" ", "", age)) %>%
- #    mutate(age = gsub("-", " to ", age)) %>%
- #    mutate(sex = tolower(sex))
+# Population
+ population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
+                         fileEncoding="UTF-8-BOM") %>%
+    # population should be numeric
+    mutate(population = as.numeric(gsub(",", "", population))) %>%
+    # some ages have space at the end
+    mutate(age = gsub(" ", "", age)) %>%
+    mutate(age = gsub("-", " to ", age)) %>%
+    mutate(sex = tolower(sex)) %>% 
+    rename(`Age cohort` = age, Sex = sex) %>%
+    arrange (Sex)
 
+kable(population, booktabs = T, caption = "Table 2: Melbourne population in 2017") %>%
+ kable_styling(latex_options = c("striped", "hold position"),
+               full_width = F)%>%
+  column_spec(2, width = "15em") %>%
+  column_spec(3, width = "15em") %>%
+  row_spec(0, bold = T)
+
+
+# Deaths
 source("Scripts/data_prep/death_rates_prep.R")
-death_rates <- calculateDeathRates(
-  population_deaths="Data/Population and deaths/population_deaths.csv"
+death_rates <- GetDeathsRates(
+  deaths="Data/Population and deaths/projections.csv"
 )
 
+write.csv(death_rates[[1]], "Data/Processed/deaths_rates_males.csv", row.names=F, quote=T)
+write.csv(death_rates[[2]], "Data/Processed/deaths_rates_females.csv", row.names=F, quote=T)
 ## Plot to check data
 
 xrange <- 100    # sets the range for the plot for the x variable
@@ -157,6 +171,7 @@ We used Dismod II (free at https://www.epigear.com/index_files/dismod_ii.html) t
 
 ```{r,eval=FALSE}
 source("Scripts/data_prep/mslt_gbd_prep.R")
+options(scipen=999)
 gbd_wider <- calculateGBDwider(
   gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
 )
@@ -226,6 +241,7 @@ kable(trends_diseases, booktabs = T, caption = "Table 3: Forecast trends for all
 
 ### Alan, there is an issue with the code in the function, trace back and you can see the line. 
 source("Scripts/data_prep/trends_prep.R")
+options(scipen=999)
   trends_diseases <- calculateDiseaseTrends(
   incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
   mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
@@ -247,6 +263,7 @@ Finally, based on the above data preparation, we use *CalculateMSLT* to generate
 
 ```{r,eval=FALSE}
 source("Scripts/data_prep/mslt_gbd_prep.R")
+options(scipen=999)
 mslt <- calculateMSLT(
   population_melbourne_location = "Data/Processed/population_melbourne_abs.csv",
   deaths_melbourne_location= "Data/Processed/deaths_melbourne.csv",
