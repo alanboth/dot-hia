@@ -256,6 +256,9 @@ for (iage in i_age_cohort){
 ### Change order in disease short_names to start with diabetes. This is important when calculating the scenario disease life tables as diabetes is calculated first to then 
 ### impact on cardiovascular disease calculations. 
 
+### ALAN, diseases trends should be applied to incidence and case fatality (from here: Data\Processed\mslt\incidence_trends_f.csv")
+### In the disease trends "Year" means simulation year, not age. 
+
 dia_index <- which(DISEASE_SHORT_NAMES$sname=='dmt2')
 dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
 
