@@ -233,6 +233,7 @@ sc_duration <- replicate(4,1) %>% append(replicate(80, 0))
 
 ## Create baseline life tables
 
+#### Alan, this needs to pick up specific deaths rates for each of the age and sex cohorts (saved in Data/Processed/death_rates_males/females)
 general_life_table_list_bl <- list()
 
 index <- 1
