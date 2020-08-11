@@ -141,7 +141,7 @@ DIABETES_STROKE_RR_M <<- 1.83 ## c(log(1.83),log()) CI (1.60, 2.08)
 
 global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
 ## for windows??
-# global_path <- paste0(global_path, "/")
+global_path <- paste0(global_path, "/")
 DISEASE_INVENTORY <-  read.csv(disease_outcomes_lookup_location,as.is=T,fileEncoding="UTF-8-BOM")
 # list of ithmr default dose response data
 list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
@@ -173,10 +173,15 @@ mmets_pp <- synth_pop %>%
 #### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
 #### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortality)  
 #### TO DO: check in source formula which RRs are applied (all, mortality, incidence)
+### Alan I added the below parameter, when we do the uncertainty analysis we change to TRUE
+PA_DOSE_RESPONSE_QUANTILE <- FALSE
+
 RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
 # Belen: I'm getting the following error here
 # Error in PA_dose_response(cause = pa_dn, dose = doses_vector) : 
 #   object 'PA_DOSE_RESPONSE_QUANTILE' not found
+
+
 
 
 
