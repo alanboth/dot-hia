@@ -1,0 +1,454 @@
+---
+title: "Including health impacts in transport modelling and economic appraisal"
+author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    df_print: paged
+    number_sections: yes
+    toc: true
+    toc_depth: 3
+  geometry: margin=1in
+  word_document:
+    toc: true
+    toc_depth: '3'
+  # html_document:
+  #   df_print: paged
+  #   toc: true
+  #   toc_depth: '3'
+  # fontsize: 12 pt
+always_allow_html: true
+header-includes:
+- \usepackage{setspace}\onehalfspacing
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+editor_options:
+  chunk_output_type: inline
+bibliography: DoT.bib
+ 
+---
+
+```{r setup, include=FALSE}
+## Clean environment
+rm(list = ls())
+
+## Global options
+knitr::opts_chunk$set(echo = TRUE, width = 75)
+options(knitr.table.format = 'latex')
+knitr::opts_chunk$set(fig.cap = "", fig.align = "center", fig.pos = "H", fig.scap = TRUE) 
+
+## The work in this document requires the following packages (code, rmarkdown and citing packages):
+
+suppressPackageStartupMessages(library(dplyr)) # for manipulating data
+suppressPackageStartupMessages(library(tidyr)) # for pivoting data
+suppressPackageStartupMessages(library(kableExtra)) # for creating tables for presentation
+suppressPackageStartupMessages(library(tibble)) # for creating tables for presentation
+suppressPackageStartupMessages(library(knitr))
+suppressPackageStartupMessages(library(readxl)) # for reading excel files
+suppressPackageStartupMessages(library(stringr)) # for splitting strings
+suppressPackageStartupMessages(library(Hmisc))
+suppressPackageStartupMessages(library(DiagrammeR))
+
+```
+
+\newpage
+
+# Introduction
+
+In this document we present the methods, data sources and online interface for the development of the quantitative health impact assessment model for the impacts of active transport scenarios on population health. We developed two versions of the model: 1) Victorian model and 2) Australian model. Both models simulate the heath impacts of changes in physical activity attributable to transport scenarios for the average adult population by age and sex cohort. The Victorian model includes health impacts from changes in exposure to road injuries and air pollution in addition to physical activity. 
+In what follows, in Section 2 we explain the quantitative health impact model methods, its data inputs and modelling assumptions for both the Victorian and the Australian model. In section 3 we explain the active transport scenarios developed in collaboration with the Victorian Department of Transport.  In section 4 we present the results for the Victorian case study. Section 4 explains the web interface available in the Australian Urban Observatory. 
+
+\newpage
+
+# Quantitative health impact assessment model
+
+The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table. The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. [1])); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. [2])); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. [3])); 4) Active travel program (e.g. travel to work program (e.g. [4]); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. [5]). The active transport scenario translates into a change in transport behaviour which in turn impacts on exposure to risk factors, namely physical activity, air pollution and road injuries. A change in exposure to the risk factors, combined with the risk of diseases associated to them is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). Road injuries risk is calculated by comparing injuries (deaths and serious injuries) at baseline and scenarios, with the latest modelled as a function of distance travelled by victim and striking model and baseline risk. From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalence of disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, years lived with disability, life years and health-adjusted life years. For age and sex cohort the model generates changes in life expectancy and health-adjusted life expectancy. In what follows we explain the potential impact fraction calculations and the proportional multi-state life table (PMSLT).  Table 1 depicts the model inputs and data sources. 
+
+
+```{r, echo=FALSE, include=TRUE}
+
+### This graph needs some work! basics are here
+
+analytical_framework <- grViz("digraph{
+         
+                     #graph[rankdir = LR]
+                     
+                      # graph, node, and edge definitions
+                      graph [compound = true, nodesep = .25, ranksep = 3.25,
+                      color = black, overlap = true]
+                      
+                      node [fontname = Helvetica, fontcolor = black,
+                      shape = rectangle, fixedsize = false, width = 3.5,
+                      color = darkslategray]
+
+                      edge [color = grey, arrowhead = none, arrowtail = none, tailport= s]
+                      
+                      
+
+
+                     
+                          subgraph cluster_0 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 24
+                     
+                            label = 'Scenarios'
+                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                            1[label = 'Private car use']
+                            2[label = 'Cycling']
+                            3[label = 'Walking']
+                            4[label = 'Public Transport'] }
+                            
+                          subgraph cluster_1 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 24
+                     
+                            label = 'Potential impact fraction and risk'
+                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                            5[label = 'Ambient PM2.5']
+                            6[label = 'On road PM2.5']
+                            7[label = 'Physical activity']
+                            8[label = 'Road trauma']
+                            9[label = 'Ischemic heart disease']
+                            10[label = 'Stroke']
+                            11[label = 'Chronic obstructive pulmonary disease']
+                            12[label = 'Lower respiratory infection']
+                            13[label = 'Diabetes mellitus type 2']
+                            14[label = 'Breast cancer']
+                            15[label = 'Colon cancer']
+                            16[label = 'Uterine cancer']
+                            }
+                            
+                          subgraph cluster_2 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 24
+                     
+                            label = 'Proportional multi-state life table'
+                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                            17[label = 'Disease life tables']
+                            18[label = 'Injuries process']
+                            19[label = 'General life table']
+                          }  
+                                subgraph cluster_3 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 24
+                     
+                            label = 'Outcomes'
+                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                            20[label = 'Incidence cases']
+                            21[label = 'Disease deaths']
+                            22[label = 'Road trauma YLDs']
+                            23[label = 'Road trauma deaths']
+                            24[label = 'Life years']
+                            25[label = 'Health-adjusted life years']
+                            26[label = 'Life expectancy']
+                            27[label = 'Health-adjusted life expectancy']
+                           } 
+                            
+                            edge[color = black, arrowhead = normal, arrowsize = 1.25]
+                          1 -> {5 6 7 8 }
+                          2 -> {5 6 7 8 }
+                          3 -> {5 6 7 8 }
+                          4 -> {5 6 7 8 }
+                          {5 6} -> {9 10 11 12}
+                          7 -> {9 10 13 14 15 16}
+                          {9 10 11 12 13 14 15 16} -> 17
+                          8 -> 18
+                          {17 18} -> 19
+                          17 -> {20 21}
+                          18 -> {22 23}
+                          19 -> {24 25 26 27}
+                          
+ 
+  
+                     
+                     }")
+
+
+
+analytical_framework
+
+```
+```{r, echo=FALSE, include=TRUE}
+graph <-
+  create_graph() %>%
+  add_node(label = "one") %>%
+  add_node(label = "two") %>%
+  add_node(label = "three") %>%
+  add_node(label = "four")
+
+# Add position information to each of
+# the graph's nodes
+graph <-
+  graph %>%
+  set_node_position(
+    node = 1,
+    x = 1, y = 1) %>%
+  set_node_position(
+    node = 2,
+    x = 2, y = 2) %>%
+  set_node_position(
+    node = 3,
+    x = 3, y = 3) %>%
+  set_node_position(
+    node = 4,
+    x = 4, y = 4)
+
+graph %>% get_node_df()
+
+```
+## Data inputs
+
+Data inputs for the proportional multi-state life table model (PMSLT) include inputs for: general life table (population, mortality rates and prevalent years lived with disability rates for all causes (YLD)), diseases life tables (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used state or nationally representative inputs. Table 1 describes all data inputs for the MSLT. Each of the MSLT components and related code are explained below Table 1.
+
+```{r, echo=FALSE, include=TRUE}
+
+pmslt_inputs <- tribble(
+~Component, ~"Data needs", ~"Input data", ~"Data processing",
+"General life table", "Population numbers and mortality rates", "Population Greater Melbourne (@RN2) by 5-year age groups and sex and death rates by single year of age and sex (@RN11)", "Population data is from the ABS 2016 Census. Mortality rates are for Victoria given that future projections for mortality were available for Vicotoria and not for Melbourne. Deaths rates projections were available by 1-year age intervals and sex from 2017 (baseline to 2066)", 
+"General life table", "All-cause YLDs", "Global Burden of Disease (GBD) study by 5-year age groups and sex (@RN8)", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
+"Disease life table", "Disability weights, incidence and case fatality", "Disability weights were derived from disease specific YLDs (@RN8) and prevalence (@RN8). Incidence and case fatality were derived using DISMOD II  and ", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
+"Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence (@RN3), mortality (@RN4). Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not avaiable. These were derived from past data (@RN5, @RN6, @RN7)", "Explained in sections Trends"
+)
+
+kable(pmslt_inputs, booktabs = T, caption = "PMSLT inputs", longtable = TRUE) %>%
+ kable_styling(latex_options = c("hold position", "repeat_header"),
+               full_width = F)%>%
+  column_spec(1:2, width = "7em") %>%
+  column_spec(3:4, width = "15em") %>%
+  row_spec(0, bold = T) 
+```
+
+
+### General life table: population numbers and mortality rates
+
+As outlined in Table 1, the PMSLT was parametrised with population data for Melbourne (**will change to the population impacted by the intervention**) and mortality rates for Victoria. Below, Table 2 summarises population data by age and sex and Graphs 1 and 2 are deaths rates for each age and sex cohort. The function (*GetDeathsRates*) is used to sort out original ABS data to a suitable input format for this model.
+
+```{r,echo=FALSE, message=FALSE}
+
+ population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
+                         fileEncoding="UTF-8-BOM") %>%
+    # population should be numeric
+    mutate(population = as.numeric(gsub(",", "", population))) %>%
+    # some ages have space at the end
+    mutate(age = gsub(" ", "", age)) %>%
+    mutate(age = gsub("-", " to ", age)) %>%
+    mutate(sex = tolower(sex)) %>% 
+    rename(`Age cohort` = age, Sex = sex, Population = population) %>%
+    arrange (Sex) %>%
+    pivot_wider(names_from=c("Sex"),
+                values_from=Population)
+
+kable(population, booktabs = T, caption = "Melbourne population in 2017") %>%
+ kable_styling(latex_options = c("hold position", "repeat_header"),
+               full_width = F)%>%
+  column_spec(2, width = "15em") %>%
+  column_spec(3, width = "15em") %>%
+  row_spec(0, bold = T)
+
+
+# Deaths
+source("Scripts/data_prep/death_rates_prep.R")
+death_rates <- GetDeathsRates(
+  deaths="Data/Population and deaths/projections.xls"
+)
+
+write.csv(death_rates[[1]], "Data/Processed/deaths_rates_males.csv", row.names=F, quote=T)
+write.csv(death_rates[[2]], "Data/Processed/deaths_rates_females.csv", row.names=F, quote=T)
+
+```
+
+```{r,echo=FALSE, message=FALSE}
+
+#### NEED TO FIX TITLES
+## Plot to check data
+
+age_cohort =seq(from = 17, to = 100, by = 5)
+age_cohort_names <- c("15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-100")
+
+data_males <- list()
+index <- 1
+  for (a in age_cohort) {
+
+    data_males[[index]] <-  as.data.frame(death_rates[[1]]) %>% filter(age_cohort == a)
+
+    # print(plotdf1[[index]])
+  index <- index +1
+  
+  }
+
+p_males <- ggplot(bind_rows(data_males, .id="Cohort"), aes(age, rate)) +
+  geom_line()
+p_males + facet_wrap(~age_cohort, scales = "free") +
+   facet_wrap(~ age_cohort, scales = "free",ncol=3, 
+      # add a labeller here:
+      labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
+  ggtitle("Deaths rates for male cohort from baseline year (2017) up to age 100") +
+  xlab("Age cohort") +
+  ylab("Mortality rate") +
+  theme(legend.title=element_blank()) +
+  theme_classic()
+
+
+
+data_females <- list()
+index <- 1
+  for (a in age_cohort) {
+
+    data_females[[index]] <-  as.data.frame(death_rates[[2]]) %>% filter(age_cohort == a)
+
+    # print(plotdf1[[index]])
+  index <- index +1
+  
+  }
+
+p_females <- ggplot(bind_rows(data_females, .id="Cohort"), aes(age, rate)) +
+  geom_line()
+p_females + facet_wrap(~age_cohort, scales = "free")  +
+   facet_wrap(~ age_cohort, scales = "free",ncol=3, 
+      # add a labeller here:
+      labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
+  ggtitle("Deaths rates for female cohort from baseline year (2017) up to age 100") +
+  xlab("Age cohort") +
+  ylab("Mortality rate") +
+  theme(legend.title=element_blank()) +
+  theme_classic()
+  
+```
+
+### General life table: All cause prevalent Years with Disability (pYLDs)
+
+ PYLDs for all causes were obtained in 5 year age groups adn sex from the GBD study for 2017. Interpolation was used to derive rates per single year of age. The function *CalculateMSLT* was used for obtaining pYLDs for all causes. 
+
+
+### Disease life table: disability weights
+
+Disability weights (DW) are derived from disease specific prevalent years lived with disability (YLD) and disease specific prevalence by age group (5 years) and sex. Data for YLDs prevalence from GBD data for 2017. An age and sex specific-correction was introduced to counteract the effects of accumulating comorbid illnesses in the older age groups (Equation 1). Interpolation was used to derive rates per single year of age from 5-year age intervals rates with the funciton *CalculateMSLT*. 
+
+\begin{equation}
+\label{DW adjusted for total YLDs-YLDdPd1YLDt}
+(YLDd/Pd)/(1-YLDt) = DW adjusted for total YLDs
+\end{equation}
+
+
+Where YLDd is the YLD mean number per age and sex for a given disease, Pd is the prevalence (as reported in GBD )  for a given disease by age and sex and YLDt is total YLD rate per age and sex. 
+
+
+### Disease life table: incidence and case fatality
+
+We used AIHW incidence and mortality cancer data for 2017 for Australia and GBD data for Australia for other diseases for the year 2017 to derive incidence and case fatality inputs for breast cancer (females), colon cancer, lung cancer, uterine cancer (females), ischemic heart disease, stroke, type 2 diabetes and chornic pulmonary disease. These diseases were selected as the modelled risk factors for these diseases are low levels of physical activity and exposure to Particulate matter of 2.5 micrometers and smaller. TO DO: injuries, depending on weather we include or not. 
+We used Dismod II (free at https://www.epigear.com/index_files/dismod_ii.html) to derive internally consistent inputs for incidence and case fatality and generate missing data. For example, the GBD studies provide data for incidence, prevalence and disease mortality, however, not case fatality. For cancers we used AIHW given that the GBD data was derived assuming remission for cancers (except for long life sequelaes) (@RN10), but in our model we assumed no remission for diseases. In addition, AIHW generates data for colon cancer and lung cancer, while the GBD only provides estimates for larger disease groups (colon and rectum cancer and tracheal, bronchus, and lung cancer). Dismod II is a separate tool, therefore, here, we provide data information to obtain data inputs for Dismod II (*gbd_wider* and *calculateInputsDismodAIHW *) and the procedures used to generate the data (Table 2). 
+
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+source("Scripts/data_prep/mslt_gbd_prep.R")
+options(scipen=999)
+gbd_wider <- calculateGBDwider(
+  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+)
+write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
+source("Scripts/data_prep/aihw_prep.R")
+AIHW <- calculateInputsDismodAIHW (
+incidence_AIHW="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+mortality_AIHW="Data/aihw/cancer_mortality_AIHW_with_projections.xlsx",
+population_deaths_location="Data/Population and deaths/population_deaths.csv"
+)
+write.csv(AIHW[[1]], "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
+write.csv(AIHW[[2]], "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
+write.csv(AIHW[[3]], "Data/Processed/population_and_deaths.csv", row.names=F, quote=T)
+```
+
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+
+dismod_process <- tribble(
+~"Disease", ~"Collection data", ~"Disease inputs", ~"ICD-10 codes", ~"Process", 
+"Chronic obstructive pulmonary disease", "Population and mortality rates (TO DO: Belen check)", "Incidence, prevalence and mortality (@RN8)", "J41-J42.4, J43-J44.9", "Remission set to zero", 
+"Diabetes mellitus type 2", "Population and mortality rates (TO DO: Belen check)", "Incidence, prevalence and mortality (@RN8)", "E08-E08.11, E08.3-E08.9, E12-E12.1, E12.3-E13.11, E13.3-E14.1, E14.3-E14.9, R73-R73.9 (all diabetes)", "Remission set to zero",
+"Ischemic heart disease", "Population and mortality rates (TO DO: Belen check)", "Incidence, prevalence and mortality (@RN8)", "I20-I21.6, I21.9-I25.9, Z82.4-Z82.49", "Remission set to zero and higher weight to prevalence (half bar)", 
+"Stroke", "Population and mortality rates (TO DO: Belen check)", "Incidence, prevalence and mortality (@RN8)", "G45-G46.8, I60-I62, I62.9-I64, I64.1, I65-I69.998", "Remission set to zero and higher weight to prevalence input (half bar)",
+"Breast cancer (females)", "Population and deaths data for Australia (@RN1)", "Incidence and mortality (@RN3)", "C50", "Remission set to zero", 
+"Uterine cancer (females)",  "Population and deaths data for Australia (@RN1)", "Incidence and mortality (@RN3)", "C54–C55", "Remission set to zero", 
+"Colon cancer",  "Population and deaths data for Australia (@RN1)", "Incidence and mortality (@RN3)", "C18", "Remission set to zero", 
+"Lung cancer",  "Population and deaths data for Australia (@RN1)", "Incidence and mortality (@RN3)", "C33–C34", "Remission set to zero"
+)
+
+kable(dismod_process , booktabs = T, caption = "Dismod II input data and procedures") %>%
+ kable_styling(latex_options = c("hold position", "repeat_header"),
+               full_width = F)%>%
+  column_spec(1, width = "5em") %>%
+  column_spec(2:5, width = "8em") %>%
+  row_spec(0, bold = T)
+
+```
+
+#### Calculate diseases trends 
+
+Table 3 outlines methods used to derive all-cause mortality (TO DO), diseases and injuries trends (TO DO) followed by the code to obtain diseases trends from the source data (*calculateDiseaseTrends*). Trends are used in the main code to run the model (*HERE*) modifying corresponding inptus. 
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+
+trends_diseases <- tribble(
+~"Input", ~"Inputs", ~"Assumptions", ~"Data processing",
+"General life table: all cause mortality", "TO DO", "1. Age-standardised trends by sex applied to all groups, and 2. Number of years trends applied into the future equivalent to the original trends forecast (e.g. if from 2017 to 2020, then trends were applied for 3 years and then stabilised", "TO DO", 
+"Disease life table: incidence cancers", "@RN3 forecast from 2017 to 2020", "Same above", "We derive an annual trend as the log difference between the age standardised rate in 2020 and 2017 divided by the diffence in years",
+"Disease life table: case fatality cancers", "@RN4 forecast from 2014 to 2024 for mortality", "Same above", "Same above",
+"Disease life table: cardiovascular diseases incidence", "@RN5 hospitallization past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)", 
+"Disease life table: cardivarcular disease case fatality", "@RN5 mortality past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)",
+"Disease life table: diabetes incidence", "@RN6 mortality past trends from years 1997 to 2023 for diabetes as the underlying or associated cause of death", "Same as above and trends only applied to incidence", "Same as above with forecast up to year 2023", 
+"Disease life table: Chronic obstructive pulmonary disease incidence", "@RN7 mortality past trends from year 2005 to 2018", "Same as above", "Same as above"
+)
+
+kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mortality, diseases and injuries") %>%
+ kable_styling(latex_options = c("repeat_header", "hold position"),
+               full_width = F)%>%
+  column_spec(1:3, width = "8em") %>%
+  column_spec(4, width = "14em") %>%
+  row_spec(0, bold = T)
+```
+
+```{r,echo=FALSE, message=FALSE}
+
+
+## Alan, there is an issue with the code in the function, trace back and you can see the line.
+source("Scripts/data_prep/trends_prep.R")
+options(scipen=999)
+  trends_diseases <- calculateDiseaseTrends(
+  incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+  mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
+  trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
+  grim_books="Data/aihw/trends/grim_books.csv",
+  trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
+)
+
+write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
+
+```
+
+### Generate multi-state life table dataframe
+
+Finally, based on the above data preparation, we use *CalculateMSLT* to generate the input dataframe to run the PMSLT code (*HERE*).
+
+```{r,echo=FALSE, message=FALSE}
+source("Scripts/data_prep/mslt_gbd_prep.R")
+options(scipen=999)
+mslt <- calculateMSLT(
+  population_melbourne_location = "Data/Processed/population_melbourne_abs.csv",
+  deaths_melbourne_location= "Data/Processed/deaths_melbourne.csv",
+  gbd_wider_location= "Data/Processed/gbd_wider.csv",
+  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
+  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv")
+write.csv(mslt, "Data/Processed/mslt/mslt_df.csv", row.names=F, quote=T)
+```
