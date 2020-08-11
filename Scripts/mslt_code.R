@@ -401,7 +401,8 @@ strk_index <- which(DISEASE_SHORT_NAMES$sname=='strk')
 dia_index <- which(DISEASE_SHORT_NAMES$sname=='dmt2')
 dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
 for (iage in i_age_cohort){
-  td1_age <- MSLT_DF[MSLT_DF$age>=iage,]
+  td1_age <- MSLT_DF[MSLT_DF$age>=iage,] ### ALAN, diseases trends should be applied to incidence and case fatality to td1_Age (from here: Data\Processed\mslt\incidence_trends_f.csv")
+  ### In the disease trends "Year" means simulation year, not age. 
   pif_disease_age <- pif_expanded[pif_expanded$age>=iage,]
   for (isex in i_sex){
     td1_age_sex <- td1_age[td1_age$sex==isex,]

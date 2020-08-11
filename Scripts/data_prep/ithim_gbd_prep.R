@@ -18,7 +18,7 @@ suppressPackageStartupMessages(library(stringr)) # for splitting strings
 
 calculateGBDandPopulation <- function(gbd_melbourne_ithimr_location,population_melbourne_abs_location) {
   # gbd_melbourne_ithimr_location="Data/gbd/gbd_melbourne_ithimr.csv"
-  # population_melbourne_abs_location="Data/Processed/population_melbourne_abs.csv"
+  #  population_melbourne_abs_location="Data/Processed/population_melbourne_abs.csv"
   
   # Tidy POPULATION to match ITHIMR code
   population <- read.csv(population_melbourne_abs_location, as.is=T,
@@ -28,7 +28,7 @@ calculateGBDandPopulation <- function(gbd_melbourne_ithimr_location,population_m
     # some ages have space at the end
     mutate(age = gsub(" ", "", age)) %>%
     mutate(age = gsub("-", " to ", age)) %>%
-    mutate(sex2 = tolower(sex))
+    mutate(sex = tolower(sex))
   
   # Tidy GBD_DATA to match ITHIMR
   gbd_data <- read.csv(gbd_melbourne_ithimr_location, as.is=T,
@@ -43,14 +43,13 @@ calculateGBDandPopulation <- function(gbd_melbourne_ithimr_location,population_m
     mutate(burden=val) %>%
     mutate(cause_name=cause) %>%
     mutate(age_name=age) %>%
-    left_join(population%>%select(sex2,age,population),
-              by=c("sex"="sex2","age"="age")) %>%
+    left_join(population,
+              by=c("sex"="sex","age"="age")) %>%
     # order by cause, otherwise issue with function ithimrsetup
     arrange(sex,age,measure,cause)
   
   # Change format age to match ITHIMR code
   population <- population %>%
-    select(-sex2) %>%
     mutate(age = gsub(" to ", "-", age))
   
   return(list(gbd_data,population))
