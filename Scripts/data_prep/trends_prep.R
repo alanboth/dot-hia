@@ -304,7 +304,7 @@ incidence_trends_m <- merge(incidence_trends_m, data_2, by = c("year", "sex"))
 ### COPD
 ### Data for mortality up to year 2017, predict up to year 2023
 
-data <- read.csv(grim_books, as.is=T, fileEncoding="UTF-8-BOM") %>%
+data <- read.csv(grim_books, as.is=T, fileEncoding="Windows-1252") %>%
   dplyr::filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2005,
          cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") %>%
   dplyr::select(YEAR, SEX, age_standardised_rate)

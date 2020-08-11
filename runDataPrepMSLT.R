@@ -59,6 +59,10 @@ trends_diseases <- calculateDiseaseTrends(
   trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
 )
 
+mortality_trends_f <- trends_diseases[[1]]
+mortality_trends_m <- trends_diseases[[2]]
+incidence_trends_f <- trends_diseases[[3]]
+incidence_trends_m <- trends_diseases[[4]]
 write.csv(incidence_trends_f, "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
 write.csv(incidence_trends_m, "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
 write.csv(mortality_trends_f, "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
