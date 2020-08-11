@@ -4,8 +4,8 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 
 calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
-  # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
-  # disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
+   # gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+   # disease_outcomes_location="Data/Processed/disease_outcomes_lookup.csv"
   
   gbd <- read.csv(gbd_location, as.is=T, fileEncoding="UTF-8-BOM") 
   
@@ -13,7 +13,7 @@ calculateDiseaseNames <- function(gbd_location,disease_outcomes_location) {
   
   disease_names_execute <- read.csv(disease_outcomes_location,
                                     as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(GBD_name, acronym) %>%
+    dplyr::select(GBD_name, acronym) %>%
     mutate(disease = tolower(GBD_name))
   
   DISEASE_SHORT_NAMES <- data.frame(disease = tolower(as.character(unique(gbd$cause_name))), 
@@ -68,13 +68,13 @@ calculateGBDwider <- function(gbd_location) {
   # remove '_name' from column names
   names(gbd) <- gsub(pattern = "_name", replacement = "", x = names(gbd))
   gbd <- gbd %>%
-    select(-contains("id")) %>%
+    dplyr::select(-contains("id")) %>%
     mutate(cause = tolower(cause))
   
   # ---- chunk-1.2.3: Generate general inputs ----
   
   gbd_tmp <- gbd %>%
-    select(-upper,-lower) %>%
+    dplyr::select(-upper,-lower) %>%
     mutate(metric=tolower(metric)) %>%
     # this name is too long
     mutate(measure = ifelse(measure=='YLDs (Years Lived with Disability)','ylds',measure)) %>%
@@ -83,17 +83,17 @@ calculateGBDwider <- function(gbd_location) {
     mutate(rate = rate / 100000) %>%
     mutate(pop = number / rate) %>%
     # only want pop for all causes
-    select(measure,sex,age,cause,rate,location,number,pop_raw=pop)
+    dplyr::select(measure,sex,age,cause,rate,location,number,pop_raw=pop)
   
   gbd_pop <- gbd_tmp %>%
     ## filter and select pop data only
     filter(cause == "all causes", measure == "Deaths") %>%
-    select(age,sex,pop=pop_raw)
+    dplyr::select(age,sex,pop=pop_raw)
   
   ## Dataframe with rates per one
   gbd_rate <- gbd_tmp %>%
     # left_join(gbd_pop, by=c("age","sex")) %>%
-    select(measure,sex,age,cause,rate,location,number) %>%
+    dplyr::select(measure,sex,age,cause,rate,location,number) %>%
     ## Add age interval variable for over 15, we model adults only
     filter(age != "Under 5" & age != "5 to 9" & age != "10 to 14") %>%
     rowwise() %>%
@@ -157,7 +157,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     data.frame() %>%
     mutate(age_cat = from_age + 2) %>%
     mutate(sex_age_cat = paste(tolower(sex), age_cat, sep="_")) %>%
-    select(sex_age_cat, population)
+    dplyr::select(sex_age_cat, population)
   
   
   mslt_df <- mslt_df %>% left_join(pop_melb, by = "sex_age_cat") %>%
@@ -190,7 +190,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
     mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
     rename(mx = rate) %>%
-    select(sex_age_cat, mx)
+    dplyr::select(sex_age_cat, mx)
   
   mslt_df <- left_join(mslt_df, deaths_melbourne)
   
@@ -203,8 +203,8 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   #### Disability weights
   
   # the row sum of all ylds_number_*disease* without ylds_number_allc
-  all_ylds_count <- select(gbd_df, contains("ylds_number")) %>%
-    select(-ylds_number_allc) %>%
+  all_ylds_count <- dplyr::select(gbd_df, contains("ylds_number")) %>%
+    dplyr::select(-ylds_number_allc) %>%
     rowSums()
   
   # Adjust all cause ylds for included diseases and injuries (exclude all cause ). From here just med 
@@ -253,7 +253,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
   
   # all values get their own column, expanding out to every age number
   mslt_df_longer <- mslt_df %>%
-    left_join(gbd_df%>%select(-age,-age_sex)) %>%
+    left_join(gbd_df%>%dplyr::select(-age,-age_sex)) %>%
     pivot_longer(names_to=c("measure","rate_num","disease"),
                  names_sep="_",
                  cols=incidence_rate_cyri:ylds_number_copd)
@@ -277,7 +277,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     ungroup()
   
   mslt_df_wider <- mslt_df_by_disease %>%
-    select(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1,
+    dplyr::select(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1,
            disease,deaths_rate,ylds_rate,dw_adj)%>%
     pivot_wider(id_cols = c(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1),
                 names_from=disease,
