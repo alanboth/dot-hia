@@ -149,6 +149,6 @@ calculateInjuries <- function(accident_location,accident_event_location,person_l
 
 # ### FOR NOW just model deaths, then add serious injuries
 # # injuries_melbourne <- injuries_melbourne %>% dplyr::filter(cas_type == "Serious injury" | cas_type == "Fatality")
-# #### Group injuries_melbourne types (add reclassification to technical appenix)
+# #### Group injuries_melbourne types (add reclassification to technical appendix)
 # modes_hierc <- c("train","tram", "truck", "bus", "lightcom", "utility", "van",
 #                  "car", "motorcycle", "moped", "bicycle", "other", "unknown")

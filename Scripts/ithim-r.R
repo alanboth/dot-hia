@@ -17,82 +17,86 @@ source(paste0(getwd(),"/Scripts/functions_mslt.R"))
 ### Run ITHIM set up
 
 setup_call_summary_filename <- 'setup_call_summary.txt"'
-parameters <- ithimr::run_ithim_setup(seed = 1,
-                                      setup_call_summary_filename = 'setup_call_summary.txt',
-                                PATH_TO_LOCAL_DATA = "C:\\Users\\rstudio\\Dropbox\\HIA - RMIT - DOT\\Model\\Data\\Processed\\",
-                                AGE_RANGE = c(15,120),
-                                TEST_WALK_SCENARIO=T, 
-                                ADD_WALK_TO_BUS_TRIPS=F,
-                                CITY='melbourne',
-                                ADD_TRUCK_DRIVERS = F,
-                                ADD_BUS_DRIVERS = F,
-                                
-                                # PM_TRANS_SHARE = 0.4,
-                                # PM_CONC_BASE = 20,
-                                
-                                speeds =  list( ### Added manually, get from data
-                                   car=21,
-                                   pedestrian=4.8,
-                                   bicycle=14.5,
-                                   motorcycle=25,1,
-                                   bus=21,
-                                   tram=28,
-                                   rail=35,
-                                   other=21),
-                                
-                                 emission_inventory <- list( ### added manually
-                                   bus=0,
-                                   bus_driver=0.82,
-                                   car=0.228,
-                                   taxi=0.011,
-                                   walking=0,
-                                   bicycle=0,
-                                   motorcycle=0.011,
-                                   truck=0.859,
-                                   big_truck=0.711,
-                                   other=0.082),
-                                  #   
-                                 NSAMPLES = 10,
-                                  MMET_WALKING = c((2.53),(1.2)),
-                                  MMET_CYCLING = c((4.63),(1.2)),
-                                  PM_CONC_BASE = c((50), (1.3)),
-                                  PM_TRANS_SHARE = c(5,20))
-                                # 
-                                # INJURY_REPORTING_RATE = c(8,3), 
-                                # 
-                                # CHRONIC_DISEASE_SCALAR = c((1), (1.2)),  
-                                # 
-                                # BACKGROUND_PA_SCALAR = c((1), (1.2)),   
-                                # 
-                                # BUS_TO_PASSENGER_RATIO = c(20,600),
-                                # 
-                                # TRUCK_TO_CAR_RATIO = c(3,10),
-                                # 
-                                # DISTANCE_SCALAR_CAR_TAXI = c(1,(1.2)),
-                                # 
-                                # DISTANCE_SCALAR_MOTORCYCLE = c(1,(1.2)),
-                                # 
-                                # DISTANCE_SCALAR_WALKING = c(1,(1.2)),
-                                # 
-                                # DISTANCE_SCALAR_CYCLING = c(1,(1.2)),
-                                # 
-                                # DISTANCE_SCALAR_PT = c(1,(1.2)),
-                                # 
-                                # PA_DOSE_RESPONSE_QUANTILE = T,  
-                                # 
-                                # AP_DOSE_RESPONSE_QUANTILE = T,
-                                # 
-                                # DAY_TO_WEEK_TRAVEL_SCALAR = 7,#c(20,3),
-                                # 
-                                # SIN_EXPONENT_SUM= c((1.5),(1.1)),
-                                # 
-                                # CASUALTY_EXPONENT_FRACTION = c(15,15),
-                                # 
-                                # EMISSION_INVENTORY_CONFIDENCE = 0.5,
-                                # 
-                                # BACKGROUND_PA_CONFIDENCE = 0.5)
+parameters <- ithimr::run_ithim_setup(
+  seed = 1,
+  setup_call_summary_filename = 'setup_call_summary.txt',
+  # PATH_TO_LOCAL_DATA = "C:\\Users\\rstudio\\Dropbox\\HIA - RMIT - DOT\\Model\\Data\\Processed\\",
+  PATH_TO_LOCAL_DATA = "Data/Processed/",
+  AGE_RANGE = c(15,120),
+  TEST_WALK_SCENARIO=T, 
+  ADD_WALK_TO_BUS_TRIPS=F,
+  CITY='melbourne',
+  ADD_TRUCK_DRIVERS = F,
+  ADD_BUS_DRIVERS = F,
+  
+  # PM_TRANS_SHARE = 0.4,
+  # PM_CONC_BASE = 20,
+  
+  speeds =  list( ### Added manually, get from data
+    car=21,
+    pedestrian=4.8,
+    bicycle=14.5,
+    motorcycle=25,1,
+    bus=21,
+    tram=28,
+    rail=35,
+    other=21),
+  
+  emission_inventory <- list( ### added manually
+    bus=0,
+    bus_driver=0.82,
+    car=0.228,
+    taxi=0.011,
+    walking=0,
+    bicycle=0,
+    motorcycle=0.011,
+    truck=0.859,
+    big_truck=0.711,
+    other=0.082),
+  #   
+  NSAMPLES = 10,
+  MMET_WALKING = c((2.53),(1.2)),
+  MMET_CYCLING = c((4.63),(1.2)),
+  PM_CONC_BASE = c((50), (1.3)),
+  PM_TRANS_SHARE = c(5,20))
+# 
+# INJURY_REPORTING_RATE = c(8,3), 
+# 
+# CHRONIC_DISEASE_SCALAR = c((1), (1.2)),  
+# 
+# BACKGROUND_PA_SCALAR = c((1), (1.2)),   
+# 
+# BUS_TO_PASSENGER_RATIO = c(20,600),
+# 
+# TRUCK_TO_CAR_RATIO = c(3,10),
+# 
+# DISTANCE_SCALAR_CAR_TAXI = c(1,(1.2)),
+# 
+# DISTANCE_SCALAR_MOTORCYCLE = c(1,(1.2)),
+# 
+# DISTANCE_SCALAR_WALKING = c(1,(1.2)),
+# 
+# DISTANCE_SCALAR_CYCLING = c(1,(1.2)),
+# 
+# DISTANCE_SCALAR_PT = c(1,(1.2)),
+# 
+# PA_DOSE_RESPONSE_QUANTILE = T,  
+# 
+# AP_DOSE_RESPONSE_QUANTILE = T,
+# 
+# DAY_TO_WEEK_TRAVEL_SCALAR = 7,#c(20,3),
+# 
+# SIN_EXPONENT_SUM= c((1.5),(1.1)),
+# 
+# CASUALTY_EXPONENT_FRACTION = c(15,15),
+# 
+# EMISSION_INVENTORY_CONFIDENCE = 0.5,
+# 
+# BACKGROUND_PA_CONFIDENCE = 0.5)
 
-                                
+# saving and restoring the parameters
+saveRDS(parameters, "Data/Processed/parameters.rds")
+parameters <- readRDS("Data/Processed/parameters.rds")
 ### Check inputs
 ithimr::summarise_ithim_inputs(parameters)                                
                                 
@@ -102,7 +106,8 @@ parameters$outcomes<- run_ithim(parameters, seed = 1)
 
 ### Run ITHIM uncertainty 
 
-parameters$outcomes <- mclapply(1:10, FUN = run_ithim, ithim_object = parameters, mc.cores = ifelse(Sys.info()[['sysname']] == "Windows",  1,  numcores))
+parameters$outcomes <- mclapply(1:10, FUN=run_ithim, ithim_object=parameters,
+                                mc.cores = ifelse(Sys.info()[['sysname']] == "Windows",  1,  10))
 
 for(i in 1:NSAMPLES) print(length(ithim_object$outcomes[[i]]))
 

@@ -1,11 +1,14 @@
 # ---- chunk-intro ----
 
+library(ithimr)
+library(dplyr)
+library(readr)
+library(tidyr)
+
 # library(ggpubr)
 # library(ggplot2)
 # library(arsenal)
 # library(janitor)
-library(dplyr)
-library(readr)
 # library(conflicted)
 # library(rlist)
 # library(reshape)
@@ -14,14 +17,91 @@ library(readr)
 # library(stringi)
 # library(tidyverse)
 # library(rlist)
-# library(ithimr)
+
 # if (interactive()) {
 #   library(conflicted)
 # }
 # conflict_prefer("filter", "dplyr")
 rm (list = ls())
 options(scipen=999)
-source("Scripts/functions_mslt.R")
+# source("Scripts/functions_mslt.R")
+
+# putting the Health Burden 2 function in here
+# --- Health Burden 2 ----- 
+### From Metahit
+
+health_burden_2 <- function(ind_ap_pa,combined_AP_PA=T){
+  pop_details <- DEMOGRAPHIC
+  pif_scen <- pop_details
+  # set up reference (scen1)
+  reference_scenario <- SCEN_SHORT_NAME[which(SCEN==REFERENCE_SCENARIO)]
+  scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]
+  ### iterating over all all disease outcomes
+  for ( j in 1:nrow(DISEASE_INVENTORY)){
+    # Disease acronym and full name
+    ac <- as.character(DISEASE_INVENTORY$acronym[j])
+    gbd_dn <- as.character(DISEASE_INVENTORY$GBD_name[j])
+    # calculating health outcome, or independent pathways?
+    pathways_to_calculate <- ifelse(combined_AP_PA,1,DISEASE_INVENTORY$physical_activity[j]+DISEASE_INVENTORY$air_pollution[j])
+    for(path in 1:pathways_to_calculate){
+      # set up column names
+      if(combined_AP_PA){
+        middle_bit <-
+          paste0(
+            ifelse(DISEASE_INVENTORY$physical_activity[j] == 1, 'pa_', ''),
+            ifelse(DISEASE_INVENTORY$air_pollution[j] == 1, 'ap_', '')
+          )
+        middle_bit_plus <-
+          paste0(
+            ifelse(DISEASE_INVENTORY$physical_activity[j] == 1, 'pa_', ''),
+            ifelse(DISEASE_INVENTORY$air_pollution[j] == 1, 'ap_', ''),
+            ifelse(DISEASE_INVENTORY$noise[j] == 1, 'noise_', ''),
+            ifelse(DISEASE_INVENTORY$nitrogen_dioxide[j] == 1, 'no2_', '')
+          )
+      }else{
+        # if independent, choose which one
+        middle_bit <- middle_bit_plus <- c('pa_','ap_')[which(c(DISEASE_INVENTORY$physical_activity[j],DISEASE_INVENTORY$air_pollution[j])==1)[path]]
+      }
+      base_var <- paste0('RR_', middle_bit, reference_scenario, '_', ac)
+      scen_vars <- paste0('RR_', middle_bit, scen_names, '_', ac)
+      # set up pif tables
+      pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index')])
+      setnames(pif_table,base_var,'outcome')
+      pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
+      ## sort pif_ref
+      setorder(pif_ref,dem_index)
+      for (index in 1:length(scen_vars)){
+        # set up naming conventions
+        scen <- scen_names[index]
+        scen_var <- scen_vars[index]
+        pif_name <- paste0(scen, '_pif_',middle_bit_plus,ac)
+        # Calculate PIFs for selected scenario
+        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index')])
+        setnames(pif_table,scen_var,'outcome')
+        pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
+        ## sort pif_temp
+        setorder(pif_temp,dem_index)
+        pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1]
+      }
+    }
+  }
+  return(pif_scen)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### TO DO: 
 ## Udpate mslt input sheet with Australian data, need to run disbayes/dsmod for diseases
 ## Add Intervention duration
@@ -37,6 +117,9 @@ source("Scripts/functions_mslt.R")
 # 3) RRs per person
 # 4) PIFS by age and sex
 
+# function inputs
+disease_outcomes_lookup_location="Data/Processed/disease_outcomes_lookup.csv"
+matched_pop_location="Data/Processed/matched_pop.csv"
 
 ## PARAMETERS
 SCEN_SHORT_NAME <- c("base", "scen1")
@@ -58,11 +141,10 @@ DIABETES_STROKE_RR_M <<- 1.83 ## c(log(1.83),log()) CI (1.60, 2.08)
 
 global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
 ## for windows??
-global_path <- paste0(global_path, "/")
-
-file_name <- paste0(getwd(), "/Data/Processed/disease_outcomes_lookup.csv")
-DISEASE_INVENTORY <-  read_csv(file_name)
-list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata/"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
+# global_path <- paste0(global_path, "/")
+DISEASE_INVENTORY <-  read.csv(disease_outcomes_lookup_location,as.is=T,fileEncoding="UTF-8-BOM")
+# list of ithmr default dose response data
+list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
 for (i in 1:length(list_of_files)){
   assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
          readr::read_csv(list_of_files[[i]],col_types = cols()),
@@ -71,23 +153,33 @@ for (i in 1:length(list_of_files)){
 
 ## GET MATCHED POPULATION
 
-synth_pop <- read_csv(paste0(getwd(), "//Data//Processed//matched_pop.csv")) %>%
-  dplyr::mutate(participant_id = seq.int(nrow(synth_pop))) %>%
-  dplyr::rename(age = age1)
+synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+  dplyr::mutate(participant_id = row_number())
+# removing this bit as the age column already exists
+# %>% dplyr::rename(age = age1)
 
 ## CALCULTE RRS PER PERSON 
 
 ### FIRST WE NEED MMETS PER PERSON  
-mmets_pp <- synth_pop %>% dplyr::select(participant_id, sex, age, dem_index, starts_with("time") & contains(c("pedestrian", "bicycle")), work_ltpa_marg_met) %>%
-  dplyr::mutate_all(funs(ifelse(is.na(.), 0, .))) %>%
+mmets_pp <- synth_pop %>% 
+  dplyr::select(participant_id, sex, age, dem_index,
+                starts_with("time") & contains(c("pedestrian", "bicycle")),
+                work_ltpa_marg_met) %>%
+  replace(is.na(.), 0) %>%
   dplyr::mutate(base_mmet = work_ltpa_marg_met + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
   dplyr::mutate(scen1_mmet = work_ltpa_marg_met + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
 
 ### SECOND WE CALCULATE RRS PER PERSON FROM MMET PER PERSON AND RRS DATA FROM ITHIMR
 #### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
-#### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortatlity)  
+#### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortality)  
 #### TO DO: check in source formula which RRs are applied (all, mortality, incidence)
 RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
+# Belen: I'm getting the following error here
+# Error in PA_dose_response(cause = pa_dn, dose = doses_vector) : 
+#   object 'PA_DOSE_RESPONSE_QUANTILE' not found
+
+
+
 
 ### CALCULTE PIFS BY AGE AND SEX GROUP
 
@@ -97,7 +189,7 @@ RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
 ### Calculate PIFs by age and sex for air pollution and physical activity combined
 #### health_burden2 was created by Rob J for metahit
 
-#### ALAN, can you please help me with this funciton? it provisions for having air pollution RRs, bue twe do not have them yet. You can find the function 
+#### ALAN, can you please help me with this function? it provisions for having air pollution RRs, but we do not have them yet. You can find the function 
 #### in functions_mslt
 pifs_pa_ap <- health_burden_2(RR_PA_calculations)
 
