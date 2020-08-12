@@ -37,7 +37,8 @@ rm(list = ls())
 ## Global options
 knitr::opts_chunk$set(echo = TRUE, width = 75)
 options(knitr.table.format = 'latex')
-knitr::opts_chunk$set(fig.cap = "", fig.align = "center", fig.pos = "H", fig.scap = TRUE) 
+knitr::opts_chunk$set(fig.cap = "", fig.align = "center", fig.pos = "H", fig.scap = TRUE, out.height = "\\textheight",  out.width = "\\textwidth")
+
 
 ## The work in this document requires the following packages (code, rmarkdown and citing packages):
 
@@ -64,39 +65,38 @@ In what follows, in Section 2 we explain the quantitative health impact model me
 
 # Quantitative health impact assessment model
 
-The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table. The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. [1])); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. [2])); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. [3])); 4) Active travel program (e.g. travel to work program (e.g. [4]); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. [5]). The active transport scenario translates into a change in transport behaviour which in turn impacts on exposure to risk factors, namely physical activity, air pollution and road injuries. A change in exposure to the risk factors, combined with the risk of diseases associated to them is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). Road injuries risk is calculated by comparing injuries (deaths and serious injuries) at baseline and scenarios, with the latest modelled as a function of distance travelled by victim and striking model and baseline risk. From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalence of disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, years lived with disability, life years and health-adjusted life years. For age and sex cohort the model generates changes in life expectancy and health-adjusted life expectancy. In what follows we explain the potential impact fraction calculations and the proportional multi-state life table (PMSLT).  Table 1 depicts the model inputs and data sources. 
+The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. @RN12)); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. @RN13)); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. @RN14)); 4) Active travel program (e.g. travel to work program (e.g. [4]); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. @RN15). The active transport scenario translates into a change in transport behaviour which in turn impacts on exposure to risk factors, namely physical activity, air pollution and road injuries. A change in exposure to the risk factors, combined with the risk of diseases associated to them is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). Road injuries risk is calculated by comparing injuries (deaths and serious injuries) at baseline and scenarios, with the latest modelled as a function of distance travelled by victim and striking model and baseline risk. From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalence of disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, years lived with disability, life years and health-adjusted life years. For age and sex cohort the model generates changes in life expectancy and health-adjusted life expectancy. In what follows we explain the potential impact fraction calculations and the PMSLT.  Table 1 depicts the model inputs and data sources. 
 
 
-```{r, echo=FALSE, include=TRUE}
-
+```{r, echo = FALSE, fig.cap = 'Analytical Framework', out.width = "150%", out.height="200%"}
 ### This graph needs some work! basics are here
 
 analytical_framework <- grViz("digraph{
          
-                     #graph[rankdir = LR]
+                   graph[rankdir = LR]
                      
                       # graph, node, and edge definitions
-                      graph [compound = true, nodesep = .25, ranksep = 3.25,
+                      graph [compound = true, nodesep = .25, ranksep = 2.25,
                       color = black, overlap = true]
                       
-                      node [fontname = Helvetica, fontcolor = black,
+                      node [fontname = Calibri, fontcolor = black,
                       shape = rectangle, fixedsize = false, width = 3.5,
-                      color = darkslategray]
+                      color = DarkGray]
 
-                      edge [color = grey, arrowhead = none, arrowtail = none, tailport= s]
-                      
-                      
+                      edge [color = DarkGray, arrowhead = none, arrowtail = none, tailport= E]
 
-
-                     
-                          subgraph cluster_0 {
+                         subgraph cluster_0 {
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 24
-                     
-                            label = 'Scenarios'
-                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                          fontsize = 30
+                          face = bold
+                          fontname = Calibri
+                          color = Gray
+                         
+                          label = 'Scenarios'
+  
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             1[label = 'Private car use']
                             2[label = 'Cycling']
                             3[label = 'Walking']
@@ -106,44 +106,50 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 24
-                     
-                            label = 'Potential impact fraction and risk'
-                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                          fontsize = 30
+                          fontname = Calibri
+                          color = Gray
+                          label = 'Potential impact fraction and risk'
+                            
+                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             5[label = 'Ambient PM2.5']
                             6[label = 'On road PM2.5']
                             7[label = 'Physical activity']
                             8[label = 'Road trauma']
                             9[label = 'Ischemic heart disease']
                             10[label = 'Stroke']
-                            11[label = 'Chronic obstructive pulmonary disease']
+                            11[label = 'COPD']
                             12[label = 'Lower respiratory infection']
                             13[label = 'Diabetes mellitus type 2']
                             14[label = 'Breast cancer']
                             15[label = 'Colon cancer']
                             16[label = 'Uterine cancer']
-                            }
+                             }
                             
                           subgraph cluster_2 {
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 24
-                     
-                            label = 'Proportional multi-state life table'
-                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                          fontsize = 30
+                          fontname = Calibri
+                          color = Gray
+                          label = 'Proportional multi-state life table'
+                             
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             17[label = 'Disease life tables']
                             18[label = 'Injuries process']
                             19[label = 'General life table']
                           }  
                                 subgraph cluster_3 {
-                          graph[shape = rectangle]
+                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 24
-                     
-                            label = 'Outcomes'
-                            node[shape = rectangle, fillcolor = Gray, margin = 0.25, fontsize = 18]
+                          fontsize = 30
+                          fontname = Calibri
+                          color = Gray
+                          label = 'Outcomes'
+                            
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             20[label = 'Incidence cases']
                             21[label = 'Disease deaths']
                             22[label = 'Road trauma YLDs']
@@ -154,11 +160,11 @@ analytical_framework <- grViz("digraph{
                             27[label = 'Health-adjusted life expectancy']
                            } 
                             
-                            edge[color = black, arrowhead = normal, arrowsize = 1.25]
-                          1 -> {5 6 7 8 }
-                          2 -> {5 6 7 8 }
-                          3 -> {5 6 7 8 }
-                          4 -> {5 6 7 8 }
+                            edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
+                          1 -> {5 6 7 8}
+                          2 -> {5 6 7 8}
+                          3 -> {5 6 7 8}
+                          4 -> {5 6 7 8}
                           {5 6} -> {9 10 11 12}
                           7 -> {9 10 13 14 15 16}
                           {9 10 11 12 13 14 15 16} -> 17
@@ -167,45 +173,11 @@ analytical_framework <- grViz("digraph{
                           17 -> {20 21}
                           18 -> {22 23}
                           19 -> {24 25 26 27}
-                          
- 
-  
-                     
                      }")
 
-
-
 analytical_framework
-
 ```
-```{r, echo=FALSE, include=TRUE}
-graph <-
-  create_graph() %>%
-  add_node(label = "one") %>%
-  add_node(label = "two") %>%
-  add_node(label = "three") %>%
-  add_node(label = "four")
 
-# Add position information to each of
-# the graph's nodes
-graph <-
-  graph %>%
-  set_node_position(
-    node = 1,
-    x = 1, y = 1) %>%
-  set_node_position(
-    node = 2,
-    x = 2, y = 2) %>%
-  set_node_position(
-    node = 3,
-    x = 3, y = 3) %>%
-  set_node_position(
-    node = 4,
-    x = 4, y = 4)
-
-graph %>% get_node_df()
-
-```
 ## Data inputs
 
 Data inputs for the proportional multi-state life table model (PMSLT) include inputs for: general life table (population, mortality rates and prevalent years lived with disability rates for all causes (YLD)), diseases life tables (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used state or nationally representative inputs. Table 1 describes all data inputs for the MSLT. Each of the MSLT components and related code are explained below Table 1.
@@ -418,22 +390,22 @@ kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mo
 
 ```{r,echo=FALSE, message=FALSE}
 
-
-## Alan, there is an issue with the code in the function, trace back and you can see the line.
-source("Scripts/data_prep/trends_prep.R")
-options(scipen=999)
-  trends_diseases <- calculateDiseaseTrends(
-  incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
-  mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
-  trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
-  grim_books="Data/aihw/trends/grim_books.csv",
-  trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
-)
-
-write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
+# 
+# ## Alan, there is an issue with the code in the function, trace back and you can see the line.
+# source("Scripts/data_prep/trends_prep.R")
+# options(scipen=999)
+#   trends_diseases <- calculateDiseaseTrends(
+#   incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+#   mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
+#   trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
+#   grim_books="Data/aihw/trends/grim_books.csv",
+#   trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
+# )
+# 
+# write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
+# write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+# write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
+# write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
 
 ```
 
