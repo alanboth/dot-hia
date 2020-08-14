@@ -2,31 +2,31 @@
 title: "Including health impacts in transport modelling and economic appraisal"
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-biblio-style: apsr
-bibliography: DoT.bib
 output:
-  pdf_document:
+  html_document:
     df_print: paged
-    number_sections: yes
-    toc: true
-    toc_depth: 3
-  geometry: margin=1in
+    toc : true
+    number_sections: true
+  pdf_document: default
+biblio-style: apsr
 header-includes:
-  - \usepackage{graphicx}
-  - \usepackage{subfig}
-  - \usepackage{floatrow}
-  - \floatsetup{capposition=top}
-  - \floatplacement{figure}{H}
-  - \captionsetup{position=above, aboveskip=0pt, belowskip=0pt}
-abstract: "Short tehcnical abstract"
+- \usepackage{graphicx}
+- \usepackage{subfig}
+- \usepackage{floatrow}
+- \floatsetup{capposition=top}
+- \floatplacement{figure}{H}
+- \captionsetup{position=above, aboveskip=0pt, belowskip=0pt}
+bibliography: DoT.bib
+abstract: Short tehcnical abstract
 ---
-
 ```{r setup, include=FALSE}
 ## Global options
 knitr::opts_chunk$set(echo = TRUE, width = 75)
 options(knitr.table.format = 'latex')
-knitr::opts_chunk$set(fig.cap = FALSE, fig.align = "center", fig.pos = "H", fig.scap = TRUE) 
+options(tinytex.verbose = TRUE)
+
 ```
+
 ```{r Libraries, echo = FALSE, message = FALSE, warning = FALSE}
 library(knitr)
 library(kableExtra)
@@ -46,9 +46,10 @@ library(readxl)
 library(stringr)
 library(Hmisc)
 library(DiagrammeR)
-
+library(tinytex)
 options(scipen = 999)
 ```
+
 
 \newpage
 
@@ -63,8 +64,8 @@ In what follows, in Section 2 we explain the quantitative health impact model me
 
 The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. @RN12)); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. @RN13)); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. @RN14)); 4) Active travel program (e.g. travel to work program (e.g. @RN16); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. @RN15). The active transport scenario translates into a change in transport behaviour which in turn impacts on exposure to risk factors, namely physical activity, air pollution and road trauma. A change in exposure to the risk factors, combined with the risk of diseases associated to them is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). Road injuries risk is calculated by comparing injuries (deaths and serious injuries) at baseline and scenarios, with the latest modelled as a function of distance travelled by victim and striking model and baseline risk. From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalent year lived with disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, prevalent years years lived with disability, life years, health-adjusted life years, life expectancy and health adjusted-life expectancy.
 
-
-```{r, echo = FALSE, fig.cap = 'Analytical Framework'}
+\blandscape
+```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
 ### This graph needs some work! basics are here
 
 analytical_framework <- grViz("digraph{
@@ -98,7 +99,9 @@ analytical_framework <- grViz("digraph{
                             3[label = 'Walking']
                             4[label = 'Public Transport'] }
                             
-                          subgraph cluster_1 {
+                          
+                            
+                            subgraph cluster_1 {
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
@@ -106,12 +109,34 @@ analytical_framework <- grViz("digraph{
                           fontname = Calibri
                           color = Gray
                           label = 'Potential impact fraction and risk'
+                          
+                          subgraph cluster_10 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 30
+                          fontname = Calibri
+                          color = Gray
+                          label = 'Exposure'
                             
                              node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             5[label = 'Ambient PM2.5']
                             6[label = 'On road PM2.5']
                             7[label = 'Physical activity']
                             8[label = 'Road trauma']
+                          }    
+                          
+                          
+                          subgraph cluster_11 {
+                          graph[shape = rectangle]
+                          style = rounded
+                          bgcolor = WhiteSmoke
+                          fontsize = 30
+                          fontname = Calibri
+                          color = Gray
+                          label = 'Relative risks'
+                            
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             9[label = 'Ischemic heart disease']
                             10[label = 'Stroke']
                             11[label = 'COPD']
@@ -120,7 +145,8 @@ analytical_framework <- grViz("digraph{
                             14[label = 'Breast cancer']
                             15[label = 'Colon cancer']
                             16[label = 'Uterine cancer']
-                             }
+                          }
+                            }
                             
                           subgraph cluster_2 {
                           graph[shape = rectangle]
@@ -175,7 +201,9 @@ analytical_framework <- grViz("digraph{
                      }")
 
 analytical_framework
+
 ```
+\elandscape
 
 ## Scenarios
 
@@ -185,47 +213,58 @@ The impacted population is xx...
 We capture changes in walking and use of private motor vehicle by...
 Changes in walking translate to increases in population levels of physical activity. 
 Changes in kilometres travelled by private car translate in changes in levels of PM2.5 and risk of road injuries. 
-Below we explain the modelling of each of this components. 
 
-### Population levels of physical activity
-#### BAU
-
-We matched VIsTA individuals with Austrlaian health surevy data for PA to derive a measure of physical activity as...
-
-#### Intervention
-### PM2.5
-#### BAU
-#### Intervention
-### Road injuries
-#### BAU
-#### Intervention
 
 ## Potential Impact Fraction
 
-The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor[@RN19]. We used the PIFs to calculate the average change in the incidence of diseases (Figure 2) in the scenarios disease processes.  We calculated the PIFs for: physical activity and air pollution. PIF inputs are baseline and scenario exposure to risk factors and dose-response functions for the association of exposure and disease combinations (e.g. physical inactivity and type 2 diabetes). Dose-response function were derived from the dose-response functions used to develop the ITHIMR package (REFERENCING TO DO, CHECK WITH JAMES). The matched population (above explained)  provided exposure for baseline and each of the scenarios for each individual which were then combined with the dose-response function to derive an individual level PIF. Individual PIFs were averaged  out by age groups (5-years) and sex to modify incidence rates in each of the disease processes (Figure XX). We calculated the “distribution shift” PIFs given the continuous distribution of the modelled risk factors (Formula 1).  Some diseases shared risk factors, for example, air pollution and physical inactivity are risk factors for ischemic heart disease. To account for shared risk factors we used Formula 2.
+The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor[@RN19]. We used the PIFs to calculate the average change in the incidence of diseases (Figure 2) in the scenarios' diseases' processes.  We calculated the PIFs for: physical activity and air pollution. PIF inputs are baseline and scenario exposure to risk factors and dose-response functions for the association of exposure and disease combinations (e.g. physical inactivity and type 2 diabetes). We calculated the “distribution shift” PIFs given the continuous distribution of the modelled risk factors (Formula 1).  Some diseases shared risk factors, for example, air pollution and physical inactivity are risk factors for ischemic heart disease. To account for shared risk factors we used Formula 2. Physical activity levels were modelled at the individual level for the Vicotria model and at the population level for the AUstralian model. The Victoria model includes air pollution and road injuries, both exposures modelled tat the population level. 
+
+
+$$
+PIF_i\text {=}\frac{\int_a^b RR_{i,x}\text P_{(i,x)}\text dix \text - \int_a^b RR_{i,x}\text P^*_{(i,x)} \text dix}{\int_a^b RR_{i,x} \text P_{(i,x)} \text dix}
+$$
+
+And combined PIFs.
+
+
+$$
+PIF_{icombined}\text {=} 1-\prod_r(1-PIF_r\text)
+$$
+### SOME table with all exposures would be useful here
+
+### Travel behaviour
+
+We used the latest Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) survey conducted across the period 2017-10 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Travel data was used to derive individual levels of physical activity and kilometers traveled by modes affected by scenarios. MORE INFO ON THE SURVEY HERE.
+
+### Physical activity
+
+#### Victorian model 
+
+Individual level of physical activity were derived for each of the VISTA survey individuals and measured in marginal metabolic equivalent of task value (mMET). mMETs were derived by multiplying the minutes spent during the last week doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure and walking and cycling for transport and an assigned metabolic equivalent value (MET) from a PA compendium minus one [@RN1] (equation 3). Walking and cycling levels were derived at the individual level for each of the VISTA persons by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages). Moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure were allocated to each VISTA individual from the national survey data collected for physical activity surveillance (@RN22). 
+
+
+TO DO: ADD equation PA
+TO DO: explain matching process. 
 
 
 
-\begin{equation}
-\label{PIF:  Distribution risk potential impact fraction. Where x denotes the exposure levels the risk factor can take on, i denotes age and sex,  RR(ix) is the RR function, P(ix) is the original risk-factor distribution by age and sex, P*(ix) is the risk-factor distribution after the intervention, dix denotes that the integration is done with respect to ix, and a and b are the integration boundaries.}
-$$PIF_i=\frac{\int_a^b RR_{i,x}\,P_{(i,x)}\,dix - \int_a^b RR_{i,x}\,P^*_{(i,x)}\,dix}{\int_a^b RR_{i,x}\,P_{(i,x)}\,dix}$$
-\end{equation}
+Dose-response function were derived from the dose-response functions used to develop the ITHIMR package (REFERENCING TO DO, CHECK WITH JAMES). The matched population (above explained)  provided exposure for baseline and each of the scenarios for each individual which were then combined with the dose-response function to derive an individual level PIF. Individual PIFs were averaged  out by age groups (5-years) and sex to modify incidence rates in each of the disease processes (Figure XX).
+#### Australian model
 
 
-\begin{equation}
-\label{PIF combined, where r indexes each risk factor.}
-$$PIF_{icombined} = 1 - \prod_r(1-PIF_r)$$
 
-\end{equation}
+### PM2.5
+### Road injuries
+
 
 ## Risk
 
 ## Proportional multi-state life table
 
-The PMSLT is a population level model (macro) approach to simulate health (and economic) implications of changes in exposure to health risk factors (e.g. physical inactivity, air pollution and diet). The PMSLT has been widely used to simulate outcomes for population level interventions for the reduction risks for chronic diseases. Orignally developed by [@Rn17; @RN19]. Figure 2 is an schematic representation of the PMSLT The mechanisms of the the PMSLT and associated diseases and injuries processes are e along with input data (Table 1). 
+The PMSLT is a population level model (macro) approach to simulate health (and economic) implications of changes in exposure to health risk factors (e.g. physical inactivity, air pollution and diet). The PMSLT has been widely used to simulate outcomes for population level interventions for the reduction risks for chronic diseases. Originally developed by [@RN17]. Figure 2 is an schematic representation of the PMSLT The mechanisms of the the PMSLT and associated diseases and injuries processes are e along with input data (Table 1). 
 
-
-```{r, echo = FALSE, fig.cap = 'Schematic description of the PMSLT'}
+\blandscape
+```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
 ### This graph needs some work! basics are here
 
 PMSLT_graph <- grViz("digraph{
@@ -238,7 +277,7 @@ PMSLT_graph <- grViz("digraph{
                       
                       node [fontname = Calibri, fontcolor = black,
                       shape = rectangle, fixedsize = false, width = 2,
-                      color = DarkGray]
+                      color = DarkGray, fontsize = 30]
                       
                       edge [color = DarkGray, arrowhead = none, arrowtail = none, tailport= E]
                       
@@ -270,7 +309,7 @@ PMSLT_graph <- grViz("digraph{
                          
                           label = 'Life Table BAU'
   
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = right]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = right]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             1[label = 'mx']
                             2[label = 'qx']
@@ -296,7 +335,7 @@ PMSLT_graph <- grViz("digraph{
                          
                           label = 'Life Table intervention'
   
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = right]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = right]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             7[label = 'mx']
                             8[label = 'qx']
@@ -333,7 +372,7 @@ PMSLT_graph <- grViz("digraph{
                           color = Gray
                           label = 'Disease process BAU'
                             
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = left]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = left]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             13[label = 'ix']
                             14[label = 'px']
@@ -355,7 +394,7 @@ PMSLT_graph <- grViz("digraph{
                           color = Gray
                           label = 'Disease process intervention'
                           
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = left]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = left]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             18[label = 'ix']
                             19[label = 'px']
@@ -376,7 +415,7 @@ PMSLT_graph <- grViz("digraph{
                           color = Gray
                           label = 'Injury process baseline'
                           
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = left]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = left]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             23[label = 'mx']
                             24[label = 'pyldx']
@@ -392,7 +431,7 @@ PMSLT_graph <- grViz("digraph{
                           color = Gray
                           label = 'Injury process intervention'
                           
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = left]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = left]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             25[label = 'mx']
                             26[label = 'pyldx']
@@ -410,7 +449,7 @@ PMSLT_graph <- grViz("digraph{
                      
                            label = 'Difference intervention and BAU'
                      
-                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted, group = right]
+                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = right]
                              edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                              27[label = 'mx']
                              28[label = 'pyldx']
@@ -431,6 +470,7 @@ PMSLT_graph <- grViz("digraph{
 
 PMSLT_graph
 ```
+\elandscape
 
 
 ## Data inputs
@@ -445,7 +485,7 @@ pmslt_inputs <- tribble(
 "General life table", "Population numbers and mortality rates", "Population Greater Melbourne [@RN2] by 5-year age groups and sex and death rates by single year of age and sex [@RN11]", "Population data is from the ABS 2016 Census. Mortality rates are for Victoria given that future projections for mortality were available for Vicotoria and not for Melbourne. Deaths rates projections were available by 1-year age intervals and sex from 2017 (baseline to 2066)", 
 "General life table", "All-cause YLDs", "Global Burden of Disease (GBD) study by 5-year age groups and sex [@RN8]", "GBD data is in five-year age groups, interpolation to derive one-year age groups", 
 "Disease life table", "Disability weights, incidence and case fatality", "Disability weights were derived from disease specific YLDs [@RN8] and prevalence [@RN8]. Incidence and case fatality were derived using DISMOD II  and ", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
-"Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence [@RN3], mortality [@RN4]. Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not avaiable. These were derived from past data [@RN5; @RN6; @RN7]", "Explained in sections Trends"
+"Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence [@RN3], mortality [@RN4]. Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not available. These were derived from past data [@RN5; @RN6; @RN7]", "Explained in sections Trends"
 )
 kable(pmslt_inputs, booktabs = T, caption = "PMSLT inputs", longtable = TRUE) %>%
 
@@ -456,7 +496,7 @@ kable(pmslt_inputs, booktabs = T, caption = "PMSLT inputs", longtable = TRUE) %>
 
 ### General life table: population numbers and mortality rates
 
-As outlined in Table 1, the PMSLT was parametrised with population data for Melbourne (**will change to the population impacted by the intervention**) and mortality rates for Victoria. Below, Table 2 summarises population data by age and sex and Graphs 1 and 2 are deaths rates for each age and sex cohort. The function (*GetDeathsRates*) is used to sort out original ABS data to a suitable input format for this model.
+As outlined in Table 1, the PMSLT was parametrised with population data for Melbourne (**will change to the population impacted by the intervention**) and mortality rates for Victoria. Below, Table 2 summarizes population data by age and sex and Graphs 1 and 2 are deaths rates for each age and sex cohort. The function (*GetDeathsRates*) is used to sort out original ABS data to a suitable input format for this model.
 
 ```{r,echo=FALSE, message=FALSE}
 
@@ -557,7 +597,7 @@ p_females + facet_wrap(~age_cohort, scales = "free")  +
 
 ### Disease life table: disability weights
 
-Disability weights (DW) are derived from disease specific prevalent years lived with disability (YLD) and disease specific prevalence by age group (5 years) and sex. Data for YLDs prevalence from GBD data for 2017. An age and sex specific-correction was introduced to counteract the effects of accumulating comorbid illnesses in the older age groups (Equation 1). Interpolation was used to derive rates per single year of age from 5-year age intervals rates with the funciton *CalculateMSLT*. 
+Disability weights (DW) are derived from disease specific prevalent years lived with disability (YLD) and disease specific prevalence by age group (5 years) and sex. Data for YLDs prevalence from GBD data for 2017. An age and sex specific-correction was introduced to counteract the effects of accumulating comorbid illnesses in the older age groups (Equation 1). Interpolation was used to derive rates per single year of age from 5-year age intervals rates with the function *CalculateMSLT*. 
 
 \begin{equation}
 \label{DW adjusted for total YLDs-YLDdPd1YLDt}
@@ -570,7 +610,7 @@ Where YLDd is the YLD mean number per age and sex for a given disease, Pd is the
 
 ### Disease life table: incidence and case fatality
 
-We used AIHW incidence and mortality cancer data for 2017 for Australia and GBD data for Australia for other diseases for the year 2017 to derive incidence and case fatality inputs for breast cancer (females), colon cancer, lung cancer, uterine cancer (females), ischemic heart disease, stroke, type 2 diabetes and chornic pulmonary disease. These diseases were selected as the modelled risk factors for these diseases are low levels of physical activity and exposure to Particulate matter of 2.5 micrometers and smaller. TO DO: injuries, depending on weather we include or not. 
+We used AIHW incidence and mortality cancer data for 2017 for Australia and GBD data for Australia for other diseases for the year 2017 to derive incidence and case fatality inputs for breast cancer (females), colon cancer, lung cancer, uterine cancer (females), ischemic heart disease, stroke, type 2 diabetes and chronic pulmonary disease. These diseases were selected as the modeled risk factors for these diseases are low levels of physical activity and exposure to Particulate matter of 2.5 micrometers and smaller. TO DO: injuries, depending on weather we include or not. 
 We used Dismod II (free at https://www.epigear.com/index_files/dismod_ii.html) to derive internally consistent inputs for incidence and case fatality and generate missing data. For example, the GBD studies provide data for incidence, prevalence and disease mortality, however, not case fatality. For cancers we used AIHW given that the GBD data was derived assuming remission for cancers (except for long life sequelaes) (@RN10), but in our model we assumed no remission for diseases. In addition, AIHW generates data for colon cancer and lung cancer, while the GBD only provides estimates for larger disease groups (colon and rectum cancer and tracheal, bronchus, and lung cancer). Dismod II is a separate tool, therefore, here, we provide data information to obtain data inputs for Dismod II (*gbd_wider* and *calculateInputsDismodAIHW *) and the procedures used to generate the data (Table 2). 
 
 
@@ -627,8 +667,8 @@ trends_diseases <- tribble(
 "General life table: all cause mortality", "TO DO", "1. Age-standardised trends by sex applied to all groups, and 2. Number of years trends applied into the future equivalent to the original trends forecast (e.g. if from 2017 to 2020, then trends were applied for 3 years and then stabilised", "TO DO", 
 "Disease life table: incidence cancers", "@RN3 forecast from 2017 to 2020", "Same above", "We derive an annual trend as the log difference between the age standardised rate in 2020 and 2017 divided by the diffence in years",
 "Disease life table: case fatality cancers", "@RN4 forecast from 2014 to 2024 for mortality", "Same above", "Same above",
-"Disease life table: cardiovascular diseases incidence", "@RN5 hospitallization past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)", 
-"Disease life table: cardivarcular disease case fatality", "@RN5 mortality past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardised rates (ASR) were frist derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)",
+"Disease life table: cardiovascular diseases incidence", "@RN5 hospitalization past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardized rates (ASR) were freest derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)", 
+"Disease life table: cardiovascular disease case fatality", "@RN5 mortality past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardized rates (ASR) were first derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)",
 "Disease life table: diabetes incidence", "@RN6 mortality past trends from years 1997 to 2023 for diabetes as the underlying or associated cause of death", "Same as above and trends only applied to incidence", "Same as above with forecast up to year 2023", 
 "Disease life table: Chronic obstructive pulmonary disease incidence", "@RN7 mortality past trends from year 2005 to 2018", "Same as above", "Same as above"
 )
