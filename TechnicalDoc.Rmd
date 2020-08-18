@@ -3,11 +3,14 @@ title: "Including health impacts in transport modelling and economic appraisal"
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  pdf_document: 
+    df_print: paged
+    toc : true
+    number_sections: true
   html_document:
     df_print: paged
     toc : true
     number_sections: true
-  pdf_document: default
 biblio-style: apsr
 header-includes:
 - \usepackage{graphicx}
@@ -217,30 +220,53 @@ Changes in kilometres travelled by private car translate in changes in levels of
 
 ## Potential Impact Fraction
 
-The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor[@RN19]. We used the PIFs to calculate the average change in the incidence of diseases (Figure 2) in the scenarios' diseases' processes.  We calculated the PIFs for: physical activity and air pollution. PIF inputs are baseline and scenario exposure to risk factors and dose-response functions for the association of exposure and disease combinations (e.g. physical inactivity and type 2 diabetes). We calculated the “distribution shift” PIFs given the continuous distribution of the modelled risk factors (Formula 1).  Some diseases shared risk factors, for example, air pollution and physical inactivity are risk factors for ischemic heart disease. To account for shared risk factors we used Formula 2. Physical activity levels were modelled at the individual level for the Vicotria model and at the population level for the AUstralian model. The Victoria model includes air pollution and road injuries, both exposures modelled tat the population level. 
+The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor[@RN19]. We used the PIFs to calculate the average change in the incidence of diseases (Figure 2) in the scenarios' diseases' processes. We calculated the PIFs for: physical activity and air pollution. We used two different approaches to calculate PIFs: 1) Individual level PIFs for physical activty and 2) Population level PIFs for air pollution. Calculation for the PMSLT are by age and sex groups, hence, PA PIFs were averaged by age and sex.
+In what follows we explained PIF calculation for each exposure (physical activity and air pollution)
 
-
-$$
-PIF_i\text {=}\frac{\int_a^b RR_{i,x}\text P_{(i,x)}\text dix \text - \int_a^b RR_{i,x}\text P^*_{(i,x)} \text dix}{\int_a^b RR_{i,x} \text P_{(i,x)} \text dix}
-$$
-
-And combined PIFs.
-
-
-$$
-PIF_{icombined}\text {=} 1-\prod_r(1-PIF_r\text)
-$$
 ### SOME table with all exposures would be useful here
-
-### Travel behaviour
-
-We used the latest Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) survey conducted across the period 2017-10 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Travel data was used to derive individual levels of physical activity and kilometers traveled by modes affected by scenarios. MORE INFO ON THE SURVEY HERE.
 
 ### Physical activity
 
 #### Victorian model 
 
-Individual level of physical activity were derived for each of the VISTA survey individuals and measured in marginal metabolic equivalent of task value (mMET). mMETs were derived by multiplying the minutes spent during the last week doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure and walking and cycling for transport and an assigned metabolic equivalent value (MET) from a PA compendium minus one [@RN1] (equation 3). Walking and cycling levels were derived at the individual level for each of the VISTA persons by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages). Moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure were allocated to each VISTA individual from the national survey data collected for physical activity surveillance (@RN22). 
+We created a matched population to derive individual levels of physical activity based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). VISTA individuals (VISTA person file) were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 1). Table 2 oulines the computational sequences. The number of succesful mathces was 99.34%. We developed a function called **calculatePersonsMatch** to generate the matched population with inputs **pa_location** (generated with **calculatePersonsPA**) and **persons_travel_location** (**calculateTravelData**).  
+
+```{r, echo=FALSE, include=TRUE}
+
+matched_population <- tribble(
+~"Matching variable", ~"VISTA", ~"NHS",
+"Age", "AGE: single year of age recoded to groups to match NHS's groups", "AGEB: 0 - 4 years to 80 - 84 years in five year age groups and 85 years and over years",
+"Sex", "SEX: Male/Female", "SEX: Male/Female",
+"Socio-economic Status", "VISTA data did not provida household SES data. Australian postcode SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles Postal Area code  (POA) [@RN23] was matched to individuals' household POA to assign them an area level IRSD", "SA1SF2DN: SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles - National",
+"Walk for transport", "Whether VISTA person had transport walking trips" ,"EXLWKTNO: Number of times walked for 10 minutes or more for transport in the last week",
+"Work status","ANYWORK: employed, unemployed", "LFSBC (Labour force status): 0. Not applicable (recoded to unemployed), 1. Employed, 2. Unemployed, 3. Not in the labour force (recoded to unemployed)"
+)
+kable(matched_population, booktabs = T, caption = "Table 1: Matched poplation", longtable = TRUE) %>%
+column_spec(1:3, width = "15em") %>%
+  row_spec(0, bold = T) %>%
+  kable_styling()
+
+```
+
+```{r, echo=FALSE, include=TRUE}
+
+matched_population_computation <- tribble(
+~Component, ~"Matching variable", ~"VISTA", ~"NHS",
+"Age",
+"Sex",
+"Socio-economic Status",
+"Walk for transport",
+"Work status",
+)
+kable(matched_population, booktabs = T, caption = "Table 2: Matched poplation computation", longtable = TRUE) %>%
+
+  column_spec(1:2, width = "7em") %>%
+  column_spec(3:4, width = "15em") %>%
+  row_spec(0, bold = T) 
+```
+
+
+Individual level of physical activity were derived for each of the VISTA survey individuals and measured in marginal metabolic equivalent of task value (mMET). mMETs were derived by multiplying the minutes spent during the last week doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure and walking and cycling for transport and an assigned metabolic equivalent value (MET) from a PA compendium minus one [@RN1] (equation 3). Walking and cycling levels were derived at the individual level for each of the VISTA persons by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages). Moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure were allocated to each VISTA individual from the  
 
 
 TO DO: ADD equation PA
@@ -250,6 +276,10 @@ TO DO: explain matching process.
 
 Dose-response function were derived from the dose-response functions used to develop the ITHIMR package (REFERENCING TO DO, CHECK WITH JAMES). The matched population (above explained)  provided exposure for baseline and each of the scenarios for each individual which were then combined with the dose-response function to derive an individual level PIF. Individual PIFs were averaged  out by age groups (5-years) and sex to modify incidence rates in each of the disease processes (Figure XX).
 #### Australian model
+### Travel behaviour
+
+We used the latest  survey conducted across the period 2017-10 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Travel data was used to derive individual levels of physical activity and kilometers traveled by modes affected by scenarios. MORE INFO ON THE SURVEY HERE.
+
 
 
 
@@ -487,11 +517,12 @@ pmslt_inputs <- tribble(
 "Disease life table", "Disability weights, incidence and case fatality", "Disability weights were derived from disease specific YLDs [@RN8] and prevalence [@RN8]. Incidence and case fatality were derived using DISMOD II  and ", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
 "Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence [@RN3], mortality [@RN4]. Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not available. These were derived from past data [@RN5; @RN6; @RN7]", "Explained in sections Trends"
 )
-kable(pmslt_inputs, booktabs = T, caption = "PMSLT inputs", longtable = TRUE) %>%
+kable(pmslt_inputs, booktabs = T, caption = " Table 2: PMSLT inputs", longtable = TRUE) %>%
 
   column_spec(1:2, width = "7em") %>%
   column_spec(3:4, width = "15em") %>%
-  row_spec(0, bold = T) 
+  row_spec(0, bold = T)  %>%
+  kable_styling()
 ```
 
 ### General life table: population numbers and mortality rates
@@ -518,7 +549,8 @@ kable(population, booktabs = T, caption = "Melbourne population in 2017") %>%
                full_width = F)%>%
   column_spec(2, width = "15em") %>%
   column_spec(3, width = "15em") %>%
-  row_spec(0, bold = T)
+  row_spec(0, bold = T) %>%
+  kable_styling()
 
 
 # Deaths
