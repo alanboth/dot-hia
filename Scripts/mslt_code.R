@@ -88,20 +88,6 @@ health_burden_2 <- function(ind_ap_pa,combined_AP_PA=T){
   return(pif_scen)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #### TO DO: 
 ## Udpate mslt input sheet with Australian data, need to run disbayes/dsmod for diseases
 ## Add Intervention duration
@@ -127,8 +113,8 @@ SCEN_SHORT_NAME <- c("base", "scen1")
 ## UNCERTAINTY PARAMETERS
 
 # NSAMPLES <- 1024
-MMET_CYCLING <-  4.63#c(log(4.63),log(1.2))
-MMET_WALKING <- 2.53 #c(log(2.53),log(1.1)) 
+MMET_CYCLING <- 4.63 #c(log(4.63),log(1.2)) 
+MMET_WALKING <- 2.53 #c(log(2.53),log(1.1))   
 
 ## TO DO: Calculate SD from CI, see Erzats
 DIABETES_IHD_RR_F <<- 2.82 ## c(log(2.82),log()) CI (2.35, 3.38)
@@ -160,7 +146,8 @@ synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
 
 ## CALCULTE RRS PER PERSON 
 
-### FIRST WE NEED MMETS PER PERSON  
+### FIRST WE NEED MMETS PER PERSON
+
 mmets_pp <- synth_pop %>% 
   dplyr::select(participant_id, sex, age, dem_index,
                 starts_with("time") & contains(c("pedestrian", "bicycle")),
@@ -173,14 +160,17 @@ mmets_pp <- synth_pop %>%
 #### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
 #### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortality)  
 #### TO DO: check in source formula which RRs are applied (all, mortality, incidence)
-### Alan I added the below parameter, when we do the uncertainty analysis we change to TRUE
-PA_DOSE_RESPONSE_QUANTILE <- FALSE
+### Alan I added the below parameter, when we do the uncertainty analysis we change to TRUEMMET_CYCLING <- c(log(4.63),log(1.2)) # 4.63
+PA_DOSE_RESPONSE_QUANTILE <- F
 
+### Inputs for health_burden_2
 RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
 # Belen: I'm getting the following error here
 # Error in PA_dose_response(cause = pa_dn, dose = doses_vector) : 
 #   object 'PA_DOSE_RESPONSE_QUANTILE' not found
 
+
+test <- lapply(c(mean, sum), test_uncertainty(synth_pop), test_uncertainty(1:5))
 
 
 
