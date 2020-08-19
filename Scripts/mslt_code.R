@@ -16,6 +16,7 @@ source("Scripts/functions_mslt.R")
 ## Add weights to matched population
 ## trends case fatality and incidence
 ## Add uncertaintiy inputs for marginal mets for NHS inputs
+## PIF in sceanrio life tables to pick up from pif table by age groups and sex using index
 
 
 ## CALCULATION ORDER only including physical activity changes
