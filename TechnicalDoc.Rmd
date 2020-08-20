@@ -3,11 +3,11 @@ title: "Including health impacts in transport modelling and economic appraisal"
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document: 
+  html_document:
     df_print: paged
     toc : true
     number_sections: true
-  html_document:
+  pdf_document: 
     df_print: paged
     toc : true
     number_sections: true
@@ -58,14 +58,14 @@ options(scipen = 999)
 
 # Introduction
 
-In this document we present the methods, data sources and online interface for the development of the quantitative health impact assessment model for the impacts of active transport scenarios on population health. We developed two versions of the model: 1) Victorian model and 2) Australian model. Both models simulate the heath impacts of changes in physical activity attributable to transport scenarios for the average adult population by age and sex cohort. The Victorian model includes health impacts from changes in exposure to road injuries and air pollution in addition to physical activity. 
+In this document we present the methods, data sources and online interface for the development of the quantitative health impact assessment model for the impacts of active transport scenarios on population health. We developed two versions of the model: 1) Victorian model and 2) Australian model. Both models simulate the heath impacts of changes in physical activity attributable to changes in physical activity for the average adult population by age and sex cohort. The difference lies in the inputs and population affected. The for Vicotria is linked to transport sceanrios...
 In what follows, in Section 2 we explain the quantitative health impact model methods, its data inputs and modelling assumptions for both the Victorian and the Australian model. In section 3 we explain the active transport scenarios developed in collaboration with the Victorian Department of Transport.  In section 4 we present the results for the Victorian case study. Section 4 explains the web interface available in the Australian Urban Observatory. 
 
 \newpage
 
 # Quantitative health impact assessment model overview
 
-The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. @RN12)); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. @RN13)); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. @RN14)); 4) Active travel program (e.g. travel to work program (e.g. @RN16); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. @RN15). The active transport scenario translates into a change in transport behaviour which in turn impacts on exposure to risk factors, namely physical activity, air pollution and road trauma. A change in exposure to the risk factors, combined with the risk of diseases associated to them is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). Road injuries risk is calculated by comparing injuries (deaths and serious injuries) at baseline and scenarios, with the latest modelled as a function of distance travelled by victim and striking model and baseline risk. From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalent year lived with disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, prevalent years years lived with disability, life years, health-adjusted life years, life expectancy and health adjusted-life expectancy.
+The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. @RN12)); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. @RN13)); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. @RN14)); 4) Active travel program (e.g. travel to work program (e.g. @RN16); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. @RN15). The active transport scenario translates into a change in transport behaviour which in turn impacts on  physical activity. A change in physical activity, combined with the risk of diseases associated to it is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalent year lived with disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, prevalent years years lived with disability, life years, health-adjusted life years, life expectancy and health adjusted-life expectancy.
 
 \blandscape
 ```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
@@ -120,13 +120,13 @@ analytical_framework <- grViz("digraph{
                           fontsize = 30
                           fontname = Calibri
                           color = Gray
-                          label = 'Exposure'
+                          label = ''
                             
                              node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
-                            5[label = 'Ambient PM2.5']
-                            6[label = 'On road PM2.5']
-                            7[label = 'Physical activity']
-                            8[label = 'Road trauma']
+                            # 5[label = 'Ambient PM2.5']
+                            # 6[label = 'On road PM2.5']
+                             7[label = 'Physical activity']
+                            # 8[label = 'Road trauma']
                           }    
                           
                           
@@ -142,8 +142,8 @@ analytical_framework <- grViz("digraph{
                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             9[label = 'Ischemic heart disease']
                             10[label = 'Stroke']
-                            11[label = 'COPD']
-                            12[label = 'Lower respiratory infection']
+                            # 11[label = 'COPD']
+                            # 12[label = 'Lower respiratory infection']
                             13[label = 'Diabetes mellitus type 2']
                             14[label = 'Breast cancer']
                             15[label = 'Colon cancer']
@@ -162,7 +162,7 @@ analytical_framework <- grViz("digraph{
                              
                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             17[label = 'Disease processes']
-                            18[label = 'Injuries process']
+                            # 18[label = 'Injuries process']
                             19[label = 'Life table']
                           }  
                                 subgraph cluster_3 {
@@ -177,8 +177,8 @@ analytical_framework <- grViz("digraph{
                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
                             20[label = 'Incidence cases']
                             21[label = 'Disease deaths']
-                            22[label = 'Road trauma pYLDs']
-                            23[label = 'Road trauma deaths']
+                            # 22[label = 'Road trauma pYLDs']
+                            # 23[label = 'Road trauma deaths']
                             24[label = 'Life years']
                             25[label = 'Health-adjusted life years']
                             26[label = 'Life expectancy']
@@ -186,21 +186,22 @@ analytical_framework <- grViz("digraph{
                            } 
                             
                             edge[color = Black, arrowhead = normal, arrowsize = 1.25]
-                          1 -> {5 6 7 8}
-                          2 -> {5 6 7 8}
-                          3 -> {5 6 7 8}
-                          4 -> {5 6 7 8}
+                          1 -> 7 # 5 6 8
+                          2 -> 7 # 5 6 8
+                          3 -> 7 # 5 6 8
+                          4 -> 7 # 5 6 8
                           
                           
                           edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
-                          {5 6} -> {9 10 11 12}
+                          # {5 6} -> {9 10 11 12}
                           7 -> {9 10 13 14 15 16}
-                          {9 10 11 12 13 14 15 16} -> 17
-                          8 -> 18
-                          {17 18} -> 19
+                          {9 10 13 14 15 16} -> 17  # 11 12
+                          # 8 -> 18
+                          # {17 18} -> 19
                           17 -> {20 21}
-                          18 -> {22 23}
+                          # 18 -> {22 23}
                           19 -> {24 25 26 27}
+                          17 -> 19
                      }")
 
 analytical_framework
@@ -248,22 +249,6 @@ column_spec(1:3, width = "15em") %>%
 
 ```
 
-```{r, echo=FALSE, include=TRUE}
-
-matched_population_computation <- tribble(
-~Component, ~"Matching variable", ~"VISTA", ~"NHS",
-"Age",
-"Sex",
-"Socio-economic Status",
-"Walk for transport",
-"Work status",
-)
-kable(matched_population, booktabs = T, caption = "Table 2: Matched poplation computation", longtable = TRUE) %>%
-
-  column_spec(1:2, width = "7em") %>%
-  column_spec(3:4, width = "15em") %>%
-  row_spec(0, bold = T) 
-```
 
 
 Individual level of physical activity were derived for each of the VISTA survey individuals and measured in marginal metabolic equivalent of task value (mMET). mMETs were derived by multiplying the minutes spent during the last week doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure and walking and cycling for transport and an assigned metabolic equivalent value (MET) from a PA compendium minus one [@RN1] (equation 3). Walking and cycling levels were derived at the individual level for each of the VISTA persons by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages). Moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure were allocated to each VISTA individual from the  
@@ -279,12 +264,6 @@ Dose-response function were derived from the dose-response functions used to dev
 ### Travel behaviour
 
 We used the latest  survey conducted across the period 2017-10 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Travel data was used to derive individual levels of physical activity and kilometers traveled by modes affected by scenarios. MORE INFO ON THE SURVEY HERE.
-
-
-
-
-### PM2.5
-### Road injuries
 
 
 ## Risk
