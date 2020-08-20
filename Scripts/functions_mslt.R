@@ -880,7 +880,7 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age)
 ## Function to generate age and sex disease life table for baseline and scenario.
 ## Remission is not modelled.
 
-RunDisease <- function(in_idata, in_disease) 
+RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease) 
   
 {
   

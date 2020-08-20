@@ -54,7 +54,7 @@ parameters <- ithimr::run_ithim_setup(
     big_truck=0.711,
     other=0.082),
   #   
-  NSAMPLES = 10,
+  NSAMPLES = 1,
   MMET_WALKING = c((2.53),(1.2)),
   MMET_CYCLING = c((4.63),(1.2)),
   PM_CONC_BASE = c((50), (1.3)),
@@ -115,6 +115,8 @@ plot(ithim_object$parameters$AP_DOSE_RESPONSE_QUANTILE_GAMMA_cvd_ihd,sapply(ithi
 
 ### Calculate PIFs from baseline and scenario levels for physical activity, air pollution and injuries to use in MSLT
 
+
+### ALAN THIS IS AN EXAMPLE OF HOW THE HEALTH BURDEN 2 FUNCTION SUMMARISES THE PIFS
 ### Calculate health burden by age groups using metahit function
 #### Calculate RRs per person for physical activity (mmets) and air pollution for baseline and scenario
 RR_PA_calculations <- ithimr::gen_pa_rr(parameters[["outcomes"]][["mmets"]])

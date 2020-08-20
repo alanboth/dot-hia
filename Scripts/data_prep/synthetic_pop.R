@@ -1,59 +1,46 @@
 # SYNTHETIC POPULATION OF VISTA PERSONS AND NHS PERSONS
-# rm (list = ls())
-#Load package.
-# library(rlang)
-# library(tidyverse)
-# library(readr)
-# library(plyr)
-# library(dplyr)
-# library(tidyr)
-# library(survey)
-# library(srvyr)
 
-# library(readr)
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
-
-# source("Scripts/functions_mslt.R")
-
-
 
 # TRAVEL DATA PERSON FILE
 ## Join VISTA persons to VISTA Households
 calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_index_location) {
-  # hh_VISTA_location="Data/Travel survey/VISTA 12-18/H_VISTA_1218_V1.csv"
-  # person_VISTA_location="Data/Travel survey/VISTA 12-18/P_VISTA1218_V1.csv"
-  # ses_index_location="Data/Travel survey/ABS SEIFA/ses.csv"
+  # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
+  # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
+  # ses_index_location="Data/Travelsurvey/ABS SEIFA/ses.csv"
   
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(HHID,SurveyPeriod,HomeSubRegion,HOMEPC) %>%
+    dplyr::select(HHID,SurveyPeriod,HomeSubRegion,HOMEPC) %>%
     filter(HHID!="") # some rows were completely blank
 
   person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
-    select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
+    dplyr::select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
            ANZSIC1, WDPERSWGT, WEPERSWGT)
   ## Add SEIFA-IRSD
   ses_index <- read.csv(ses_index_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
 
+  
+  ### DELETE?? repeated from above
   person_VISTA <- read.csv(person_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
+    dplyr::select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
            ANZSIC1, WDPERSWGT, WEPERSWGT)
   ## Add SEIFA-IRSD
-  ses_index <- read.csv(ses_index_location,as.is=T,fileEncoding="UTF-8-BOM") %>% 
+  ses_index <- read.csv(ses_index_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
-  
-  
-  
+
+  # 
+  # 
   ### Join persons and household, keep data for greater Melb only and create unique weights
   persons_travel <- left_join(person_VISTA, hh_VISTA, by = "HHID") %>% 
     filter(SurveyPeriod == "2017-18" &
              (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
     rowwise() %>% # want to sum across rows, not down columns
     mutate(participant_wt = sum(as.numeric(WDPERSWGT),as.numeric(WEPERSWGT),na.rm=T)) %>%
-    select(-WDPERSWGT,-WEPERSWGT) %>%
+    dplyr::select(-WDPERSWGT,-WEPERSWGT) %>%
     as.data.frame() %>%
     inner_join(ses_index, by="HOMEPC") %>%
     ### Create age category as persons_pa is only available by age groups
@@ -95,31 +82,19 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     rename(work_full = FULLTIMEWORK) %>%
     rename(persid = PERSID) %>%
     rename(hhid = HHID) %>%
-    select(persid,hhid,age,age_group,sex,work_status,work_full,study_full,
+    dplyr::select(persid,hhid,age,age_group,sex,work_status,work_full,study_full,
            occupation_cat,industry_cat,SurveyPeriod,HomeSubRegion,HOMEPC,
            participant_wt,ses)
   
   return(persons_travel)
 
-  # This bit doesn't work as FULLTIMEWORK only resolves to 'Yes' and 'No', which is what is used later in persons_pa.
-  # ### Full time variable
-  # persons_travel$work_full <- persons_travel$FULLTIMEWORK
-  # persons_travel$work_full[persons_travel$work_full == "Part-time TAFE/Uni"] <- "Full time"
-  # persons_travel$work_full[persons_travel$work_full == "Part-time TAFE/Uni"] <- "Part time"
-  # persons_travel$work_full[persons_travel$work_full == "No Study"] <- NA
-  # persons_travel$work_full[persons_travel$work_full == "Something Else"] <- "Other"
-
 }
 
 
-
-
-### USE SCENARIOS TRIPS SET
-### Add variable with total transport walking and cycling time and distance from
 ### trips_melbourne
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
-  # travel_data_location="Data/Processed/travel_data.csv"
-  # scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
+     # travel_data_location="Data/Processed/travel_data.csv"
+     # scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
   
 
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
@@ -133,17 +108,17 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   #### Scenario
   total_trips_time_dist_base <- trips_melbourne %>%
-    select(persid, trip_mode_base, trip_duration_base, trip_distance_base) %>%
+   dplyr::select(persid, trip_mode_base, trip_duration_base, trip_distance_base) %>%
     # group by person and travel mode
-    group_by(persid, trip_mode_base) %>%
+    dplyr::group_by(persid, trip_mode_base) %>%
     # find the total distance and time traveled for each person by travel mode
-    summarise(time_base=sum(trip_duration_base),
+    dplyr::summarise(time_base=sum(trip_duration_base),
               distance_base=sum(trip_distance_base)) %>%
     # expand time_base and distance_base to separate pairs of columns for each
     # travel mode
     pivot_wider(names_from=trip_mode_base,values_from=c(time_base, distance_base)) %>%
     # rearrange the columns
-    select(persid,time_base_car,distance_base_car,
+    dplyr::select(persid,time_base_car,distance_base_car,
            time_base_pedestrian,distance_base_pedestrian,
            time_base_train,distance_base_train,
            time_base_bus,distance_base_bus,
@@ -154,17 +129,17 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   #### Scenario
   total_trips_time_dist_scen <- trips_melbourne %>%
-    select(persid, trip_mode_scen, trip_duration_scen, trip_distance_scen) %>%
+    dplyr::select(persid, trip_mode_scen, trip_duration_scen, trip_distance_scen) %>%
     # group by person and travel mode
-    group_by(persid, trip_mode_scen) %>%
+    dplyr::group_by(persid, trip_mode_scen) %>%
     # find the total distance and time traveled for each person by travel mode
-    summarise(time_scen=sum(trip_duration_scen),
+    dplyr::summarise(time_scen=sum(trip_duration_scen),
               distance_scen=sum(trip_distance_scen)) %>%
     # expand time_scen and distance_scen to separate pairs of columns for each
     # travel mode
     pivot_wider(names_from=trip_mode_scen,values_from=c(time_scen, distance_scen)) %>%
     # rearrange the columns
-    select(persid,time_scen_car,distance_scen_car,
+    dplyr::select(persid,time_scen_car,distance_scen_car,
            time_scen_pedestrian,distance_scen_pedestrian,
            time_scen_train,distance_scen_train,
            time_scen_bus,distance_scen_bus,
@@ -198,20 +173,25 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
 # PA PERSON AND HOUSEHOLD FILE
 ### Create variables to match with travel survey and for pa analysis
 calculatePersonsPA <- function(pa_location,hh_location) {
-  # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
-  # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
+  pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
+  hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 
 
   pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
 
-    select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
+    dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
            EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
-           EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH)
+           EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH) %>%
+ mutate_all(funs(type.convert(replace(., .== 99997, 0)))) %>%
+    mutate_all(funs(type.convert(replace(., .== 99998, 0))))
+
+  
+    
   
 
   hh <- read.csv(hh_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
 
-    select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
+    dplyr::select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
   
   persons_pa <- left_join(pa, hh, by="ABSHIDB") %>%
     ### Sex to match persons_pa
@@ -283,7 +263,10 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     mutate(ltpa_marg_met = (EXLWMMIN*4 + EXLWVMIN*6.5)/60) %>%
     mutate(work_marg_met = (WPAMMIN*4 + WPAVMIN*6.5)/60) %>%
     mutate(work_ltpa_marg_met = (MODMINS*4 + VIGMINS*6.5 + EXFSRMIN*2.5)/60) %>%
-    mutate(walk_trans = EXLWKTNO) %>%
+    mutate(mod_hr = MODMINS/60) %>%
+    mutate(vig_hr = VIGMINS/60) %>%
+    mutate(walk_rc = EXFSRMIN/60) %>%
+    mutate(walk_trans = EXLWKTNO/60) %>%
     mutate(walk_base = case_when(EXLWKTNO == 0 ~ "No",
                                  EXLWKTNO > 0  ~ "Yes")) %>%
     ### Add whether participants meet PA guidelines (difference for adults and 
@@ -292,9 +275,9 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                       (EXWLKTME + EXLWMMIN + EXLWVMIN*2) >= 150),
                                    "Yes", "No")) %>%
     mutate(pa_guide_older_adults = ifelse(EXNUDAYW >= 5 & EXNUDTH >=5, "Yes", "No")) %>%
-    select(ABSHIDB, age_group, sex, ses, walk_base, work_status, ltpa_marg_met,
+    dplyr::select(ABSHIDB, age_group, sex, ses, walk_base, work_status, ltpa_marg_met,
            work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-           pa_guide_older_adults)
+           pa_guide_older_adults, mod_hr, vig_hr, walk_rc)
   
   return(persons_pa)
 }
@@ -312,16 +295,12 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 # walk_trans
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-  # pa_location="Data/Processed/persons_pa.csv"
-  # persons_travel_location="Data/Processed/persons_travel.csv"
+    # pa_location="Data/Processed/persons_pa.csv"
+    # persons_travel_location="Data/Processed/persons_travel.csv"
   
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
   persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
-
-  persons_pa <- read.csv(pa_location,as.is=T,fileEncoding="UTF-8-BOM")
-  persons_travel <- read.csv(persons_travel_location,as.is=T,fileEncoding="UTF-8-BOM")
-
   
   # sort(unique(persons_pa$age_group))
   # sort(unique(persons_travel$age_group))
@@ -365,8 +344,8 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # time, MUST BE REMOVED FOR PRODUCTION!
   set.seed(12)
   persons_matched_random<- persons_matched %>%
-    group_by(persid) %>%
-    summarize(group_size=n()) %>%
+    dplyr::group_by(persid) %>%
+    dplyr::summarize(group_size=dplyr::n()) %>%
     ungroup() %>%
     rowwise() %>%
     mutate(random_sample=round(runif(1, min=1, max=group_size)))
@@ -431,8 +410,8 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   ### Select variables 
   
   persons_matched_final <- persons_matched_final %>%
-    select(persid, participant_wt, age, sex, ses, dem_index, work_status,
-           occupation_cat, industry_cat, work_full, study_full,
+    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status,
+           occupation_cat, industry_cat, work_full, study_full, mod_hr, vig_hr, walk_rc,
            work_ltpa_marg_met, walk_trans,
            
            time_base_car       , distance_base_car,

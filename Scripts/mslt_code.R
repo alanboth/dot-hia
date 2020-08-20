@@ -1,147 +1,140 @@
 # ---- chunk-intro ----
-
+rm (list = ls())
 library(ithimr)
 library(dplyr)
 library(readr)
 library(tidyr)
 
-# library(ggpubr)
-# library(ggplot2)
-# library(arsenal)
-# library(janitor)
-# library(conflicted)
-# library(rlist)
-# library(reshape)
-# library(reshape2)
-# library(zoo)
-# library(stringi)
-# library(tidyverse)
-# library(rlist)
-
-# if (interactive()) {
-#   library(conflicted)
-# }
-# conflict_prefer("filter", "dplyr")
-rm (list = ls())
 options(scipen=999)
-# source("Scripts/functions_mslt.R")
+source("Scripts/functions_mslt.R")
 
-# putting the Health Burden 2 function in here
-# --- Health Burden 2 ----- 
-### From Metahit
-
-health_burden_2 <- function(ind_ap_pa,combined_AP_PA=T){
-  pop_details <- DEMOGRAPHIC
-  pif_scen <- pop_details
-  # set up reference (scen1)
-  reference_scenario <- SCEN_SHORT_NAME[which(SCEN==REFERENCE_SCENARIO)]
-  scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]
-  ### iterating over all all disease outcomes
-  for ( j in 1:nrow(DISEASE_INVENTORY)){
-    # Disease acronym and full name
-    ac <- as.character(DISEASE_INVENTORY$acronym[j])
-    gbd_dn <- as.character(DISEASE_INVENTORY$GBD_name[j])
-    # calculating health outcome, or independent pathways?
-    pathways_to_calculate <- ifelse(combined_AP_PA,1,DISEASE_INVENTORY$physical_activity[j]+DISEASE_INVENTORY$air_pollution[j])
-    for(path in 1:pathways_to_calculate){
-      # set up column names
-      if(combined_AP_PA){
-        middle_bit <-
-          paste0(
-            ifelse(DISEASE_INVENTORY$physical_activity[j] == 1, 'pa_', ''),
-            ifelse(DISEASE_INVENTORY$air_pollution[j] == 1, 'ap_', '')
-          )
-        middle_bit_plus <-
-          paste0(
-            ifelse(DISEASE_INVENTORY$physical_activity[j] == 1, 'pa_', ''),
-            ifelse(DISEASE_INVENTORY$air_pollution[j] == 1, 'ap_', ''),
-            ifelse(DISEASE_INVENTORY$noise[j] == 1, 'noise_', ''),
-            ifelse(DISEASE_INVENTORY$nitrogen_dioxide[j] == 1, 'no2_', '')
-          )
-      }else{
-        # if independent, choose which one
-        middle_bit <- middle_bit_plus <- c('pa_','ap_')[which(c(DISEASE_INVENTORY$physical_activity[j],DISEASE_INVENTORY$air_pollution[j])==1)[path]]
-      }
-      base_var <- paste0('RR_', middle_bit, reference_scenario, '_', ac)
-      scen_vars <- paste0('RR_', middle_bit, scen_names, '_', ac)
-      # set up pif tables
-      pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index')])
-      setnames(pif_table,base_var,'outcome')
-      pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
-      ## sort pif_ref
-      setorder(pif_ref,dem_index)
-      for (index in 1:length(scen_vars)){
-        # set up naming conventions
-        scen <- scen_names[index]
-        scen_var <- scen_vars[index]
-        pif_name <- paste0(scen, '_pif_',middle_bit_plus,ac)
-        # Calculate PIFs for selected scenario
-        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index')])
-        setnames(pif_table,scen_var,'outcome')
-        pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
-        ## sort pif_temp
-        setorder(pif_temp,dem_index)
-        pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1]
-      }
-    }
-  }
-  return(pif_scen)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
+### All processing without uncertainty inputs left in other codes, here, all code with uncertainty
 
 
 #### TO DO: 
-## Udpate mslt input sheet with Australian data, need to run disbayes/dsmod for diseases
-## Add Intervention duration
-## Add all cause mortality pifs modifying the general life table only and compare results. 
+
 ## Add weights to matched population
 ## trends case fatality and incidence
-## Run uncertainty
+## Add uncertaintiy inputs for marginal mets for NHS inputs
+## PIF in sceanrio life tables to pick up from pif table by age groups and sex using index
+## Check that parameters work for running one age group at the time
+## Add population option (what proportion impacted)
+## add option for scearios (e.g. change x drivign to walking)
+## Add time frame into the future for modelling
 
 
 ## CALCULATION ORDER only including physical activity changes
-# 1) Matched population
-# 2) mmets per person 
-# 3) RRs per person
-# 4) PIFS by age and sex
+# 1) Inputs MSLT (from runDataPrepMSLT, fixed)
+# 2) Run scenarios (use calculateScenario, not fixed)
+# 3) Matched population with mets baseline and scenario (use )
+# 4) mmets per person (code below, has uncertainty inputs)
+# 5) RRs per person (code below, has uncertainty inputs)
+# 6) PIFS by age and sex (with function health_burden_2)
+# 7) Parameters for Mslt code running
+# 8) Run rest
 
-# function inputs
-disease_outcomes_lookup_location="Data/Processed/disease_outcomes_lookup.csv"
-matched_pop_location="Data/Processed/matched_pop.csv"
+###################################### Probabilisitic Sensitivity Sceanrio parameters ################################
 
-## PARAMETERS
-SCEN_SHORT_NAME <- c("base", "scen1")
+# NSAMPLES <- 2000 #activate for Monte Carlo simulation
+MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
+MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
+MMET_MOD <- 4 ## TO DO: GET Uncertain paramters
+MMET_VIC <- 6.5 ## TO DO: GET Uncertain paramters
+### TO DOL ADD inputs with uncertainty for mmets_other activities, may need to separate below moderate and vigorous PA
 
-## UNCERTAINTY PARAMETERS
+## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multple simulations )
+### Relative risks of diabetes for ischemic heart disease and stroke
 
-# NSAMPLES <- 1024
-MMET_CYCLING <-  4.63#c(log(4.63),log(1.2))
-MMET_WALKING <- 2.53 #c(log(2.53),log(1.1)) 
-
-## TO DO: Calculate SD from CI, see Erzats
 DIABETES_IHD_RR_F <<- 2.82 ## c(log(2.82),log()) CI (2.35, 3.38)
 DIABETES_STROKE_RR_F <<- 2.28 ## c(log(2.28),log()) CI (1.93, 2.69)
 DIABETES_IHD_RR_M <<- 2.16 ## c(log(2.16),log()) CI (1.82, 2.56)
 DIABETES_STROKE_RR_M <<- 1.83 ## c(log(1.83),log()) CI (1.60, 2.08)
 
-## GET DEMOGRAPHICS
-## DATA DOSE RESPONSE RRS (FROM METAHIT)
+PA_DOSE_RESPONSE_QUANTILE <- F # Generates random numbers for each of the Relative Risk functions
+
+############################## 1) Inputs MSLT (from runDataPrepMSLT) ###############################################
+
+### Melbourne
+mslt_melbourne="Data/Processed/mslt/mslt_df.csv"
+MSLT_DF <- read.csv(mslt_melbourne,as.is=T,fileEncoding="UTF-8-BOM")
+### Australia wide (to do)
+
+############################## 2) Run scenarios ###################################################################
+
+# Generate trips_melbourne_scenarios.csv
+source("Scripts/scenarios.R")
+in_data="Data/Processed/trips_melbourne.csv"
+scenario_trips <- calculateScenario(trips_melbourne = in_data, 
+                                       age_input = (15:98) , ### replace with age grouping that matched age cohorts
+                                       sex_input = c("male", "female"),  # OR ONE OR THE OTHER
+                                       original_mode = "car" , # Just car trips can be replaced
+                                       replace_mode = "pedestrian" , #OR "bicycle" ## Just pedestrian or cycling
+                                       distance_replace = 5 ,
+                                       purpose_input = c("social", "buy something",  "work related", "pick-up or drop-off someone", 
+                                                         "personal business", "unknown purpose (at start of day)",
+                                                         "recreational", "pick-up or deliver something", "accompany someone", 
+                                                         "education", "other purpose", "at or go home", "change mode", "not stated"), # OR ONE OR ANY COMBINATION
+                                       day = c("weekday", "weekend day")) # OR ONE OR THE OTHER
+
+### Alan, if all this is connected, we do not really need to write the files
+write_csv(scenario_trips, "Data/Processed/trips_melbourne_scenarios.csv")
+
+############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
+
+source("Scripts/data_prep/synthetic_pop.R")
+
+#### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
+persons_travel <- calculatePersonsTravelScenario(
+  travel_data_location="Data/Processed/travel_data.csv",
+  scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
+)
+write.csv(persons_travel, "Data/Processed/persons_travel.csv", row.names=F, quote=T)
+
+#### 2.2) Create PA dataset from NHS data to then match to VISTA people
+persons_pa <- calculatePersonsPA(
+  pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv",
+  hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
+)
+write.csv(persons_pa, "Data/Processed/persons_pa.csv", row.names=F, quote=F)
+
+#### 2.3) Match NHS people to VISTA people based on age, sex, ses, work status and whehter they walk for transport
+persons_matched <- calculatePersonsMatch(
+  pa_location="Data/Processed/persons_pa.csv",
+  persons_travel_location="Data/Processed/persons_travel.csv"
+)
+write.csv(persons_matched, "Data/Processed/matched_pop.csv", row.names=F, quote=T)
+
+### Australia wide (to do)
+#### Just use PA data set above, but need to create separate functions to include tranpsort PA. 
+
+############################# 3) mmets per person (code below, has uncertainty inputs) ############################
+
+
+### change work and time marginal met to minutes and mulptiply by uncertain mets
+
+matched_pop_location = "Data/Processed/matched_pop.csv"
+
+synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
+  dplyr::mutate(participant_id = row_number())
+mmets_pp <- synth_pop %>% 
+  dplyr::select(participant_id, sex, age, dem_index, mod_hr, vig_hr, walk_rc,
+                starts_with("time") & contains(c("pedestrian", "bicycle")),
+                work_ltpa_marg_met) %>%
+  replace(is.na(.), 0) %>%
+  dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
+  dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
+
+########################## 4) RRs per person (code below, has uncertainty inputs) #################################
+
+### Relative risks of physical inactivity on diseases
 
 global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
 ## for windows??
 global_path <- paste0(global_path, "/")
+disease_outcomes_lookup_location="Data/Processed/disease_outcomes_lookup.csv"
+
+SCEN_SHORT_NAME <- c("base", "scen1")
+
 DISEASE_INVENTORY <-  read.csv(disease_outcomes_lookup_location,as.is=T,fileEncoding="UTF-8-BOM")
 # list of ithmr default dose response data
 list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
@@ -151,83 +144,32 @@ for (i in 1:length(list_of_files)){
          pos = 1)
 }
 
-## GET MATCHED POPULATION
-
-synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-  dplyr::mutate(participant_id = row_number())
-# removing this bit as the age column already exists
-# %>% dplyr::rename(age = age1)
-
-## CALCULTE RRS PER PERSON 
-
-### FIRST WE NEED MMETS PER PERSON  
-mmets_pp <- synth_pop %>% 
-  dplyr::select(participant_id, sex, age, dem_index,
-                starts_with("time") & contains(c("pedestrian", "bicycle")),
-                work_ltpa_marg_met) %>%
-  replace(is.na(.), 0) %>%
-  dplyr::mutate(base_mmet = work_ltpa_marg_met + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
-  dplyr::mutate(scen1_mmet = work_ltpa_marg_met + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
-
-### SECOND WE CALCULATE RRS PER PERSON FROM MMET PER PERSON AND RRS DATA FROM ITHIMR
-#### TO DO: HOW IS UNCERTAINTY IN RRS INCORPORATED (SEE FILES e.g. breast_cancer_mortality)
-#### TO Do: WHICH RRS ARE USED IN FUNCTION? CHECK SOURCE FUNCTION gen_pa_rr (for example, some rrs have all and other mortality)  
-#### TO DO: check in source formula which RRs are applied (all, mortality, incidence)
-### Alan I added the below parameter, when we do the uncertainty analysis we change to TRUE
-PA_DOSE_RESPONSE_QUANTILE <- FALSE
-
 RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
-# Belen: I'm getting the following error here
-# Error in PA_dose_response(cause = pa_dn, dose = doses_vector) : 
-#   object 'PA_DOSE_RESPONSE_QUANTILE' not found
 
 
+###################### 5) PIFS by age and sex (with function health_burden_2) #####################################
 
-
-
-
-### CALCULTE PIFS BY AGE AND SEX GROUP
-
-# RR_PA_calculations <- RR_PA_calculations %>%
-#   dplyr::mutate(dem_index = group_indices(., age_cat, sex)) ### Added here to add 
-
-### Calculate PIFs by age and sex for air pollution and physical activity combined
-#### health_burden2 was created by Rob J for metahit
-
-#### ALAN, can you please help me with this function? it provisions for having air pollution RRs, but we do not have them yet. You can find the function 
-#### in functions_mslt
 pifs_pa_ap <- health_burden_2(RR_PA_calculations)
 
 
-# PLACE HOLDER
-pif_expanded <- read_csv(paste0(paste0(getwd(),"/Data/Processed/pif_expanded.csv")))
+###################### 6) Parameters for Mslt code running #######################################################
 
-# PLACE HOLDER
-DISEASE_SHORT_NAMES <-  read_csv(paste0(paste0(getwd(),"/Data/Processed/disease_names.csv")))
-
-### MELB DATA
-
-MSLT_DF <- read_csv(paste0(getwd(), "/Data/Processed/mslt.csv"))
-
-## Parameters
+DISEASE_SHORT_NAMES <-  read.csv("Data/Processed/disease_names.csv")
 
 year <- 2017
 
-i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+
+### Inputs that we can change in a shiny app
+i_age_cohort <- c(17) #, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
 
 i_sex <- c('male', 'female')
 
-trend_mort_ac <- 1 # TO DO
+# sc_duration <- replicate(4,1) %>% append(replicate(80, 0))
 
-### Add trends diseases incidence and case fatality
+###################### 7) Run rest ##############################################################################
 
-### Intervention duraction
-##
-
-sc_duration <- replicate(4,1) %>% append(replicate(80, 0))
-
-
-# ---- chunk-2 ----
+# PLACE HOLDER
+pif_expanded <- read_csv(paste0(paste0(getwd(),"/Data/Processed/pif_expanded.csv")))
 
 # ---- chunk-2 ----
 
@@ -289,95 +231,7 @@ for (iage in i_age_cohort){
 }
 
 
-# ---- chunk-4 ----
-
-## Create non_disease lists, these are by age and sex for road injuries and lwri baseline and scenario, including calculation of difference in rates. 
-## Different calculation for scenario deaths and ylds for lri and injuries. 
-
-non_disease_list <- list()
-index <- 1
-
-
-for (iage in i_age_cohort){
-  for (isex in i_sex) {
-    for (d in 1:nrow(DISEASE_SHORT_NAMES)){
-      
-      ## Exclude chronic disease and all-cause mortality and  pyld
-      if (DISEASE_SHORT_NAMES$is_not_dis[d] != 1 || DISEASE_SHORT_NAMES$acronym[d] == 'other' || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif'){
-      }
-      else {
-        
-        ## Only keep non-diseases variables in the dataframe
-        td1 <- as.data.frame(filter(MSLT_DF, age >= iage & sex == isex) %>% 
-                               dplyr::select(age, sex, contains(DISEASE_SHORT_NAMES$acronym[DISEASE_SHORT_NAMES$sname == DISEASE_SHORT_NAMES$sname[d]])))
-        
-        
-        pif_non_disease <- as.data.frame(dplyr::filter(pif_expanded, age >= iage & sex == isex) %>% 
-                                           dplyr::select(age, sex, contains(DISEASE_SHORT_NAMES$acronym[DISEASE_SHORT_NAMES$sname == DISEASE_SHORT_NAMES$sname[d]])))
-        
-        ## Modify pif by duration of intervention
-        
-        # pif_non_disease[,3] <- pif_non_disease[,3] * sc_duration
-        
-        non_disease_list[[index]] <-  RunNonDisease (td1, in_non_disease = DISEASE_SHORT_NAMES$acronym[d])
-        
-        non_disease_list[[index]]$non_disease <- DISEASE_SHORT_NAMES$acronym[d]
-        
-        ### For LRI we modify mortality rates and ylds rates by 1-PIF. For road trauma we multiple the PIF by baseline deaths/ylds rates to generate scenario
-        ### ylds and mortlality rates and then take the difference
-        
-        if (DISEASE_SHORT_NAMES$acronym[d] == 'lri'){
-          
-          
-          
-          ## PIFs multiplied by scenario duration  
-          ## RATES
-          ### deaths sceanario lri
-          non_disease_list[[index]][paste0('deaths_rate_sc')] <-
-            non_disease_list[[index]][paste0('deaths_rate_bl')] * 
-            (1 - pif_non_disease [paste0('pif_', DISEASE_SHORT_NAMES$acronym[d], '_deaths')] * sc_duration) 
-          
-          
-          ### ylds scenario lri
-          non_disease_list[[index]][paste0('ylds_rate_sc')] <-
-            non_disease_list[[index]][paste0('ylds_rate_bl')] * 
-            (1 - pif_non_disease [paste0('pif_', DISEASE_SHORT_NAMES$acronym[d], '_ylds')] * sc_duration) 
-          
-        }
-        else {
-          
-          ## deaths sceanario injuries
-          non_disease_list[[index]][paste0('deaths_rate_sc')] <-
-            non_disease_list[[index]][paste0('deaths_rate_bl')] * 
-            (1 - pif_non_disease [paste0('pif_', DISEASE_SHORT_NAMES$acronym[d], '_deaths')] * sc_duration) 
-          
-          
-          ## ylds scenario injuries
-          non_disease_list[[index]][paste0('ylds_rate_sc')] <-
-            non_disease_list[[index]][paste0('ylds_rate_bl')] * 
-            (1 - pif_non_disease [paste0('pif_', DISEASE_SHORT_NAMES$acronym[d], '_ylds')] * sc_duration) 
-        }
-        
-        ## Difference variable
-        
-        ## deaths difference
-        non_disease_list[[index]][paste0('diff_mort')] <- non_disease_list[[index]][paste0('deaths_rate_sc')] -
-          non_disease_list[[index]][paste0('deaths_rate_bl')]
-        ## ylds difference
-        non_disease_list[[index]][paste0('diff_ylds')] <- non_disease_list[[index]][paste0('ylds_rate_sc')] -
-          non_disease_list[[index]][paste0('ylds_rate_bl')]
-        
-        non_disease_list[[index]][IsNanDataFrame(non_disease_list[[index]])] <- 0
-        
-        names(non_disease_list)[index] <- paste(iage, isex, DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-        
-        index <- index + 1
-        
-      }
-    }
-  }  
-}
-# ---- chunk-5 ----
+# # ---- chunk-4 ----
 
 ## Create scenario life tables with new pifs,includes Diabetes loop. 
 
@@ -441,7 +295,7 @@ for (iage in i_age_cohort){
         }
         
         ### Multiply for vector for duration scenario
-        pif_disease[,2] <- pif_disease[,2] * sc_duration
+        # pif_disease[,2] <- pif_disease[,2] * sc_duration
         
         new_col <- td1_age_sex[[paste('incidence', DISEASE_SHORT_NAMES$sname[d], sep = '_')]] * (1 - (pif_disease[[pif_colname]]))
         
@@ -478,7 +332,7 @@ for (iage in i_age_cohort){
 ## Uncommnet to check scenario life tables
 # View(disease_life_table_list_sc[[3]])
 
-# ---- chunk-8 ----
+# ---- chunk-5 ----
 
 ## Generate total change in mortality rate to recalculate scenario general life tables
 
@@ -488,9 +342,6 @@ index <- 1
 age_sex_cols <- which(colnames(disease_life_table_list_sc[[index]])%in%c('age', 'sex'))
 
 ### Sum mortality rate change scenarios (mx_sc_total)
-
-
-
 
 #### Diseases
 mx_sc_total_disease <- list()
@@ -535,51 +386,6 @@ for (iage in i_age_cohort){
   }
 }
 
-
-#### NonDiseases (road injuries and lri)
-mx_sc_total_non_disease <- list()
-l_index <- 1
-index <- 1
-for (iage in i_age_cohort){
-  for (isex in i_sex){
-    mortality_sum <- NULL
-    mortality_sum1 <- NULL
-    create_new <- T
-    
-    ## Sum all non_diseases mortality rates
-    
-    for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-      if (DISEASE_SHORT_NAMES$is_not_dis[d] != 1 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-      }
-      else {
-        
-        # print(paste(isex, DISEASE_SHORT_NAMES$disease[d]))
-        
-        if (create_new){
-          mortality_sum <- non_disease_list[[index]][,age_sex_cols]
-          mortality_sum$total <- 0
-          create_new <- F
-          mortality_sum$total <- mortality_sum$total +
-            (non_disease_list[[index]]$diff_mort)
-        }else{
-          mortality_sum$total <- mortality_sum$total +
-            (non_disease_list[[index]]$diff_mort)
-        }
-        
-        # cat(age, ' - ', sex,' - ',  disease,' - ',  index, ' - ', l_index,  '\n')
-        index <- index + 1
-      }
-    }
-    mx_sc_total_non_disease[[l_index]] <- mortality_sum
-    names(mx_sc_total_non_disease)[l_index] <- paste(iage, isex)
-    
-    l_index <- l_index + 1
-    
-  }
-}
-
-
-
 ## YLDs change
 ### Diseases
 
@@ -620,47 +426,8 @@ for (iage in i_age_cohort){
   }
 }
 
-### Non-disease
 
-pylds_sc_total_non_disease <- list()
-l_index <- 1
-index <- 1
-for (iage in i_age_cohort){
-  for (isex in i_sex){
-    pylds_sum <- NULL
-    create_new <- T
-    
-    for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-      if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
-          || DISEASE_SHORT_NAMES$is_not_dis[d] != 1 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-      }
-      else {
-        
-        # print(paste(isex, DISEASE_SHORT_NAMES$disease[d]))
-        
-        if (create_new){
-          pylds_sum <- non_disease_list[[index]][,age_sex_cols]
-          pylds_sum$total <- 0
-          create_new <- F
-          pylds_sum$total <- pylds_sum$total +
-            (non_disease_list[[index]]$diff_ylds)
-        }else{
-          pylds_sum$total <- pylds_sum$total +
-            (non_disease_list[[index]]$diff_ylds)
-        }
-        
-        # cat(age, ' - ', sex,' - ',  disease,' - ',  index, ' - ', l_index,  '\n')
-        index <- index + 1
-      }
-      
-    }
-    pylds_sc_total_non_disease[[l_index]] <- pylds_sum
-    names(pylds_sc_total_non_disease)[l_index] <- paste(iage, isex)
-    l_index <- l_index + 1
-  }
-}
-
-# ---- chunk-9 ----
+# ---- chunk-6 ----
 
 ## Calculate general life tables with modified mortality and pylds total
 ## Original mortality rate is modified by the mx_sc_total (total change in mortality from diseases)
@@ -678,12 +445,10 @@ for (iage in i_age_cohort){
     td2 <- MSLT_DF
     # td2 <- subset(td2, select = -c(mx, pyld_rate))
     td2[td2$age >= iage & td2$sex == isex,][[paste('mx')]] <- general_life_table_list_bl[[index]]$mx + 
-      mx_sc_total_disease[[index]]$total + 
-      mx_sc_total_non_disease[[index]]$total
+      mx_sc_total_disease[[index]]$total
     
     td2[td2$age >= iage & td2$sex == isex,][[paste('pyld_rate')]] <- general_life_table_list_bl[[index]]$pyld_rate + 
-      pylds_sc_total_disease[[index]]$total + 
-      pylds_sc_total_non_disease[[index]]$total
+      pylds_sc_total_disease[[index]]$total
     
     
     # Instead of idata, feed td to run scenarios
@@ -696,7 +461,7 @@ for (iage in i_age_cohort){
   }
 }
 
-# ---- chunk-10 ----
+# ---- chunk-7 ----
 
 ## In the following list 'output_life_table', 34 data frames are nested per age and sex cohort
 
@@ -713,7 +478,7 @@ dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
 output_burden <- list()
 l_index <- 1
 index <- 1
-index_n <- 1
+
 sc_cols <- which(colnames(disease_life_table_list_sc[[index]])%in%c('age', 'sex', 'incidence_disease', 'mx', 'px'))
 bl_cols <- which(colnames(disease_life_table_list_bl[[index]])%in%c('incidence_disease', 'mx', 'px'))
 l_sc_cols <- which(colnames(general_life_table_list_sc[[l_index]])%in%c('Lx', 'Lwx', 'ex', 'ewx'))
@@ -849,128 +614,6 @@ for (iage in i_age_cohort){
     }
     
     
-    #### Add non_diseases (injuires and lwri)
-    
-    create_new <- T
-    for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-      if (DISEASE_SHORT_NAMES$is_not_dis[d] != 1 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-      }
-      else {
-        if (create_new){
-          
-          td5 <- non_disease_list[[index_n]]
-          
-          
-          ## Calculate numbers
-          
-          # ## Variable names
-          #
-          mx_num_bl <- paste('mx_num_bl',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          ylds_num_bl <- paste('ylds_num_bl',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          mx_num_sc <- paste('mx_num_sc',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          ylds_num_sc <- paste('ylds_num_sc',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          ### Baseline
-          td5[[mx_num_bl]] <- non_disease_list[[index_n]]$deaths_rate_bl *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          td5[[ylds_num_bl]]<- non_disease_list[[index_n]]$ylds_rate_bl *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          
-          ### Scenario
-          td5[[mx_num_sc]] <- non_disease_list[[index_n]]$deaths_rate_sc *
-            general_life_table_list_sc[[l_index]]$Lx
-          
-          td5[[ylds_num_sc]] <- non_disease_list[[index_n]]$ylds_rate_sc *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          output_burden_change3 <- list()
-          
-          ### Difference
-          
-          output_burden_change3$mx_num_diff <- non_disease_list[[index_n]]$diff_mort * general_life_table_list_sc[[l_index]]$Lx
-          
-          output_burden_change3$ylds_num_diff <- non_disease_list[[index_n]]$diff_ylds * general_life_table_list_sc[[l_index]]$Lx
-          
-          
-          ### Change names rates to match each non_disease
-          
-          names(output_burden_change3)[names(output_burden_change3) == 'diff_ylds'] <- paste('ylds_rate_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          names(output_burden_change3)[names(output_burden_change3) == 'diff_mort'] <- paste('deaths_rate_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          ## Change names numbers to match non_disease
-          
-          names(output_burden_change3)[names(output_burden_change3) == 'mx_num_diff'] <- paste('mx_num_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          names(output_burden_change3)[names(output_burden_change3) == 'ylds_num_diff'] <- paste('ylds_num_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          output_burden_sc <- cbind(output_burden_sc, td5)
-          output_burden_sc <- cbind(output_burden_sc, output_burden_change3)
-          
-          create_new <- F
-          
-          ## Here the calculations above are repeated, here is where the F is telling to move into the next disease
-          
-        }else{
-          
-          td6 <- non_disease_list[[index_n]]
-          
-          
-          ## Calculate numbers
-          
-          # ## Variable names
-          #
-          mx_num_bl <- paste('mx_num_bl',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          ylds_num_bl <- paste('ylds_num_bl',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          mx_num_sc <- paste('mx_num_sc',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          ylds_num_sc <- paste('ylds_num_sc',DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          ### Baseline
-          td6[[mx_num_bl]] <- non_disease_list[[index_n]]$deaths_rate_bl *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          td6[[ylds_num_bl]]<- non_disease_list[[index_n]]$ylds_rate_bl *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          
-          ### Scenario
-          td6[[mx_num_sc]] <- non_disease_list[[index_n]]$deaths_rate_sc *
-            general_life_table_list_sc[[l_index]]$Lx
-          
-          td6[[ylds_num_sc]] <- non_disease_list[[index_n]]$ylds_rate_sc *
-            general_life_table_list_bl[[l_index]]$Lx
-          
-          output_burden_change4 <- list()
-          ### Difference
-          
-          output_burden_change4$mx_num_diff <- non_disease_list[[index_n]]$diff_mort * general_life_table_list_sc[[l_index]]$Lx
-          
-          output_burden_change4$ylds_num_diff <- non_disease_list[[index_n]]$diff_ylds * general_life_table_list_sc[[l_index]]$Lx
-          
-          
-          ### Change names rates to match each non_disease
-          
-          names(output_burden_change4)[names(output_burden_change4) == 'diff_ylds'] <- paste('ylds_rate_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          names(output_burden_change4)[names(output_burden_change4) == 'diff_mort'] <- paste('deaths_rate_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          ## Change names numbers to match non_disease
-          
-          names(output_burden_change4)[names(output_burden_change4) == 'mx_num_diff'] <- paste('mx_num_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          names(output_burden_change4)[names(output_burden_change4) == 'ylds_num_diff'] <- paste('ylds_num_diff', DISEASE_SHORT_NAMES$acronym[d], sep = '_')
-          
-          output_burden_sc <- cbind(output_burden_sc, td6)
-          output_burden_sc <- cbind(output_burden_sc, output_burden_change4)
-          
-        }
-        index_n <- index_n + 1
-      }
-    }
-    
-    
     ## general_life_table_list_sc and general_life_table_list_bl (Lx)
     
     output_burden_lf_sc <- general_life_table_list_sc[[l_index]][,l_sc_cols]
@@ -1094,21 +737,7 @@ output_diseases_change <- output_df %>%
 
 
 
-# ---- chunk-11.1.3 Injuries deaths and ylds ----
-#### Add uncertainty intervals
-#### Accumulated over the life of the cohort. For example, total life years change for females 16-19 over their life course
 
-### Vector with diseases (may be a better way for this)
-
-### hard coded matches, best not to
-output_injuries_change <- output_df %>% 
-  group_by(Gender, `Age group`) %>%
-  summarise_if(is.numeric, funs(sum)) %>%
-  dplyr::select(`Age group`, Gender, matches("diff_pedestrian|diff_cyclist|diff_motorcyclist|diff_motor"))
-
-
-
-### Below is for graphs, needs more owrk
 
 # # ---- chunk-11.2 Graphs ---- CHECK GRAPHS AND WHAT WE WANT
 # # ---- chunk-11.2.1 Graphs cohorts age and sex ----

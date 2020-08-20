@@ -10,6 +10,7 @@ library(devtools)
 # MAIN FUNCTIONS TO RUN A SCENARIO
 
 # Generate trips_melbourne.csv
+### FIXED, SERVES TO ITHIM R AND METAHIT, MOVE TO DATA PREP
 source("Scripts/data_prep/trips_prep.R")
 trips_melbourne <- calculateVistaTrips(
   hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv",
@@ -17,16 +18,6 @@ trips_melbourne <- calculateVistaTrips(
   trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
 )
 write.csv(trips_melbourne, "Data/Processed/trips_melbourne.csv", row.names=F, quote=F)
-
-
-
-# Generate trips_melbourne_scenarios.csv
-source("Scripts/scenarios.R")
-scenario <- calculateScenario(
-  trips_melbourne_location="Data/Processed/trips_melbourne.csv"
-)
-write.csv(scenario, "Data/Processed/trips_melbourne_scenarios.csv", row.names=F, quote=F)
-
 
 
 source("Scripts/data_prep/synthetic_pop.R")
