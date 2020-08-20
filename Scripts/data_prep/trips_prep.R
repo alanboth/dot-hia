@@ -80,7 +80,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
     dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
     filter(HHID!="") # some rows were completely blank
   person_VISTA <- read.csv(person_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
+    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT) 
   trip_VISTA <- read.csv(trip_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
 
     dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
