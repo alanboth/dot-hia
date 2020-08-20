@@ -17,22 +17,29 @@ source("Scripts/functions_mslt.R")
 ## trends case fatality and incidence
 ## Add uncertaintiy inputs for marginal mets for NHS inputs
 ## PIF in sceanrio life tables to pick up from pif table by age groups and sex using index
+## Check that parameters work for running one age group at the time
+## Add population option (what proportion impacted)
+## add option for scearios (e.g. change x drivign to walking)
+## Add time frame into the future for modelling
 
 
 ## CALCULATION ORDER only including physical activity changes
-# 1) Inputs MSLT (from runDataPrepMSLT)
-# 2) Matched population with mets baseline and scenario (from run_Scenario)
-# 3) mmets per person (code below, has uncertainty inputs)
-# 4) RRs per person (code below, has uncertainty inputs)
-# 5) PIFS by age and sex (with function health_burden_2)
-# 6) Parameters for Mslt code running
-# 7) Run rest
+# 1) Inputs MSLT (from runDataPrepMSLT, fixed)
+# 2) Run scenarios (use calculateScenario, not fixed)
+# 3) Matched population with mets baseline and scenario (use )
+# 4) mmets per person (code below, has uncertainty inputs)
+# 5) RRs per person (code below, has uncertainty inputs)
+# 6) PIFS by age and sex (with function health_burden_2)
+# 7) Parameters for Mslt code running
+# 8) Run rest
 
 ###################################### Probabilisitic Sensitivity Sceanrio parameters ################################
 
 # NSAMPLES <- 2000 #activate for Monte Carlo simulation
 MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
 MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
+MMET_MOD <- 4 ## TO DO: GET Uncertain paramters
+MMET_VIC <- 6.5 ## TO DO: GET Uncertain paramters
 ### TO DOL ADD inputs with uncertainty for mmets_other activities, may need to separate below moderate and vigorous PA
 
 ## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multple simulations )
@@ -52,23 +59,70 @@ mslt_melbourne="Data/Processed/mslt/mslt_df.csv"
 MSLT_DF <- read.csv(mslt_melbourne,as.is=T,fileEncoding="UTF-8-BOM")
 ### Australia wide (to do)
 
+############################## 2) Run scenarios ###################################################################
+
+# Generate trips_melbourne_scenarios.csv
+source("Scripts/scenarios.R")
+in_data="Data/Processed/trips_melbourne.csv"
+scenario_trips <- calculateScenario(trips_melbourne = in_data, 
+                                       age_input = (15:98) , ### replace with age grouping that matched age cohorts
+                                       sex_input = c("male", "female"),  # OR ONE OR THE OTHER
+                                       original_mode = "car" , # Just car trips can be replaced
+                                       replace_mode = "pedestrian" , #OR "bicycle" ## Just pedestrian or cycling
+                                       distance_replace = 5 ,
+                                       purpose_input = c("social", "buy something",  "work related", "pick-up or drop-off someone", 
+                                                         "personal business", "unknown purpose (at start of day)",
+                                                         "recreational", "pick-up or deliver something", "accompany someone", 
+                                                         "education", "other purpose", "at or go home", "change mode", "not stated"), # OR ONE OR ANY COMBINATION
+                                       day = c("weekday", "weekend day")) # OR ONE OR THE OTHER
+
+### Alan, if all this is connected, we do not really need to write the files
+write_csv(scenario_trips, "Data/Processed/trips_melbourne_scenarios.csv")
+
 ############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
 
-### Melbourne
-matched_pop_location="Data/Processed/matched_pop.csv"
+source("Scripts/data_prep/synthetic_pop.R")
+
+#### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
+persons_travel <- calculatePersonsTravelScenario(
+  travel_data_location="Data/Processed/travel_data.csv",
+  scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
+)
+write.csv(persons_travel, "Data/Processed/persons_travel.csv", row.names=F, quote=T)
+
+#### 2.2) Create PA dataset from NHS data to then match to VISTA people
+persons_pa <- calculatePersonsPA(
+  pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv",
+  hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
+)
+write.csv(persons_pa, "Data/Processed/persons_pa.csv", row.names=F, quote=F)
+
+#### 2.3) Match NHS people to VISTA people based on age, sex, ses, work status and whehter they walk for transport
+persons_matched <- calculatePersonsMatch(
+  pa_location="Data/Processed/persons_pa.csv",
+  persons_travel_location="Data/Processed/persons_travel.csv"
+)
+write.csv(persons_matched, "Data/Processed/matched_pop.csv", row.names=F, quote=T)
+
 ### Australia wide (to do)
+#### Just use PA data set above, but need to create separate functions to include tranpsort PA. 
 
 ############################# 3) mmets per person (code below, has uncertainty inputs) ############################
+
+
+### change work and time marginal met to minutes and mulptiply by uncertain mets
+
+matched_pop_location = "Data/Processed/matched_pop.csv"
 
 synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
   dplyr::mutate(participant_id = row_number())
 mmets_pp <- synth_pop %>% 
-  dplyr::select(participant_id, sex, age, dem_index,
+  dplyr::select(participant_id, sex, age, dem_index, mod_hr, vig_hr, walk_rc,
                 starts_with("time") & contains(c("pedestrian", "bicycle")),
                 work_ltpa_marg_met) %>%
   replace(is.na(.), 0) %>%
-  dplyr::mutate(base_mmet = work_ltpa_marg_met + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
-  dplyr::mutate(scen1_mmet = work_ltpa_marg_met + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
+  dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
+  dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
 
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
 
@@ -78,6 +132,8 @@ global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/gl
 ## for windows??
 global_path <- paste0(global_path, "/")
 disease_outcomes_lookup_location="Data/Processed/disease_outcomes_lookup.csv"
+
+SCEN_SHORT_NAME <- c("base", "scen1")
 
 DISEASE_INVENTORY <-  read.csv(disease_outcomes_lookup_location,as.is=T,fileEncoding="UTF-8-BOM")
 # list of ithmr default dose response data
@@ -102,7 +158,9 @@ DISEASE_SHORT_NAMES <-  read.csv("Data/Processed/disease_names.csv")
 
 year <- 2017
 
-i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+
+### Inputs that we can change in a shiny app
+i_age_cohort <- c(17) #, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
 
 i_sex <- c('male', 'female')
 
