@@ -17,7 +17,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   # incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx"
   # mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls"
   # trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx"
-  # grim_books="Data/aihw/trends/grim_books.csv"
+  # grim_books="Data/aihw/trends/grim_books_utf8.csv"
   # trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
   # trends_injuries= #TO DO
   
@@ -304,7 +304,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   ### COPD
   ### Data for mortality up to year 2017, predict up to year 2023
   
-  data <- read.csv(grim_books, as.is=T, fileEncoding="Windows-1252") %>%
+  data <- read.csv(grim_books, as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2005,
                   cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") %>%
     dplyr::select(YEAR, SEX, age_standardised_rate)

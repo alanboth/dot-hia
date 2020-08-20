@@ -55,7 +55,7 @@ trends_diseases <- calculateDiseaseTrends(
   incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
   mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
   trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
-  grim_books="Data/aihw/trends/grim_books.csv",
+  grim_books="Data/aihw/trends/grim_books_utf8.csv",
   trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
 )
 
