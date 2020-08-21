@@ -97,7 +97,7 @@ persons_pa <- calculatePersonsPA(
 )
 write.csv(persons_pa, "Data/Processed/persons_pa.csv", row.names=F, quote=F)
 
-#### 2.3) Match NHS people to VISTA people based on age, sex, ses, work status and whehter they walk for transport
+#### 2.3) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
 persons_matched <- calculatePersonsMatch(
   pa_location="Data/Processed/persons_pa.csv",
   persons_travel_location="Data/Processed/persons_travel.csv"
@@ -109,21 +109,13 @@ write.csv(persons_matched, "Data/Processed/matched_pop.csv", row.names=F, quote=
 
 ############################# 3) mmets per person (code below, has uncertainty inputs) ############################
 
+source("Scripts/data_prep/mmet_pp.R")
 
-### change work and time marginal met to minutes and mulptiply by uncertain mets
+### change work and time marginal met to minutes and multiply by uncertain mets
 
-matched_pop_location = "Data/Processed/matched_pop.csv"
-
-synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-  dplyr::mutate(participant_id = row_number())
-mmets_pp <- synth_pop %>% 
-  dplyr::select(participant_id, sex, age, dem_index, mod_hr, vig_hr, walk_rc,
-                starts_with("time") & contains(c("pedestrian", "bicycle")),
-                work_ltpa_marg_met) %>%
-  replace(is.na(.), 0) %>%
-  dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
-  dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
-
+mmets_pp <- calculateMMETSperPerson(
+  matched_pop_location = "Data/Processed/matched_pop.csv"
+)
 
 write.csv(mmets_pp, "Data/Processed/mets_test.csv", row.names=F, quote=T)
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
