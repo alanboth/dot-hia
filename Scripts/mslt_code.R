@@ -205,12 +205,14 @@ for (iage in i_age_cohort){
   for (isex in i_sex){
     for (d in c(1:nrow(DISEASE_SHORT_NAMES))[dia_order]){
       
-      
+    
       ## Exclude non-males diseases and non-chronic diseases and road injuries and disease with no pif
       if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
           || DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
       }
       else {
+        
+        ### ALAN here we need to modify incidence rates and case fatality rates with trends. 
         
         # print(paste(isex, DISEASE_SHORT_NAMES$disease[d]))
         disease_life_table_list_bl[[index]] <- RunDisease(in_idata = MSLT_DF,in_mid_age = iage, in_sex = isex,  in_disease = DISEASE_SHORT_NAMES$sname[d])
@@ -249,8 +251,7 @@ strk_index <- which(DISEASE_SHORT_NAMES$sname=='strk')
 dia_index <- which(DISEASE_SHORT_NAMES$sname=='dmt2')
 dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
 for (iage in i_age_cohort){
-  td1_age <- MSLT_DF[MSLT_DF$age>=iage,] ### ALAN, diseases trends should be applied to incidence and case fatality to td1_Age (from here: Data\Processed\mslt\incidence_trends_f.csv")
-  ### In the disease trends "Year" means simulation year, not age. 
+  td1_age <- MSLT_DF[MSLT_DF$age>=iage,] 
   pif_disease_age <- pif_expanded[pif_expanded$age>=iage,]
   for (isex in i_sex){
     td1_age_sex <- td1_age[td1_age$sex==isex,]
