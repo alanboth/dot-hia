@@ -124,6 +124,8 @@ mmets_pp <- synth_pop %>%
   dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_base_pedestrian * MMET_WALKING + time_base_bicycle * MMET_CYCLING) %>%
   dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc * MMET_WALKING + time_scen_pedestrian * MMET_WALKING + time_scen_bicycle * MMET_CYCLING)
 
+
+write.csv(mmets_pp, "Data/Processed/mets_test.csv", row.names=F, quote=T)
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
 
 ### Relative risks of physical inactivity on diseases
