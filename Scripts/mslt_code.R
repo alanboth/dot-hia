@@ -1,12 +1,13 @@
 # ---- chunk-intro ----
 rm (list = ls())
-library(ithimr)
+# library(ithimr)
 library(dplyr)
 library(readr)
+library(data.table)
 library(tidyr)
 
 options(scipen=999)
-source("Scripts/functions_mslt.R")
+# source("Scripts/functions_mslt.R")
 
 ### All processing without uncertainty inputs left in other codes, here, all code with uncertainty
 
@@ -15,12 +16,12 @@ source("Scripts/functions_mslt.R")
 
 ## Add weights to matched population
 ## trends case fatality and incidence
-## Add uncertaintiy inputs for marginal mets for NHS inputs
-## PIF in sceanrio life tables to pick up from pif table by age groups and sex using index
+## Add uncertainty inputs for marginal mets for NHS inputs
+## PIF in scenario life tables to pick up from pif table by age groups and sex using index
 ## Check that parameters work for running one age group at the time
 ## Add population option (what proportion impacted)
-## add option for scearios (e.g. change x drivign to walking)
-## Add time frame into the future for modelling
+## add option for scearios (e.g. change x driving to walking)
+## Add time frame into the future for modeling
 
 
 ## CALCULATION ORDER only including physical activity changes
@@ -33,16 +34,16 @@ source("Scripts/functions_mslt.R")
 # 7) Parameters for Mslt code running
 # 8) Run rest
 
-###################################### Probabilisitic Sensitivity Sceanrio parameters ################################
+###################################### Probabilistic Sensitivity Scenario parameters ################################
 
 # NSAMPLES <- 2000 #activate for Monte Carlo simulation
 MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
 MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
-MMET_MOD <- 4 ## TO DO: GET Uncertain paramters
-MMET_VIC <- 6.5 ## TO DO: GET Uncertain paramters
+MMET_MOD <- 4 ## TO DO: GET Uncertain parameters
+MMET_VIC <- 6.5 ## TO DO: GET Uncertain parameters
 ### TO DOL ADD inputs with uncertainty for mmets_other activities, may need to separate below moderate and vigorous PA
 
-## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multple simulations )
+## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multiple simulations )
 ### Relative risks of diabetes for ischemic heart disease and stroke
 
 DIABETES_IHD_RR_F <<- 2.82 ## c(log(2.82),log()) CI (2.35, 3.38)
@@ -52,14 +53,14 @@ DIABETES_STROKE_RR_M <<- 1.83 ## c(log(1.83),log()) CI (1.60, 2.08)
 
 PA_DOSE_RESPONSE_QUANTILE <- F # Generates random numbers for each of the Relative Risk functions
 
-############################## 1) Inputs MSLT (from runDataPrepMSLT) ###############################################
+############################## 0) Inputs MSLT (from runDataPrepMSLT) ###############################################
 
 ### Melbourne
 mslt_melbourne="Data/Processed/mslt/mslt_df.csv"
 MSLT_DF <- read.csv(mslt_melbourne,as.is=T,fileEncoding="UTF-8-BOM")
 ### Australia wide (to do)
 
-############################## 2) Run scenarios ###################################################################
+############################## 1) Run scenarios ###################################################################
 
 # Generate trips_melbourne_scenarios.csv
 source("Scripts/scenarios.R")
@@ -77,6 +78,9 @@ scenario_trips <- calculateScenario(trips_melbourne = in_data,
                                        day = c("weekday", "weekend day")) # OR ONE OR THE OTHER
 
 ### Alan, if all this is connected, we do not really need to write the files
+### AB: Yes, I'm planning on rewriting the functions so that they can accept a 
+###     dataframe or file location. We'll then be able to run the whole thing 
+###     without referring to files. 
 write_csv(scenario_trips, "Data/Processed/trips_melbourne_scenarios.csv")
 
 ############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
@@ -114,42 +118,50 @@ source("Scripts/data_prep/mmet_pp.R")
 ### change work and time marginal met to minutes and multiply by uncertain mets
 
 mmets_pp <- calculateMMETSperPerson(
-  matched_pop_location = "Data/Processed/matched_pop.csv"
+  matched_pop_location = "Data/Processed/matched_pop.csv",
+  MMET_CYCLING = MMET_CYCLING,
+  MMET_WALKING = MMET_WALKING,
+  MMET_MOD = MMET_MOD,
+  MMET_VIC = MMET_VIC
 )
 
 write.csv(mmets_pp, "Data/Processed/mets_test.csv", row.names=F, quote=T)
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
+source("Scripts/ithim-r_wrappers.R")
 
 ### Relative risks of physical inactivity on diseases
 
-global_path <- file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global/')
-## for windows??
-global_path <- paste0(global_path, "/")
-disease_outcomes_lookup_location="Data/Processed/disease_outcomes_lookup.csv"
+RR_PA_calculations <- gen_pa_rr_wrapper(
+  mmets_pp_location="Data/Processed/mets_test.csv",
+  disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv",
+  # location of ithmr default dose response data:
+  dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
+                              "/dose_response/drpa/extdata"),
+  PA_DOSE_RESPONSE_QUANTILE=F
+)
+write.csv(RR_PA_calculations, "Data/Processed/RR_PA_calculations.csv", row.names=F, quote=T)
 
-SCEN_SHORT_NAME <- c("base", "scen1")
-
-DISEASE_INVENTORY <-  read.csv(disease_outcomes_lookup_location,as.is=T,fileEncoding="UTF-8-BOM")
-# list of ithmr default dose response data
-list_of_files <- list.files(path = paste0(global_path,"dose_response/drpa/extdata"), recursive = TRUE, pattern = "\\.csv$", full.names = TRUE)
-for (i in 1:length(list_of_files)){
-  assign(stringr::str_sub(basename(list_of_files[[i]]), end = -5),
-         readr::read_csv(list_of_files[[i]],col_types = cols()),
-         pos = 1)
-}
-
-RR_PA_calculations <- ithimr::gen_pa_rr(mmets_pp)
 
 
 ###################### 5) PIFS by age and sex (with function health_burden_2) #####################################
+source("Scripts/ithim-r_wrappers.R")
 
-pifs_pa_ap <- health_burden_2(RR_PA_calculations)
+# calculate_AP will calculate air pollution, be sure to set false if you don't have air pollution data
+# health_burden_2 needs a complete rewrite to be more comprehensible, but works well enough for now
+
+pifs_pa_ap <- health_burden_2(
+  ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv",
+  disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv",
+  demographic_location="Data/DEMO.csv",
+  combined_AP_PA=F,
+  calculate_AP=F
+)
+write.csv(pifs_pa_ap, "Data/Processed/pifs_pa_ap.csv", row.names=F, quote=T)
 
 
 ###################### 6) Parameters for Mslt code running #######################################################
 
-DISEASE_SHORT_NAMES <-  read.csv("Data/Processed/disease_names.csv")
-
+DISEASE_SHORT_NAMES <- read.csv("Data/Processed/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM")
 year <- 2017
 
 
@@ -163,7 +175,10 @@ i_sex <- c('male', 'female')
 ###################### 7) Run rest ##############################################################################
 
 # PLACE HOLDER
-pif_expanded <- read_csv(paste0(paste0(getwd(),"/Data/Processed/pif_expanded.csv")))
+pif_expanded <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
+
+# FROM health_burden_2
+pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # ---- chunk-2 ----
 
