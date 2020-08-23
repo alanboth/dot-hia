@@ -52,13 +52,14 @@ parameters <- ithimr::run_ithim_setup(
     motorcycle=0.011,
     truck=0.859,
     big_truck=0.711,
-    other=0.082),
+    other=0.082)
   #   
-  NSAMPLES = 1,
-  MMET_WALKING = c((2.53),(1.2)),
-  MMET_CYCLING = c((4.63),(1.2)),
-  PM_CONC_BASE = c((50), (1.3)),
-  PM_TRANS_SHARE = c(5,20))
+  # NSAMPLES = 1,
+  # MMET_WALKING = c((2.53),(1.2)),
+  # MMET_CYCLING = c((4.63),(1.2)),
+  # PM_CONC_BASE = c((50), (1.3)),
+  # PM_TRANS_SHARE = c(5,20)
+  )
 # 
 # INJURY_REPORTING_RATE = c(8,3), 
 # 
