@@ -5,10 +5,10 @@ library(data.table)
 # runs a local version of gen_pa_rr (and PA_dose_response) so ithim-r library doesn't need to be called
 # ithim-r still needs to be installed so we can access the dose response folder
 gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_response_folder,PA_DOSE_RESPONSE_QUANTILE) {
-  mmets_pp_location="Data/Processed/mets_test.csv"
-  disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
-  dose_response_folder="/home/alan/R/x86_64-pc-linux-gnu-library/3.6/ithimr/extdata/global//dose_response/drpa/extdata"
-  PA_DOSE_RESPONSE_QUANTILE=F
+  # mmets_pp_location="Data/Processed/mets_test.csv"
+  # disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
+  # dose_response_folder="/home/alan/R/x86_64-pc-linux-gnu-library/3.6/ithimr/extdata/global//dose_response/drpa/extdata"
+  # PA_DOSE_RESPONSE_QUANTILE=F
   
   ## loading copies of the ithm-r functions called
   gen_pa_rr <- function(mmets_pp) {
@@ -99,7 +99,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
   # ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
   # disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
-  # demographic_location="Data/DEMO.csv"
+  # demographic_location="Data/Processed/DEMO.csv"
   # combined_AP_PA=F
   # calculate_AP=F
   
@@ -160,14 +160,15 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           # set up naming conventions
           scen <- scen_names[index]
           scen_var <- scen_vars[index]
-          pif_name <- paste0(scen, '_pif_',middle_bit_plus,ac)
+          pif_name <- paste0('pif_',ac)
           # Calculate PIFs for selected scenario
           pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index')])
           setnames(pif_table,scen_var,'outcome')
           pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
           ## sort pif_temp
           setorder(pif_temp,dem_index)
-          pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1]
+          pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1] 
+
         }
       }
     }
