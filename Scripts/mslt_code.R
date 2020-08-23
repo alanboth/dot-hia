@@ -7,7 +7,7 @@ library(data.table)
 library(tidyr)
 
 options(scipen=999)
-# source("Scripts/functions_mslt.R")
+source("Scripts/functions_mslt.R")
 
 ### All processing without uncertainty inputs left in other codes, here, all code with uncertainty
 
@@ -40,7 +40,7 @@ options(scipen=999)
 MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
 MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
 MMET_MOD <- 4 ## TO DO: GET Uncertain parameters
-MMET_VIC <- 6.5 ## TO DO: GET Uncertain parameters
+MMET_VIG <- 6.5 ## TO DO: GET Uncertain parameters
 ### TO DOL ADD inputs with uncertainty for mmets_other activities, may need to separate below moderate and vigorous PA
 
 ## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multiple simulations )
@@ -122,7 +122,7 @@ mmets_pp <- calculateMMETSperPerson(
   MMET_CYCLING = MMET_CYCLING,
   MMET_WALKING = MMET_WALKING,
   MMET_MOD = MMET_MOD,
-  MMET_VIC = MMET_VIC
+  MMET_VIG = MMET_VIG
 )
 
 write.csv(mmets_pp, "Data/Processed/mets_test.csv", row.names=F, quote=T)
@@ -149,14 +149,19 @@ source("Scripts/ithim-r_wrappers.R")
 # calculate_AP will calculate air pollution, be sure to set false if you don't have air pollution data
 # health_burden_2 needs a complete rewrite to be more comprehensible, but works well enough for now
 
-pifs_pa_ap <- health_burden_2(
+pif <- health_burden_2(
   ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv",
   disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv",
-  demographic_location="Data/DEMO.csv",
+  demographic_location="Data/Processed/DEMO.csv",
   combined_AP_PA=F,
   calculate_AP=F
-)
-write.csv(pifs_pa_ap, "Data/Processed/pifs_pa_ap.csv", row.names=F, quote=T)
+) %>% 
+  slice(rep(1:n(), each = 5)) %>% ### ALAN, I added some lines to make it compatible with the code for running disease_life_tables
+  mutate(age=rep(seq(16,100,1), times = 2))
+
+
+
+write.csv(pif, "Data/Processed/pifs_pa_ap.csv", row.names=F, quote=T)
 
 
 ###################### 6) Parameters for Mslt code running #######################################################
@@ -166,7 +171,7 @@ year <- 2017
 
 
 ### Inputs that we can change in a shiny app
-i_age_cohort <- c(17) #, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
 
 i_sex <- c('male', 'female')
 
@@ -177,8 +182,8 @@ i_sex <- c('male', 'female')
 # PLACE HOLDER
 pif_expanded <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
-# FROM health_burden_2
-pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
+# FROM health_burden_2 ALAN, I still need to check why the new Pifs are not working when runnig scenario disease life tables
+# pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # ---- chunk-2 ----
 
