@@ -167,6 +167,17 @@ write.csv(pif, "Data/Processed/pifs_pa_ap.csv", row.names=F, quote=T)
 ###################### 6) Parameters for Mslt code running #######################################################
 
 DISEASE_SHORT_NAMES <- read.csv("Data/Processed/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM")
+
+### Only include DISEASE_SHORT_NAMES for PA related diseases
+
+disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
+include <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>% 
+  dplyr::filter(physical_activity ==1)
+
+DISEASE_SHORT_NAMES <- DISEASE_SHORT_NAMES %>%
+  dplyr::filter(DISEASE_SHORT_NAMES$acronym %in% include$acronym)
+
+
 year <- 2017
 
 
@@ -180,10 +191,10 @@ i_sex <- c('male', 'female')
 ###################### 7) Run rest ##############################################################################
 
 # PLACE HOLDER
-pif_expanded <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
+# pif_expanded_1 <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # FROM health_burden_2 ALAN, I still need to check why the new Pifs are not working when runnig scenario disease life tables
-# pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
+pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # ---- chunk-2 ----
 
@@ -251,12 +262,7 @@ for (iage in i_age_cohort){
 
 ## Create scenario life tables with new pifs,includes Diabetes loop. 
 
-### Relative risks of diabetes for cardiovascular diseases
-
-DIABETES_IHD_RR_F <<- 2.82 ## 2.35
-DIABETES_STROKE_RR_F <<- 2.28 ## 1.93
-DIABETES_IHD_RR_M <<- 2.16 ## 2.16
-DIABETES_STROKE_RR_M <<- 1.83 ## 1.6
+### Read disease inventory and only include PA related diseases
 
 
 disease_life_table_list_sc <- list()
