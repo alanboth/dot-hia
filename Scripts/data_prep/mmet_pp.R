@@ -1,11 +1,11 @@
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
-calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKING,MMET_MOD,MMET_VIC) {
+calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKING,MMET_MOD,MMET_VIG) {
   # matched_pop_location = "Data/Processed/matched_pop.csv"
-  # MMET_CYCLING = 4.63 
-  # MMET_WALKING = 2.53 
+  # MMET_CYCLING = 4.63
+  # MMET_WALKING = 2.53
   # MMET_MOD = 4
-  # MMET_VIC = 6.5
+  # MMET_VIG = 6.5
 
   synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::mutate(participant_id = row_number())
@@ -14,10 +14,10 @@ calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKI
                   starts_with("time") & contains(c("pedestrian", "bicycle")),
                   work_ltpa_marg_met) %>%
     replace(is.na(.), 0) %>%
-    dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC +
+    dplyr::mutate(base_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIG +
                     walk_rc * MMET_WALKING + time_base_pedestrian * MMET_WALKING +
                     time_base_bicycle * MMET_CYCLING) %>%
-    dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIC + walk_rc *
+    dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIG + walk_rc *
                     MMET_WALKING + time_scen_pedestrian * MMET_WALKING +
                     time_scen_bicycle * MMET_CYCLING)
   
