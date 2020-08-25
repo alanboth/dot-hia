@@ -40,7 +40,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
       stop("Unsupported cause/disease. Please select from \n\n         all_cause \n\n         breast_cancer\n\n         cardiovascular_disease \n\n         colon_cancer \n\n         coronary_heart_disease \n\n         endometrial_cancer \n\n         heart_failure \n\n         lung_cancer \n\n         stroke \n\n         total_cancer")
     }
     outcome_type <- ifelse(cause %in% c("lung_cancer", "breast_cancer", 
-                                        "endometrial_cancer", "colon_cancer"), "all", "mortality")
+                                        "endometrial_cancer", "colon_cancer"), "all", "mortality") ### TO DO: add to get incidence if available
     if (cause %in% c("total_cancer", "coronary_heart_disease", 
                      "breast_cancer", "endometrial_cancer", "colon_cancer")) 
       dose[dose > 35] <- 35
