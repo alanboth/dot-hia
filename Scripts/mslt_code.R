@@ -141,6 +141,13 @@ RR_PA_calculations <- gen_pa_rr_wrapper(
 )
 write.csv(RR_PA_calculations, "Data/Processed/RR_PA_calculations.csv", row.names=F, quote=T)
 
+### test difference of using persons' weights and below hb_2 calculation
+
+
+RR_PA_calculations_w <-  RR_PA_calculations  %>%
+  srvyr::as_survey_design(weights = participant_wt)
+
+
 
 
 ###################### 5) PIFS by age and sex (with function health_burden_2) #####################################
