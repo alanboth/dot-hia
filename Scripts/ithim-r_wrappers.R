@@ -97,12 +97,12 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 }
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  # ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
-  # disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
-  # demographic_location="Data/Processed/DEMO.csv"
-  # combined_AP_PA=F
-  # calculate_AP=F
-  
+  ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
+  disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
+  demographic_location="Data/Processed/DEMO.csv"
+  combined_AP_PA=F
+  calculate_AP=F
+
   ind_ap_pa <- read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM")
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
@@ -114,6 +114,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   
   pop_details <- DEMOGRAPHIC
   pif_scen <- pop_details
+  pif_scen_2 <- pop_details
   # set up reference (scen1)
   reference_scenario <- SCEN_SHORT_NAME[1]
   scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]
@@ -151,9 +152,10 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         scen_vars <- paste0('RR_', middle_bit, scen_names, '_', ac)
         # set up pif tables
         # dies here if you don't have air pollution
-        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index')])
+        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index', 'participant_wt')])
         setnames(pif_table,base_var,'outcome')
         pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
+        pif_ref_2 <- pif_table 
         ## sort pif_ref
         setorder(pif_ref,dem_index)
         for (index in 1:length(scen_vars)){
@@ -162,16 +164,30 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           scen_var <- scen_vars[index]
           pif_name <- paste0('pif_',ac)
           # Calculate PIFs for selected scenario
-          pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index')])
+          pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index', 'participant_wt')])
           setnames(pif_table,scen_var,'outcome')
           pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
+          pif_temp_2 <- pif_table 
+          
+          
           ## sort pif_temp
           setorder(pif_temp,dem_index)
           pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1] 
-
+          
+        # ALAN, trying to add the same calculations as above, but using weights, not working 
+        # pif_wt[[pif_name]] <- pif_temp_2 %>% mutate(pif=(pif_ref_2$outcome - .[,'outcome']) / pif_ref_2$outcome) %>%
+        # srvyr::as_survey_design(weights = participant_wt)
+        # pif_scen_2 <-  pif_wt  %>%
+        # group_by(dem_index) %>%
+        # dplyr::summarize(srvyr::survey_mean(pif))
         }
       }
     }
   }
   return(pif_scen)
 }
+
+  
+
+
+
