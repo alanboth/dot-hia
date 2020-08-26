@@ -58,14 +58,12 @@ options(scipen = 999)
 
 # Introduction
 
-In this document we present the methods, data sources and online interface for the development of the quantitative health impact assessment model for the impacts of active transport scenarios on population health. We developed two versions of the model: 1) Victorian model and 2) Australian model. Both models simulate the heath impacts of changes in physical activity attributable to changes in physical activity for the average adult population by age and sex cohort. The difference lies in the inputs and population affected. The for Vicotria is linked to transport sceanrios...
-In what follows, in Section 2 we explain the quantitative health impact model methods, its data inputs and modelling assumptions for both the Victorian and the Australian model. In section 3 we explain the active transport scenarios developed in collaboration with the Victorian Department of Transport.  In section 4 we present the results for the Victorian case study. Section 4 explains the web interface available in the Australian Urban Observatory. 
-
-\newpage
+In this document we present the methods and data sources for the development of the quantitative health impact assessment model for the impacts of physical activity scenarios on population health. We developed two models: 1) Melbourne model and 2) Australia model. The Melbourne model quantifies physial activity related health impacts of changes in transport, and the Australia model quantifies health impacts of changes in physical activity directly, not informed by changes in transport. 
+In what follows, Section 2 explains the quantitative health impact model, including methods, data inputs and modelling assumptions. Section 3 explains an application of the Melbourne model to an active transport scenario developed in collaboration with the Victorian Department of Transport and its results. Section 4 demonstrates the use of the web interface throught the Australian Urban Observatory. 
 
 # Quantitative health impact assessment model overview
 
-The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in active transport behaviour in the population of interest. Changes in transport may be informed by: 1) Hypothetical scenarios (e.g. what if a proportion of private car trips are replaced by active modes? (e.g. @RN12)); 2) Policy based (e.g. transport policy targets of reduction in motorised travel (e.g. @RN13)); 3) Active transport intervention/s (e.g. new cycle lane, improved public transport, new bicycle share scheme (e.g. @RN14)); 4) Active travel program (e.g. travel to work program (e.g. @RN16); and 5) Land use scenarios (e.g. improved connectivity, land use, etc. e.g. @RN15). The active transport scenario translates into a change in transport behaviour which in turn impacts on  physical activity. A change in physical activity, combined with the risk of diseases associated to it is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalence of overall disability in the general life table. Change in the risk of road injuries impacts on mortality and prevalent year lived with disability. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, prevalent years years lived with disability, life years, health-adjusted life years, life expectancy and health adjusted-life expectancy.
+The model analytical framework is depicted in Figure 1. The model consists of three main sections: 1) Scenarios; 2) Potential Impact Fractions and Risk calculations; and 3) Proportional multi-state life table (PMSLT). The simulation starts with a change in physical activity in the population of interest. For the Melbourne model changes in physical activity are informed by the transport scenarios and in the Australian model such changes are made direclty to physical activity. A change in physical activity, combined with the risk of diseases associated to it, is combined in the potential impact fraction (PIF) calculations to then modify incidence in the disease process (Proportional Multi-State Life Table). From each of the diseases process, data on changes in mortality and prevalence of diseases is collected to then modify overall mortality and prevalent years years lived with disability in the general life table. Outcomes by age (5-years) and sex cohort include: change in the number of incidence cases, prevalent years years lived with disability, life years, health-adjusted life years, life expectancy and health adjusted-life expectancy.
 
 \blandscape
 ```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
@@ -97,13 +95,16 @@ analytical_framework <- grViz("digraph{
                           label = 'Scenarios'
   
                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                            0[label = 'Physical activity']
                             1[label = 'Private car use']
                             2[label = 'Cycling']
                             3[label = 'Walking']
-                            4[label = 'Public Transport'] }
+                            4[label = 'Public Transport'] 
                             
+                            {rank = same; 0;2;3;4}
                           
-                            
+       }  
+                          
                             subgraph cluster_1 {
                           graph[shape = rectangle]
                           style = rounded
@@ -113,7 +114,7 @@ analytical_framework <- grViz("digraph{
                           color = Gray
                           label = 'Potential impact fraction and risk'
                           
-                          subgraph cluster_10 {
+                                              subgraph cluster_10 {
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
@@ -127,7 +128,7 @@ analytical_framework <- grViz("digraph{
                             # 6[label = 'On road PM2.5']
                              7[label = 'Physical activity']
                             # 8[label = 'Road trauma']
-                          }    
+                          }   
                           
                           
                           subgraph cluster_11 {
@@ -164,6 +165,7 @@ analytical_framework <- grViz("digraph{
                             17[label = 'Disease processes']
                             # 18[label = 'Injuries process']
                             19[label = 'Life table']
+                            
                           }  
                                 subgraph cluster_3 {
                            graph[shape = rectangle]
@@ -186,10 +188,11 @@ analytical_framework <- grViz("digraph{
                            } 
                             
                             edge[color = Black, arrowhead = normal, arrowsize = 1.25]
-                          1 -> 7 # 5 6 8
+                          0 -> 7
+                          1 -> {2 3 4} # 5 6 8
                           2 -> 7 # 5 6 8
                           3 -> 7 # 5 6 8
-                          4 -> 7 # 5 6 8
+                          4 -> 3 # 5 6 8
                           
                           
                           edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
@@ -211,26 +214,62 @@ analytical_framework
 
 ## Scenarios
 
-In this study we modelled the potential health implicaton of changes in use of public transport attributable to the proposed Neighbourhood Rail Netwwork in Greater Melbourne (n=xx). The project proposes...
-For this study, we used the VTM model developed by the Victoria Departmen of Transport...
-The impacted population is xx...
-We capture changes in walking and use of private motor vehicle by...
-Changes in walking translate to increases in population levels of physical activity. 
-Changes in kilometres travelled by private car translate in changes in levels of PM2.5 and risk of road injuries. 
+Table 1 outlines user inputs for each of the models: Melbourne model and Australian model. 
 
+```{r, echo=FALSE, include=TRUE}
+
+scenarios <- tribble(
+~"User Input", ~"Melbourne Model", ~"Australia model",
+"Age", "All ages, 18-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-98", "All ages, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99",
+"Sex", "Female, Male, Both",  "Female, Male, Both",
+"Physical activity minutes", "NA", "Number: 0 to xx",
+"Physical activity distance", "NA", "Number: 0 to xx", 
+"Replace mode", "Walking or cycling", "N/A", 
+"Replace distance", "Number: 0 to xx", "N/A", 
+"Trip purpose", "social, buy something, work related, pick-up or drop-off someone, personal business, unknown purpose (at start of day),recreational, pick-up or deliver something, accompany someone,education, other purpose, at or go home, change mode, not stated", "N/A", 
+"Day of the week", "Weekday, Weekend day, both", "N/A"
+)
+kable(scenarios, booktabs = T, caption = "Table 1: Inputs PA-health impacts model online interface", longtable = TRUE) %>%
+column_spec(1:3, width = "15em") %>%
+  row_spec(0, bold = T) %>%
+  kable_styling()
+```
 
 ## Potential Impact Fraction
 
-The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor[@RN19]. We used the PIFs to calculate the average change in the incidence of diseases (Figure 2) in the scenarios' diseases' processes. We calculated the PIFs for: physical activity and air pollution. We used two different approaches to calculate PIFs: 1) Individual level PIFs for physical activty and 2) Population level PIFs for air pollution. Calculation for the PMSLT are by age and sex groups, hence, PA PIFs were averaged by age and sex.
-In what follows we explained PIF calculation for each exposure (physical activity and air pollution)
+The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. We used PIFs to calculate the average change in incidence of diseases (Figure 2) in the scenarios' diseases' processes. PIFs were derived for: ishcemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R (https://github.com/ITHIM/ITHIM-R) project were used here to calculate individual level RRs for BAU and scenario which where then used to calculate individual level PIFs (\ref{eq1}). Specifically the function to generate relative risks at the individual level for BAU and sceanarios (gen_pa_rr). Inputs of gen_pa_rr are individual marginal metabolics of taks per hour (mMET-hours) per week. All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mmethrs for: colon, breatst and uterine cancers, ishcemic heart disease and stroke; 10 for lung cancer and 32 for stroke) (https://github.com/ITHIM/ITHIM-R). Table 2 oulines RRs mean, lower and upper bounds for each of the modelled diseases from which the samples were taken following normal distributions truncated to zero (https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). mMETs-hours were derived by summing up the product of physical activity duration and intensity [@RN23]. Marginal METs are calculated by subtracting one from the reported METs for a given activity [@RN21].  Individual level PIFs were averaged out by age and sex to modify incidence of diseases (Figure 2). 
+Below, calculations for mMET-hours for the Melbourne and Australian model and method to average out PIFs by age and sex are explined in turn.
 
-### SOME table with all exposures would be useful here
 
-### Physical activity
+$$
+\begin{align}
+\label{eq1}
+ PIF_d= \frac {RR_{dBAU} - RR_{dSCENRIO}} {RR_{dBAU}}
+\end{align}
+$$
+#### Melbourne model
 
-#### Victorian model 
+We created a matched population to derive individual mMET-hours per week based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). PA data from the NHS were allocated to each VISTA individual. MET-hours per individual were derived from the sum of the product of hours spent weekly doing transport walking, transport cycling, vigorour PA for leisure and work, moderate PA for leisure and work and walking for leisure by their corresponding mMET-hours. Tranport walking and cycling were sourced from the VISTA survey and the rest from the NHS (Table 2).
+We used the latest VISTA survey conducted across the period 2017-18 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Walking and cycling minutes for each of the VISTA persons (n=7,117) were derived by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages).  The NHS is a representative sample of Australian adults. The data were collected by the Australian Bureau of Statistics and published as the National Health Survey, 2017-18, Basic-CURF [@RN22]. A sample of 21,315 adults was available. Minutes spent doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure during the a week were collected. The three categories are mutually exclusive [@RN24] and were translated to hours per week. Survey respondents were asked about the time they spent doing physical activity in the last week, including walking for transport, walking for recreation, moderate physical activity (excludes walking) and vigorous physical activity. A walking session was only to be recorded if the duration of the session was at least 10 minutes.
+Total mMETs per person for the BAU scenario were derived by translating minutes spent in each of the domains per week to hours and then multiplying by the MET scores [@RN21] minus one. Tables 3 outlines all types of PA activities included, by source, and correspoinding assigned MET values. VISTA individuals were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 3).  
+  
+```{r, echo=FALSE, include=TRUE}
 
-We created a matched population to derive individual levels of physical activity based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). VISTA individuals (VISTA person file) were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 1). Table 2 oulines the computational sequences. The number of succesful mathces was 99.34%. We developed a function called **calculatePersonsMatch** to generate the matched population with inputs **pa_location** (generated with **calculatePersonsPA**) and **persons_travel_location** (**calculateTravelData**).  
+mets <- tribble(
+~"Physical activity", ~"Survey", ~"METs", "Source",
+"Age", "AGE: single year of age recoded to groups to match NHS's groups", "AGEB: 0 - 4 years to 80 - 84 years in five year age groups and 85 years and over years",
+"Sex", "SEX: Male/Female", "SEX: Male/Female",
+"Socio-economic Status", "VISTA data did not provida household SES data. Australian postcode SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles Postal Area code  (POA) [@RN23] was matched to individuals' household POA to assign them an area level IRSD", "SA1SF2DN: SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles - National",
+"Walk for transport", "Whether VISTA person had transport walking trips" ,"EXLWKTNO: Number of times walked for 10 minutes or more for transport in the last week",
+"Work status","ANYWORK: employed, unemployed", "LFSBC (Labour force status): 0. Not applicable (recoded to unemployed), 1. Employed, 2. Unemployed, 3. Not in the labour force (recoded to unemployed)"
+)
+kable(matched_population, booktabs = T, caption = "Table 1: Matched poplation", longtable = TRUE) %>%
+column_spec(1:3, width = "15em") %>%
+  row_spec(0, bold = T) %>%
+  kable_styling()
+```
+
+
 
 ```{r, echo=FALSE, include=TRUE}
 
@@ -246,24 +285,33 @@ kable(matched_population, booktabs = T, caption = "Table 1: Matched poplation", 
 column_spec(1:3, width = "15em") %>%
   row_spec(0, bold = T) %>%
   kable_styling()
-
 ```
 
-
-
-Individual level of physical activity were derived for each of the VISTA survey individuals and measured in marginal metabolic equivalent of task value (mMET). mMETs were derived by multiplying the minutes spent during the last week doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure and walking and cycling for transport and an assigned metabolic equivalent value (MET) from a PA compendium minus one [@RN1] (equation 3). Walking and cycling levels were derived at the individual level for each of the VISTA persons by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages). Moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure were allocated to each VISTA individual from the  
-
-
-TO DO: ADD equation PA
-TO DO: explain matching process. 
-
-
-
-Dose-response function were derived from the dose-response functions used to develop the ITHIMR package (REFERENCING TO DO, CHECK WITH JAMES). The matched population (above explained)  provided exposure for baseline and each of the scenarios for each individual which were then combined with the dose-response function to derive an individual level PIF. Individual PIFs were averaged  out by age groups (5-years) and sex to modify incidence rates in each of the disease processes (Figure XX).
 #### Australian model
+
+
+```{r, echo=FALSE, include=TRUE}
+
+METs <- tribble(
+~"User Input", ~"Melbourne Model", ~"Australia model",
+"Age", "All ages, 18-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-98", "All ages, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99",
+"Sex", "Female, Male, Both",  "Female, Male, Both",
+"Physical activity minutes", "NA", "Number: 0 to xx",
+"Physical activity distance", "NA", "Number: 0 to xx", 
+"Replace mode", "Walking or cycling", "N/A", 
+"Replace distance", "Number: 0 to xx", "N/A", 
+"Trip purpose", "social, buy something, work related, pick-up or drop-off someone, personal business, unknown purpose (at start of day),recreational, pick-up or deliver something, accompany someone,education, other purpose, at or go home, change mode, not stated", "N/A", 
+"Day of the week", "Weekday, Weekend day, both", "N/A"
+)
+kable(scenarios, booktabs = T, caption = "Table 1: Inputs PA-health impacts model online interface", longtable = TRUE) %>%
+column_spec(1:3, width = "15em") %>%
+  row_spec(0, bold = T) %>%
+  kable_styling()
+```
+
+### Some graphs here for distribution of physical actiity comparing melbourne modle and Australia models
 ### Travel behaviour
 
-We used the latest  survey conducted across the period 2017-10 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Travel data was used to derive individual levels of physical activity and kilometers traveled by modes affected by scenarios. MORE INFO ON THE SURVEY HERE.
 
 
 ## Risk
@@ -700,7 +748,7 @@ kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mo
 #   incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
 #   mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
 #   trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
-#   grim_books="Data/aihw/trends/grim_books.csv",
+#   grim_books="Data/aihw/trends/grim_books_utf8.csv",
 #   trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
 # )
 # 
