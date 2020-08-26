@@ -187,7 +187,209 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   return(pif_scen)
 }
 
+
+## Function to generate age and sex life table for baseline and scenario.
+
+# mx:        mortality
+# pyld_rate: person-years lived with a disability rate
+# qx:        probability of dying
+# lx:        number of survivors year 1 simulation
+# dx:        number died in year 1 simulation
+# Lx:        number of persons lived by cohort to age x + 1/2 (average people)
+# ex:        life expectancy
+# Lwx:       health adjusted life years
+# ewx:       health adjusted life expectancy
+
+RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
+  # in_idata=MSLT_DF
+  # in_sex='male'
+  # in_mid_age=17
+
+  # Create a life table starting data frame from input data. 
+  lf_df <- in_idata %>%
+    dplyr::filter(age >= in_mid_age & sex == in_sex) %>%
+    dplyr::select('sex', 'age', 'pyld_rate', 'mx')
+
+  # are we using modified mortality rates?
+  if(is.data.frame(death_rates)) {
+    # filter to only this cohort's death rates
+    cohort_death_rates <- death_rates %>%
+      filter(age_cohort == in_mid_age & sex == in_sex) %>%
+      dplyr::select(age,sex,rate)
+    # join to lf_df and replace mx with the new mortality data
+    lf_df <- lf_df %>%
+      inner_join(cohort_death_rates, by=c('age','sex')) %>%
+      dplyr::select(sex, age, pyld_rate, mx=rate)
+  }
   
+  # Create list life table variables. First as vector and then added to the data frame at the end.
+  ## We model up to 100, that is the reason for the age limit in the function
+  
+  # probability of dying
+  
+  qx <-  ifelse(lf_df$age < 100, 1 - exp(-1 * lf_df$mx), 1)
+  
+  # number of survivors year 1 simulation
+  
+  num_row <- nrow(lf_df)
+  lx <- rep(0,num_row)
+  lx[1] <- as.numeric(in_idata$population_number[in_idata$age == in_mid_age & in_idata$sex == in_sex]) 
+  
+  # number died in year 1 simulation
+  
+  dx <- rep(0,num_row)
+  dx[1] <- lx[1] * qx[1]
+  
+  # number of survivors and who die from year 2 onwards. 
+  
+  for (i in 2:num_row){
+    lx[i] <- lx[i - 1] - dx[i - 1]
+    dx[i] <- lx[i] * qx[i]
+  }
+  
+  # number of persons lived by cohort to age x + 1/2 (average people)
+  
+  Lx <- rep(0,num_row)
+  
+  # for years up to 99
+  
+  for (i in 1:(num_row-1))
+    Lx[i] <- (lx[i] + lx[i + 1]) / 2
+  
+  # for year 100, cohort dies at 100 if anyone left
+  
+  Lx[num_row] <- lx[num_row] / lf_df$mx[num_row]
+  
+  
+  # create life expectancy variable
+  ex <- rep(0,num_row)
+  for (i in 1:num_row){
+    ex[i] <- sum(Lx[i:num_row]) / lx[i]
+  }
+  
+  # create health adjusted life years variable 
+  
+  Lwx <- Lx * (1 - lf_df$pyld_rate)
+  
+  # create health adjusted life expectancy variable
+  ewx <- rep(0,num_row)
+  for (i in 1:num_row){
+    ewx[i] <- sum(Lwx[i:num_row]) / lx[i]
+  }
+  
+  lf_df$qx <- qx
+  lf_df$lx <- lx
+  lf_df$dx <- dx
+  lf_df$Lx <- Lx
+  lf_df$ex <- ex
+  lf_df$Lwx <- Lwx
+  lf_df$ewx <- ewx
+  lf_df
+}
+
+# ---- RunDisease ----
+
+## Function to generate age and sex disease life table for baseline and scenario.
+## Remission is not modelled.
+
+RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease) 
+  
+{
+  
+  
+  # create disease variable for the disease life table function 
+  dw_disease <- paste("dw_adj", in_disease, sep = "_")
+  incidence_disease <- paste("incidence", in_disease, sep = "_")
+  case_fatality_disease <- paste("case_fatality", in_disease, sep = "_")
+  
+  ## add generic variable names to the source data frame (in_idata)
+  in_idata$dw_disease <- in_idata[[dw_disease]]
+  in_idata$incidence_disease <- in_idata[[incidence_disease]]
+  in_idata$case_fatality_disease <- in_idata[[case_fatality_disease]]
+  
+  # Select columns for lifetable calculations
+  
+  ##BZ: back yo using filtering, otherwise the life tables are not run by cohort (age and sex)
+  dlt_df <- dplyr::filter(in_idata, age >= in_mid_age & sex == in_sex) %>% 
+    dplyr::select(sex, age, dw_disease, incidence_disease, case_fatality_disease)
+  
+  ##BZ: Rob, line 264 does not filter by age and sex, each disease life table starts at firt age cohort (e.g. 17) and by gender. 
+  
+  # dlt_df <- in_idata[,colnames(in_idata) %in% c('sex', 'age', 'dw_disease', 'incidence_disease', 'case_fatality_disease')] # dplyr::select(sex, age, dw_disease, incidence_disease, case_fatality_disease)
+  
+  dlt_df$disease <- in_disease
+  
+  # create list of life table variables. Created as vectors and then added to dataframe. 
+  # See see methods in: 1) Concept and original calculations: Barendregt, J. J., et al. (1998). "Coping with multiple morbidity in a life table." Math Popul Stud 7(1): 29-49. 
+  # and 2) Latest version, variables below calculated from it: Barendregt, J. J., et al. (2003). "A generic model for the assessment of disease epidemiology: the computational basis of DisMod II." Popul Health Metr 1(1): 4-4.
+  
+  
+  ### lx, qx, wx and vx are intermediate variables, 
+  
+  lx <- dlt_df$incidence_disease + dlt_df$case_fatality_disease
+  qx <-  sqrt((dlt_df$incidence_disease - dlt_df$case_fatality_disease) * (dlt_df$incidence_disease - dlt_df$case_fatality_disease))
+  wx <- exp(-1*(lx+qx)/2)
+  vx <- exp(-1*(lx-qx)/2)
+  
+  ## Healthy (Sx), Disease (Cx) and Death (Dx), total (Tx) (control check, has to be 1000), total alive (Ax)
+  ## persons years live at risk (PYx), prevalence rate (px), mortality rate (mx)
+  ## Remission and mortality from other causes were replaced by zero in the formulas (as we assume no remission and independence of disease mortality with total mortlaity). 
+  
+  ### First create empty variables
+  
+  number_of_ages <- nrow(dlt_df)
+  Sx <- Cx <- Dx <- Tx  <- Ax <- PYx <- px <- mx <- rep(0,number_of_ages)
+  cfds <- dlt_df$case_fatality_disease
+  ages <- dlt_df$age
+  
+  #### Starts with 1000 healthy (Sx) and total (Ax) people. 
+  
+  Sx[1] <- Ax[1] <- 1000
+  
+  ##### start with variables without calculation exceptions
+  
+  ##### variables without exceptions (else includes exception for year one of the simulation)  
+  for (i in 2:(number_of_ages-1)){ ##!! this can go to "number_of_ages" now (?)
+    if(qx[i-1] > 0){
+      
+      ### The following five variables are created to simplify Sx, Cx and Dx calculations, and do not form part of the disease life tables.
+      vxmwx <- vx[i-1] - wx[i-1]
+      SxpCx <- Sx[i-1]+Cx[i-1]
+      dqx <- 2 * qx[i-1]
+      qxmlx <- qx[i-1] - lx[i-1]
+      qxplx <- qx[i-1] + lx[i-1]
+      
+      ### Healthy (Sx), Diseases (Cx) and Death from the Disease (Dx)
+      
+      Sx[i] <- Sx[i-1] * (2*vxmwx * cfds[i-1]  + (vx[i-1] * qxmlx + wx[i-1] * qxplx)) / dqx
+      Cx[i] <- -1*(vxmwx*(2*(cfds[i-1]  * SxpCx - lx[i-1] * Sx[i-1]) - Cx[i-1] * lx[i-1]) - Cx[i-1] * qx[i-1] * (vx[i-1]+wx[i-1])) / dqx
+      Dx[i] <- (vxmwx * (2 * cfds[i-1] * Cx[i-1] - lx[i-1]*SxpCx)- qx[i-1] * SxpCx*(vx[i-1]+wx[i-1]) + dqx * (SxpCx+Dx[i-1]) ) / dqx
+    }else{
+      Sx[i] <- Sx[i - 1] 
+      Cx[i] <- Cx[i - 1]
+      Dx[i] <- Dx[i - 1]
+    }
+  }
+  
+  
+  Tx   <- Sx + Cx + Dx 
+  Ax <- Sx + Cx
+  
+  first_indices <- 1:(number_of_ages-1)
+  last_indices <- 2:number_of_ages
+  PYx <- (Ax[first_indices] + Ax[last_indices])/2
+  mx[first_indices] <- (Dx[last_indices] - Dx[first_indices])/PYx[first_indices]
+  mx[mx<0] <- 0
+  px[first_indices] <- (Cx[last_indices] + Cx[first_indices])/2/PYx[first_indices]
+  
+  dlt_df$Tx <- Tx
+  dlt_df$mx <- mx
+  dlt_df$px <- px
+  dlt_df
+}
+
+
+
 
 
 

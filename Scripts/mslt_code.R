@@ -7,7 +7,7 @@ library(data.table)
 library(tidyr)
 
 options(scipen=999)
-source("Scripts/functions_mslt.R")
+# source("Scripts/functions_mslt.R")
 
 ### All processing without uncertainty inputs left in other codes, here, all code with uncertainty
 
@@ -179,10 +179,10 @@ DISEASE_SHORT_NAMES <- read.csv("Data/Processed/disease_names.csv",as.is=T,fileE
 
 disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
 include <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM") %>% 
-  dplyr::filter(physical_activity ==1)
+  dplyr::filter(physical_activity == 1)
 
 DISEASE_SHORT_NAMES <- DISEASE_SHORT_NAMES %>%
-  dplyr::filter(DISEASE_SHORT_NAMES$acronym %in% include$acronym)
+  dplyr::filter(acronym %in% include$acronym)
 
 
 year <- 2017
@@ -196,12 +196,19 @@ i_sex <- c('male', 'female')
 # sc_duration <- replicate(4,1) %>% append(replicate(80, 0))
 
 ###################### 7) Run rest ##############################################################################
+source("Scripts/ithim-r_wrappers.R")
 
 # PLACE HOLDER
 # pif_expanded_1 <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # FROM health_burden_2 ALAN, I still need to check why the new Pifs are not working when runnig scenario disease life tables
 pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
+
+death_rates <- rbind(
+  read.csv("Data/Processed/deaths_rates_males.csv",as.is=T,fileEncoding="UTF-8-BOM"),
+  read.csv("Data/Processed/deaths_rates_females.csv",as.is=T,fileEncoding="UTF-8-BOM")
+)
+
 
 # ---- chunk-2 ----
 
@@ -210,11 +217,19 @@ pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="U
 #### Alan, this needs to pick up specific deaths rates for each of the age and sex cohorts (saved in Data/Processed/death_rates_males/females)
 general_life_table_list_bl <- list()
 
+# dataframe of the age and sex cohorts (crossing just does a cross product)
+age_sex_cohorts <- crossing(data.frame(age=c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)),
+                            data.frame(sex=c('male', 'female')))
+tmp <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17)
+tmp2 <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17, death_rates = death_rates)
+
 index <- 1
 
 for (iage in i_age_cohort){
   for (isex in i_sex){
     # cat('age ', age, ' and sex ', sex, '\n') #Uncomment to see index
+    # iage=17
+    # isex="male"
     suppressWarnings(general_life_table_list_bl[[index]] <- RunLifeTable(in_idata = MSLT_DF,
                                                                          in_sex = isex, in_mid_age = iage))
     
