@@ -214,11 +214,11 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
   if(is.data.frame(death_rates)) {
     # filter to only this cohort's death rates
     cohort_death_rates <- death_rates %>%
-      filter(age_cohort == in_mid_age & sex == in_sex) %>%
+      dplyr::filter(age_cohort == in_mid_age & sex == in_sex) %>%
       dplyr::select(age,sex,rate)
     # join to lf_df and replace mx with the new mortality data
     lf_df <- lf_df %>%
-      inner_join(cohort_death_rates, by=c('age','sex')) %>%
+      dplyr::inner_join(cohort_death_rates, by=c('age','sex')) %>%
       dplyr::select(sex, age, pyld_rate, mx=rate)
   }
   
@@ -292,10 +292,11 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
 ## Function to generate age and sex disease life table for baseline and scenario.
 ## Remission is not modelled.
 
-RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease) 
-  
-{
-  
+RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease, incidence_trends=NA, mortality_trends=NA) {
+  # in_idata=MSLT_DF
+  # in_sex='male'
+  # in_mid_age=17
+  # in_disease='dmt2'
   
   # create disease variable for the disease life table function 
   dw_disease <- paste("dw_adj", in_disease, sep = "_")
@@ -310,14 +311,45 @@ RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease)
   # Select columns for lifetable calculations
   
   ##BZ: back yo using filtering, otherwise the life tables are not run by cohort (age and sex)
-  dlt_df <- dplyr::filter(in_idata, age >= in_mid_age & sex == in_sex) %>% 
-    dplyr::select(sex, age, dw_disease, incidence_disease, case_fatality_disease)
+  dlt_df <- in_idata %>%
+    dplyr::filter(age >= in_mid_age & sex == in_sex) %>% 
+    dplyr::select('sex', 'age', dw_disease, incidence_disease, case_fatality_disease)
   
   ##BZ: Rob, line 264 does not filter by age and sex, each disease life table starts at firt age cohort (e.g. 17) and by gender. 
   
   # dlt_df <- in_idata[,colnames(in_idata) %in% c('sex', 'age', 'dw_disease', 'incidence_disease', 'case_fatality_disease')] # dplyr::select(sex, age, dw_disease, incidence_disease, case_fatality_disease)
   
   dlt_df$disease <- in_disease
+  
+  # are we using modified mortality trends?
+  if(is.data.frame(mortality_trends)) {
+    # filter to only this cohort's incidence trends
+    cohort_mortality_trends <- mortality_trends %>%
+      dplyr::filter(sex == in_sex) %>%
+      dplyr::select('year',mortality_trend=in_disease) %>%
+      dplyr::mutate(row_num=row_number())
+    # BELEN: I'm not sure what to do with the incidence trend so I just multiplied it with case_fatality_disease
+    dlt_df <- dlt_df %>%
+      dplyr::mutate(row_num=row_number()) %>%
+      dplyr::inner_join(cohort_mortality_trends, by=c('row_num')) %>%
+      dplyr::mutate(case_fatality_disease=case_fatality_disease*mortality_trend) %>%
+      dplyr::select('sex', 'age', 'dw_disease', 'incidence_disease', 'case_fatality_disease', 'disease')
+  }
+  
+  # are we using modified incidence trends?
+  if(is.data.frame(incidence_trends)) {
+    # filter to only this cohort's incidence trends
+    cohort_incidence_trends <- incidence_trends %>%
+      dplyr::filter(sex == in_sex) %>%
+      dplyr::select('year',incidence_trend=in_disease) %>%
+      dplyr::mutate(row_num=row_number())
+    # BELEN: I'm not sure what to do with the incidence trend so I just multiplied it with incidence_disease
+    dlt_df <- dlt_df %>%
+      dplyr::mutate(row_num=row_number()) %>%
+      dplyr::inner_join(cohort_incidence_trends, by=c('row_num')) %>%
+      dplyr::mutate(incidence_disease=incidence_disease*incidence_trend) %>%
+      dplyr::select('sex', 'age', 'dw_disease', 'incidence_disease', 'case_fatality_disease', 'disease')
+  }
   
   # create list of life table variables. Created as vectors and then added to dataframe. 
   # See see methods in: 1) Concept and original calculations: Barendregt, J. J., et al. (1998). "Coping with multiple morbidity in a life table." Math Popul Stud 7(1): 29-49. 

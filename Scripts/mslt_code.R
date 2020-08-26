@@ -204,7 +204,7 @@ source("Scripts/ithim-r_wrappers.R")
 # FROM health_burden_2 ALAN, I still need to check why the new Pifs are not working when runnig scenario disease life tables
 pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
-death_rates <- rbind(
+death_rates <- bind_rows(
   read.csv("Data/Processed/deaths_rates_males.csv",as.is=T,fileEncoding="UTF-8-BOM"),
   read.csv("Data/Processed/deaths_rates_females.csv",as.is=T,fileEncoding="UTF-8-BOM")
 )
@@ -219,23 +219,26 @@ general_life_table_list_bl <- list()
 
 # dataframe of the age and sex cohorts (crossing just does a cross product)
 age_sex_cohorts <- crossing(data.frame(age=c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)),
-                            data.frame(sex=c('male', 'female')))
-tmp <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17)
-tmp2 <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17, death_rates = death_rates)
+                            data.frame(sex=c('male', 'female'))) %>%
+  dplyr::mutate(cohort=paste0(age,"_",sex))
+# tmp <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17)
+# tmp2 <- RunLifeTable(in_idata = MSLT_DF, in_sex = "male", in_mid_age = 17, death_rates = death_rates)
+# 
+# 
+# tmp <- mapply(RunLifeTable, c(MSLT_DF,MSLT_DF), c('male','female'), c(17,17) )
+
 
 index <- 1
 
-for (iage in i_age_cohort){
-  for (isex in i_sex){
-    # cat('age ', age, ' and sex ', sex, '\n') #Uncomment to see index
-    # iage=17
-    # isex="male"
-    suppressWarnings(general_life_table_list_bl[[index]] <- RunLifeTable(in_idata = MSLT_DF,
-                                                                         in_sex = isex, in_mid_age = iage))
+for (i in 1:nrow(age_sex_cohorts)){
+  suppressWarnings(
+    general_life_table_list_bl[[i]] <- RunLifeTable(in_idata   = MSLT_DF,
+                                                    in_sex     = age_sex_cohorts$sex[i],
+                                                    in_mid_age = age_sex_cohorts$age[i],
+                                                    death_rates= death_rates)
+  )
     
-    names(general_life_table_list_bl)[index] <- paste(iage, isex, sep = '_')
-    index <- index + 1
-  }
+  names(general_life_table_list_bl)[i] <- age_sex_cohorts$cohort[i]
 }
 
 
@@ -248,36 +251,60 @@ for (iage in i_age_cohort){
 ### ALAN, diseases trends should be applied to incidence and case fatality (from here: Data\Processed\mslt\incidence_trends_f.csv")
 ### In the disease trends "Year" means simulation year, not age. 
 
-dia_index <- which(DISEASE_SHORT_NAMES$sname=='dmt2')
-dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
+incidence_trends <- bind_rows(
+  read.csv("Data/Processed/mslt/incidence_trends_m.csv",as.is=T,fileEncoding="UTF-8-BOM"),
+  read.csv("Data/Processed/mslt/incidence_trends_f.csv",as.is=T,fileEncoding="UTF-8-BOM")
+)
+
+mortality_trends <- bind_rows(
+  read.csv("Data/Processed/mslt/mortality_trends_m.csv",as.is=T,fileEncoding="UTF-8-BOM"),
+  read.csv("Data/Processed/mslt/mortality_trends_f.csv",as.is=T,fileEncoding="UTF-8-BOM")
+)
+
+
+disease_cohorts <- DISEASE_SHORT_NAMES %>%
+  # Exclude non-diseases, road injuries, and diseases with no pif
+  dplyr::filter(is_not_dis == 0 & acronym != 'no_pif' & acronym != 'other' ) %>%
+  dplyr::select(sname,males,females)
+
+# adding the age and sex cohorts:
+age_sex_disease_cohorts <- crossing(age_sex_cohorts,disease_cohorts) %>%
+  mutate(cohort=paste0(age,'_',sex,'_',sname)) %>%
+  # Exclude non-male diseases (and non-female if there were any)
+  filter( (sex=='male' & males==1) | (sex=='female' & females==1)) %>%
+  dplyr::select(age,sex,sname,cohort)
+
+# ensuring we start with diabetes (dmt2)
+age_sex_disease_cohorts <- bind_rows(
+  age_sex_disease_cohorts %>%
+    filter(sname=='dmt2'),
+  age_sex_disease_cohorts %>%
+    filter(sname!='dmt2')
+)
+
+# # testing outputs
+# tmp <- RunDisease(in_idata=MSLT_DF, in_mid_age=17, in_sex='male',
+#                   in_disease='ishd')
+# # modify incidence rates and case fatality rates with trends. 
+# tmp2 <- RunDisease(in_idata=MSLT_DF, in_mid_age=17, in_sex='male',
+#                    in_disease='ishd',incidence_trends=incidence_trends,
+#                    mortality_trends=mortality_trends)
+
 
 disease_life_table_list_bl <- list()
-index <- 1
 
-for (iage in i_age_cohort){
-  for (isex in i_sex){
-    for (d in c(1:nrow(DISEASE_SHORT_NAMES))[dia_order]){
-      
-    
-      ## Exclude non-males diseases and non-chronic diseases and road injuries and disease with no pif
-      if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
-          || DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-      }
-      else {
-        
-        ### ALAN here we need to modify incidence rates and case fatality rates with trends. 
-        
-        # print(paste(isex, DISEASE_SHORT_NAMES$disease[d]))
-        disease_life_table_list_bl[[index]] <- RunDisease(in_idata = MSLT_DF,in_mid_age = iage, in_sex = isex,  in_disease = DISEASE_SHORT_NAMES$sname[d])
-        
-        names(disease_life_table_list_bl)[index] <- paste(iage, isex, DISEASE_SHORT_NAMES$sname[d], sep = '_')
-        
-        index <- index + 1
-        
-      }
-    }
-  }
+for (i in 1:nrow(age_sex_disease_cohorts)){
+  disease_life_table_list_bl[[i]] <- RunDisease(in_idata         = MSLT_DF,
+                                                in_mid_age       = age_sex_disease_cohorts$age[i],
+                                                in_sex           = age_sex_disease_cohorts$sex[i],
+                                                in_disease       = age_sex_disease_cohorts$sname[i],
+                                                incidence_trends = incidence_trends,
+                                                mortality_trends = mortality_trends)
+
+  names(disease_life_table_list_bl)[i] <- age_sex_disease_cohorts$cohort[i]
 }
+
+
 
 
 # # ---- chunk-4 ----
@@ -372,7 +399,7 @@ for (iage in i_age_cohort){
     }
   }
 }
-## Uncommnet to check scenario life tables
+## Uncomment to check scenario life tables
 # View(disease_life_table_list_sc[[3]])
 
 # ---- chunk-5 ----
