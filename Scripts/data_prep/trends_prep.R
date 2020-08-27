@@ -19,7 +19,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   # trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx"
   # grim_books="Data/aihw/trends/grim_books_utf8.csv"
   # trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
-  # trends_injuries= #TO DO
+  # 
   
   
   #### DISEASES
@@ -84,7 +84,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   value_year=(data[[4,2]] - data[[1,2]])
   
   data_2 <- data.frame(year = rep(c(0:100)), sex = rep("female", 101)) %>%
-    mutate(tablc = ifelse(year <= value_year, 
+    mutate(tbalc = ifelse(year <= value_year, 
                           exp(value_change/value_year* year),
                           exp(value_change/value_year * value_year)))
   
@@ -121,7 +121,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   value_year=(data[[4,2]] - data[[1,2]])
   
   data_2 <- data.frame(year = rep(c(0:100)), sex = rep("male", 101)) %>%
-    mutate(tablc = ifelse(year <= value_year, 
+    mutate(tbalc = ifelse(year <= value_year, 
                           exp(value_change/value_year* year),
                           exp(value_change/value_year * value_year)))
   
@@ -304,7 +304,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   ### COPD
   ### Data for mortality up to year 2017, predict up to year 2023
   
-  data <- read.csv(grim_books, as.is=T, fileEncoding="UTF-8-BOM") %>%
+  data <- read.csv(grim_books) %>%
     dplyr::filter(AGE_GROUP == "Total", SEX != "Persons", YEAR >= 2005,
                   cause_of_death == "Chronic obstructive pulmonary disease (COPD) (ICD-10 J40–J44)") %>%
     dplyr::select(YEAR, SEX, age_standardised_rate)
@@ -361,6 +361,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   # Use projectd data to derive annual change
   
+  
   value_change=log(FitFore.Male[[18,2]]/FitFore.Male[[13,2]])
   
   value_year=FitFore.Male[[18,1]]-FitFore.Male[[13,1]]
@@ -397,12 +398,13 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   value_year=FitFore.Fem[[27,1]]-FitFore.Fem[[22,1]]
   
   data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("female", 101)) %>%
-    mutate(dtm2 = ifelse(year <= value_year, 
+    mutate(dmt2 = ifelse(year <= value_year, 
                          exp(value_change/value_year* year),
                          exp(value_change/value_year * value_year)))
   
   ### Apply trend to incidence
   incidence_trends_f <- merge(incidence_trends_f, data_2, by = c("year", "sex"))
+  
   
   ### Males
   
@@ -423,7 +425,7 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   value_year=FitFore.Males[[27,1]]-FitFore.Males[[22,1]]
   
   data_2 <- data.frame(year = rep(c(0:100)), sex =  rep("male", 101)) %>%
-    mutate(dtm2 = ifelse(year <= value_year, 
+    mutate(dmt2 = ifelse(year <= value_year, 
                          exp(value_change/value_year* year),
                          exp(value_change/value_year * value_year)))
   
@@ -507,13 +509,13 @@ calculateDiseaseTrends <- function(incidence_trends_cancers, mortality_trends_ca
   
   
   
-  mortality_trends_f <- mortality_trends_f %>% arrange(year)
-  mortality_trends_m <- mortality_trends_m %>% arrange(year)
+  mortality_trends_f <- mortality_trends_f %>% arrange(year) %>% ### diabetes 1 as trends only apply to incidence
+    mutate(dmt2 = 1)
+  mortality_trends_m <- mortality_trends_m %>% arrange(year) %>%
+    mutate(dmt2 = 1)
   incidence_trends_f <- incidence_trends_f %>% arrange(year)
   incidence_trends_m <- incidence_trends_m %>% arrange(year)
   
   return(list(mortality_trends_f, mortality_trends_m, incidence_trends_f, incidence_trends_m))
   
 }
-
-### Injuries trends (from GBD??)
