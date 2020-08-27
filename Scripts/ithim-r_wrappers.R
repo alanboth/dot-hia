@@ -233,7 +233,7 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
   
   num_row <- nrow(lf_df)
   lx <- rep(0,num_row)
-  lx[1] <- as.numeric(in_idata$population_number[in_idata$age == in_mid_age & in_idata$sex == in_sex]) 
+  lx[1] <- as.numeric(in_idata$population[in_idata$age == in_mid_age & in_idata$sex == in_sex]) 
   
   # number died in year 1 simulation
   

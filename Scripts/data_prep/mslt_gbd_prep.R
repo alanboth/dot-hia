@@ -286,9 +286,7 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     # BZ: this is correct
     rename(pyld_rate=ylds_rate_allc_adj_1)
   
-  ## Rename population to match run_life table code
-  
-  mslt_df_wider$population_number <- mslt_df_wider$population
+
   
   ### Add dismod outputs rates per one
   dismod_cancers <- read.csv(dismod_output_cancers, as.is=T, fileEncoding="UTF-8-BOM")
