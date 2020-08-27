@@ -5,17 +5,6 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 rm(list = ls())
 library(devtools)
 
-# ltpa= leisure time physical activity
-
-
-# Generate death rates for the population
-source("Scripts/data_prep/death_rates_prep.R")
-death_rates <- calculateDeathRates(
-  population_deaths="Data/Population and deaths/population_deaths.csv"
-)
-write.csv(death_rates,"Data/Processed/deaths_melbourne.csv", row.names=F, quote=F)
-
-
 source("Scripts/data_prep/ithim_gbd_prep.R")
 # this outputs a list containing gbd_melbourne and population_melbourne
 GBDandPopulation <- calculateGBDandPopulation(
@@ -67,3 +56,17 @@ write.csv(incidence_trends_f, "Data/Processed/mslt/incidence_trends_f.csv", row.
 write.csv(incidence_trends_m, "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
 write.csv(mortality_trends_f, "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
 write.csv(mortality_trends_m, "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+
+
+# ltpa= leisure time physical activity
+
+
+# Generate death rates with projections
+
+
+source("Scripts/data_prep/deaths_rates_prep.R")
+### DO a lot here? 
+deaths_Vic <- GetDeathsRates( 
+  deaths="Data/Population and deaths/projections.xls", 
+  location="Victoria"
+)
