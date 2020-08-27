@@ -10,7 +10,7 @@ GetDeathsRates <- function(deaths, location){
 
 options(scipen=999)
 deaths="Data/Population and deaths/projections.xls"
-location= "Australia" #"Victoria" or any state of interest.
+location= "Victoria" #"Victoria" or any state of interest.
 
 data_male <- readxl::read_xls(deaths, sheet = "Table 5", range = "A7:K5107") %>% 
   select(Year, Age, location) %>% 
