@@ -39,8 +39,8 @@ options(scipen=999)
 # NSAMPLES <- 2000 #activate for Monte Carlo simulation
 MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
 MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
-MMET_MOD <- 4 ## TO DO: GET Uncertain parameters
-MMET_VIG <- 6.5 ## TO DO: GET Uncertain parameters
+MMET_MOD <- 3.5 ## TO DO: GET Uncertain parameters
+MMET_VIG <- 7 ## TO DO: GET Uncertain parameters
 ### TO DOL ADD inputs with uncertainty for mmets_other activities, may need to separate below moderate and vigorous PA
 
 ## TO DO: Calculate SD from CI, see Erzats (<<- I think this command assigns the variables to the global environment which is useful for running multiple simulations )
@@ -55,10 +55,19 @@ PA_DOSE_RESPONSE_QUANTILE <- F # Generates random numbers for each of the Relati
 
 ############################## 0) Inputs MSLT (from runDataPrepMSLT) ###############################################
 
-### Melbourne
-mslt_melbourne="Data/Processed/mslt/mslt_df.csv"
-MSLT_DF <- read.csv(mslt_melbourne,as.is=T,fileEncoding="UTF-8-BOM")
-### Australia wide (to do)
+### MSLT_general (Alan, now population is for Melbourne, we need to create files that pick up Melbourne and Australia pop)
+mslt_general="Data/Processed/mslt/mslt_df.csv"
+MSLT_DF <- read.csv(mslt_general,as.is=T,fileEncoding="UTF-8-BOM")
+
+### Death rates specific to Melbourne
+death_rates <- bind_rows(
+  read.csv("Data/Processed/deaths_rates_males.csv",as.is=T,fileEncoding="UTF-8-BOM"),
+  read.csv("Data/Processed/deaths_rates_females.csv",as.is=T,fileEncoding="UTF-8-BOM")
+)
+### Deaths rates specific to Australia
+
+
+
 
 ############################## 1) Run scenarios ###################################################################
 
@@ -198,17 +207,7 @@ i_sex <- c('male', 'female')
 ###################### 7) Run rest ##############################################################################
 source("Scripts/ithim-r_wrappers.R")
 
-# PLACE HOLDER
-# pif_expanded_1 <- read.csv("Data/Processed/pif_expanded.csv",as.is=T,fileEncoding="UTF-8-BOM")
-
-# FROM health_burden_2 ALAN, I still need to check why the new Pifs are not working when runnig scenario disease life tables
 pif_expanded <- read.csv("Data/Processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
-
-death_rates <- bind_rows(
-  read.csv("Data/Processed/deaths_rates_males.csv",as.is=T,fileEncoding="UTF-8-BOM"),
-  read.csv("Data/Processed/deaths_rates_females.csv",as.is=T,fileEncoding="UTF-8-BOM")
-)
-
 
 # ---- chunk-2 ----
 
