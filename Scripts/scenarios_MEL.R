@@ -1,3 +1,4 @@
+
 #### Function to create scenario trips to use in mslt_code
 
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
@@ -7,7 +8,7 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
 
-calculateScenario <- function(trips_melbourne = in_data, 
+calculateScenarioMel <- function(trips_melbourne = in_data, 
                               age_input = (15:98) , ### replace with age grouping that matched age cohorts
                               sex_input = c("male", "female"), 
                               original_mode = "car" , # Just car trips can be replaced
