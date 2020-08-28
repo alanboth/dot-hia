@@ -248,6 +248,7 @@ age_sex_cohorts <- crossing(data.frame(age=c(17, 22, 27, 32, 37, 42, 47, 52, 57,
 # tmp <- mapply(RunLifeTable, c(MSLT_DF,MSLT_DF), c('male','female'), c(17,17) )
 
 
+
 index <- 1
 
 for (i in 1:nrow(age_sex_cohorts)){

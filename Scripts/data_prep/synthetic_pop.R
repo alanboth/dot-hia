@@ -302,7 +302,7 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     
     dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, ltpa_marg_met,
            work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt, dem_index)
+           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt)
   
   return(persons_pa)
 }
