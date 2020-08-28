@@ -4,8 +4,8 @@ calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKI
   # matched_pop_location = "Data/Processed/matched_pop.csv"
   # MMET_CYCLING = 4.63
   # MMET_WALKING = 2.53
-  # MMET_MOD = 4
-  # MMET_VIG = 6.5
+  # MMET_MOD = 3.5
+  # MMET_VIG = 7
 
   synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::mutate(participant_id = row_number())
@@ -23,5 +23,3 @@ calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKI
   
   return(mmets_pp)
 }
-
-

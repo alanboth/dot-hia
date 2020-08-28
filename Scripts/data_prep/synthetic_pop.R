@@ -173,15 +173,15 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
 # PA PERSON AND HOUSEHOLD FILE
 ### Create variables to match with travel survey and for pa analysis
 calculatePersonsPA <- function(pa_location,hh_location) {
-  pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
-  hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
+  # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
+  # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 
 
   pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
 
     dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
            EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
-           EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH) %>%
+           EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH, NHIFINWT) %>%
  mutate_all(funs(type.convert(replace(., .== 99997, 0)))) %>%
     mutate_all(funs(type.convert(replace(., .== 99998, 0))))
 
@@ -275,9 +275,68 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                       (EXWLKTME + EXLWMMIN + EXLWVMIN*2) >= 150),
                                    "Yes", "No")) %>%
     mutate(pa_guide_older_adults = ifelse(EXNUDAYW >= 5 & EXNUDTH >=5, "Yes", "No")) %>%
-    dplyr::select(ABSHIDB, age_group, sex, ses, walk_base, work_status, ltpa_marg_met,
+    
+    ## Add age group variable
+    mutate(age_group_scen = case_when(age_group == 1 ~ "0 to 4",
+                                 age_group == 2 ~ "5 to 9",
+                                 age_group == 3 ~ "10 to 14",
+                                 age_group == 4 ~ "15 to 19", 
+                                 age_group == 5 ~ "15 to 19",
+                                 age_group == 6 ~ "20 tp 24",
+                                 age_group == 7 ~ "25 to 29", 
+                                 age_group == 8 ~ "30 to 34", 
+                                 age_group == 9 ~ "35 to 39",
+                                 age_group == 10 ~ "40 to 44",
+                                 age_group == 11 ~ "45 to 49", 
+                                 age_group == 12 ~ "50 to 54",
+                                 age_group == 13 ~ "55 to 59",
+                                 age_group == 14 ~ "60 to 64", 
+                                 age_group == 15 ~ "65 to 69",
+                                 age_group == 16 ~ "70 to 74",
+                                 age_group == 17 ~ "75 to 79", 
+                                 age_group == 18 ~ "80 to 84",
+                                 age_group == 19 ~ "85 +")) %>%
+    ### Add dem index
+    mutate(dem_index = case_when(age_group_scen == "0 to 4" & sex ==   "male" ~  1,
+                                 age_group_scen == "5 to 9" & sex ==   "male" ~  2,
+                                 age_group_scen == "10 to 14" & sex ==   "male" ~  3,
+                                 age_group_scen == "20 tp 24" & sex ==   "male" ~  4,
+                                 age_group_scen == "25 to 29" & sex ==   "male" ~  5,
+                                 age_group_scen == "30 to 34" & sex ==   "male" ~  6,
+                                 age_group_scen == "35 to 39" & sex ==   "male" ~  7,
+                                 age_group_scen == "40 to 44" & sex ==   "male" ~  8, 
+                                 age_group_scen == "45 to 49" & sex ==   "male" ~  9,
+                                 age_group_scen == "50 to 54" & sex ==   "male" ~ 10,
+                                 age_group_scen == "55 to 59" & sex ==   "male" ~ 11, 
+                                 age_group_scen == "60 to 64" & sex ==   "male" ~ 12,
+                                 age_group_scen == "65 to 69" & sex ==   "male" ~ 13, 
+                                 age_group_scen == "70 to 74" & sex ==   "male" ~ 14, 
+                                 age_group_scen == "75 to 79" & sex ==   "male" ~ 15,
+                                 age_group_scen == "80 to 84" & sex ==   "male" ~ 16,
+                                 age_group_scen == "85 +" & sex ==   "male" ~ 17,
+                                 age_group_scen == "0 to 4" & sex ==   "female" ~  18,
+                                 age_group_scen == "5 to 9" & sex ==   "female" ~  19,
+                                 age_group_scen == "10 to 14" & sex ==   "female" ~  20,
+                                 age_group_scen == "20 tp 24" & sex ==   "female" ~  21,
+                                 age_group_scen == "25 to 29" & sex ==   "female" ~  22,
+                                 age_group_scen == "30 to 34" & sex ==   "female" ~  23,
+                                 age_group_scen == "35 to 39" & sex ==   "female" ~  24,
+                                 age_group_scen == "40 to 44" & sex ==   "female" ~  25, 
+                                 age_group_scen == "45 to 49" & sex ==   "female" ~  26,
+                                 age_group_scen == "50 to 54" & sex ==   "female" ~ 27,
+                                 age_group_scen == "55 to 59" & sex ==   "female" ~ 28, 
+                                 age_group_scen == "60 to 64" & sex ==   "female" ~ 29,
+                                 age_group_scen == "65 to 69" & sex ==   "female" ~ 30, 
+                                 age_group_scen == "70 to 74" & sex ==   "female" ~ 31, 
+                                 age_group_scen == "75 to 79" & sex ==   "female" ~ 32,
+                                 age_group_scen == "80 to 84" & sex ==   "female" ~ 33,
+                                 age_group_scen == "85 +" & sex ==   "female" ~ 34)) %>%
+    
+    rename(participant_wt = NHIFINWT) %>%
+    
+    dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, ltpa_marg_met,
            work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-           pa_guide_older_adults, mod_hr, vig_hr, walk_rc)
+           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt, dem_index)
   
   return(persons_pa)
 }

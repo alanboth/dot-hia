@@ -75,7 +75,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
     }
   }
   
-  mmets_pp <- read.csv(mmets_pp_location,as.is=T,fileEncoding="UTF-8-BOM")
+  mmets_pp <- mmets_pp_location ### Alan, I changed here, as in mslt mmets have uncertainty, so should not be read from fixed file
   DISEASE_INVENTORY <-  read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   # filtering down to columns with 'mmet' in their name
@@ -97,13 +97,13 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 }
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
-  disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
-  demographic_location="Data/Processed/DEMO.csv"
-  combined_AP_PA=F
-  calculate_AP=F
+  # ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
+  # disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
+  # demographic_location="Data/Processed/DEMO.csv"
+  # combined_AP_PA=F
+  # calculate_AP=F
 
-  ind_ap_pa <- read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM")
+  ind_ap_pa <- ind_ap_pa_location  #read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM") ## Alan I removed read as this inputs will have uncertainy
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
   
