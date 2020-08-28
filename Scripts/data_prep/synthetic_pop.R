@@ -296,41 +296,7 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                  age_group == 17 ~ "75 to 79", 
                                  age_group == 18 ~ "80 to 84",
                                  age_group == 19 ~ "85 +")) %>%
-    ### Add dem index
-    mutate(dem_index = case_when(age_group_scen == "0 to 4" & sex ==   "male" ~  1,
-                                 age_group_scen == "5 to 9" & sex ==   "male" ~  2,
-                                 age_group_scen == "10 to 14" & sex ==   "male" ~  3,
-                                 age_group_scen == "20 tp 24" & sex ==   "male" ~  4,
-                                 age_group_scen == "25 to 29" & sex ==   "male" ~  5,
-                                 age_group_scen == "30 to 34" & sex ==   "male" ~  6,
-                                 age_group_scen == "35 to 39" & sex ==   "male" ~  7,
-                                 age_group_scen == "40 to 44" & sex ==   "male" ~  8, 
-                                 age_group_scen == "45 to 49" & sex ==   "male" ~  9,
-                                 age_group_scen == "50 to 54" & sex ==   "male" ~ 10,
-                                 age_group_scen == "55 to 59" & sex ==   "male" ~ 11, 
-                                 age_group_scen == "60 to 64" & sex ==   "male" ~ 12,
-                                 age_group_scen == "65 to 69" & sex ==   "male" ~ 13, 
-                                 age_group_scen == "70 to 74" & sex ==   "male" ~ 14, 
-                                 age_group_scen == "75 to 79" & sex ==   "male" ~ 15,
-                                 age_group_scen == "80 to 84" & sex ==   "male" ~ 16,
-                                 age_group_scen == "85 +" & sex ==   "male" ~ 17,
-                                 age_group_scen == "0 to 4" & sex ==   "female" ~  18,
-                                 age_group_scen == "5 to 9" & sex ==   "female" ~  19,
-                                 age_group_scen == "10 to 14" & sex ==   "female" ~  20,
-                                 age_group_scen == "20 tp 24" & sex ==   "female" ~  21,
-                                 age_group_scen == "25 to 29" & sex ==   "female" ~  22,
-                                 age_group_scen == "30 to 34" & sex ==   "female" ~  23,
-                                 age_group_scen == "35 to 39" & sex ==   "female" ~  24,
-                                 age_group_scen == "40 to 44" & sex ==   "female" ~  25, 
-                                 age_group_scen == "45 to 49" & sex ==   "female" ~  26,
-                                 age_group_scen == "50 to 54" & sex ==   "female" ~ 27,
-                                 age_group_scen == "55 to 59" & sex ==   "female" ~ 28, 
-                                 age_group_scen == "60 to 64" & sex ==   "female" ~ 29,
-                                 age_group_scen == "65 to 69" & sex ==   "female" ~ 30, 
-                                 age_group_scen == "70 to 74" & sex ==   "female" ~ 31, 
-                                 age_group_scen == "75 to 79" & sex ==   "female" ~ 32,
-                                 age_group_scen == "80 to 84" & sex ==   "female" ~ 33,
-                                 age_group_scen == "85 +" & sex ==   "female" ~ 34)) %>%
+
     
     rename(participant_wt = NHIFINWT) %>%
     

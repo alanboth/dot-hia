@@ -188,7 +188,7 @@ pif_MEL <- health_burden_2(
   dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% ### ALAN, I added some lines to make it compatible with the code for running disease_life_tables
   dplyr::mutate(age=rep(seq(16,100,1), times = 2))
 
-### Australia (Belen to fix demo index to match age groups)
+### Australia (Belen to fix demo index to match age groups) 
 # 
 # pif_AUS <- health_burden_2(
 #   ind_ap_pa_location=RR_PA_calculations_AUS,
