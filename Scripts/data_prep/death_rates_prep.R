@@ -1,31 +1,34 @@
 ## Mortality rates are from the 3222.0 Population Projections, Australia, 2017 (base) – 2066.
 ### Original data probability rates are converted to rates as these are the requiered inputs for the PMSLT
-### Rates are per age and sex group with projections up to year 2066 based on medium improvements in life expectancy from ABS.
+### Rates are per age and sex group with projections up to year 2066 based on medium and high improvements in life expectancy from ABS.
 
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(readxl)) # for reading excel files
 
 rm (list = ls())
-GetDeathsRates <- function(deaths, location){
+GetDeathsRates <- function(deaths, location, assumption){
 
 options(scipen=999)
-deaths="Data/Population and deaths/projections.xls"
-location= "Victoria" #"Victoria" or any state of interest.
+# deaths="Data/Population and deaths/projections.xls"
+# location= "Victoria" #"Victoria" or any state of interest.
+# assumption="medium"
 
-data_male <- readxl::read_xls(deaths, sheet = "Table 5", range = "A7:K5107") %>% 
-  select(Year, Age, location) %>% 
-  mutate(rate = -(log(1-.[3]))) %>% # convert to rates 
+SHEET= ifelse(assumption == "high", "Table 4", "Table 5")
+
+data_male <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:K5107") %>% 
+  dplyr::select(Year, Age, location) %>% 
+  mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
   mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
                                    Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
-  select(rate, join_variable)
+  dplyr::select(rate, join_variable)
 
-data_female <- readxl::read_xls(deaths, sheet = "Table 5", range = "A7:B5107") %>% 
-  bind_cols(readxl::read_xls(deaths, sheet = "Table 5", range = "M7:U5107")) %>%
-  select(Year, Age, location) %>% 
-  mutate(rate = -(log(1-1-.[,3]))) %>% # convert to rates 
+data_female <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:B5107") %>% 
+  bind_cols(readxl::read_xls(deaths, sheet = SHEET, range = "M7:U5107")) %>%
+  dplyr::select(Year, Age, location) %>% 
+  mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
   mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
                                    Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
-  select(rate, join_variable)
+  dplyr::select(rate, join_variable)
 
 #Age cohorts
 
@@ -66,7 +69,7 @@ for (age in age_cohort) {
   
   year=seq(from =2017, to = (2017  + (100-age)), by = 1) # min age modelled is 17 and we assume that cohort live up to 100
   age = seq(age, to = 100, by =1)
-  sex ="male"
+  sex ="female"
   
   females_deaths[[index]] <- data.frame(year, age, sex) %>%  
     mutate(join_variable = case_when(year < 2067 ~ paste(year, age, sep = "_"),
