@@ -75,5 +75,5 @@ names(pa_melbourne)[names(pa_melbourne)=="ABSHIDB"] <- "id"
 
 
 write_csv(pa_melbourne, (paste0(getwd(), "/Data/Processed/pa_melbourne.csv")))
-write_rds(pa_melbourne, (paste0(getwd(), "/Data/Processed/pa_melbourne.Rds")))
+
 

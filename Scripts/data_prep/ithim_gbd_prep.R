@@ -1,4 +1,4 @@
-### Prepare gbd data from IHME for ithimr
+### Prepare gbd and population data for ithimr
 
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
@@ -17,8 +17,8 @@ suppressPackageStartupMessages(library(stringr)) # for splitting strings
 # max_age (=number, e.g. 49)
 
 calculateGBDandPopulation <- function(gbd_melbourne_ithimr_location,population_melbourne_abs_location) {
-  # gbd_melbourne_ithimr_location="Data/gbd/gbd_melbourne_ithimr.csv"
-  #  population_melbourne_abs_location="Data/Processed/population_melbourne_abs.csv"
+  # gbd_melbourne_ithimr_location="Data/original/gbd/gbd_ithimr.csv"
+  # population_melbourne_abs_location="Data/original/abs/population_melbourne_abs.csv"
   
   # Tidy POPULATION to match ITHIMR code
   population <- read.csv(population_melbourne_abs_location, as.is=T,

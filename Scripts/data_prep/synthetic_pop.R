@@ -93,8 +93,8 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
 
 ### trips_melbourne
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
-     # travel_data_location="Data/Processed/travel_data.csv"
-     # scenario_location="Data/Processed/trips_melbourne_scenarios.csv"
+     # travel_data_location="Data/processed/travel_data.csv"
+     # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
   
 
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
@@ -320,41 +320,18 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 # walk_trans
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-    # pa_location="Data/Processed/persons_pa.csv"
-    # persons_travel_location="Data/Processed/persons_travel.csv"
+    pa_location="Data/processed/persons_pa.csv"
+    persons_travel_location="Data/processed/persons_travel.csv"
   
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
   persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
-  # sort(unique(persons_pa$age_group))
-  # sort(unique(persons_travel$age_group))
-  # sort(unique(persons_pa$sex))
-  # sort(unique(persons_travel$sex))
-  # sort(unique(persons_pa$ses))
-  # sort(unique(persons_travel$ses))
-  # sort(unique(persons_pa$walk_base))
-  # sort(unique(persons_travel$walk_base))
-  # sort(unique(persons_pa$work_status))
-  # sort(unique(persons_travel$work_status))
-  
-  # persons_pa_match <- persons_pa %>%
-  #   mutate(age_range=cut(age, breaks=seq(0,20,4))) 
-  # 
-  # persons_travel_match <- persons_travel %>%
-  #   mutate(age_range=cut(age, breaks=seq(0,20,4)))
-  # 
-  # # selecting the match variables and the ones we'll join
-  # persons_pa_match <- persons_pa %>%
-  #   select(age_group, sex, ses, walk_base, work_status, ltpa_marg_met,
-  #          work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-  #          pa_guide_older_adults)
-  
-  
   # This joins the two tables based on the match variables. This is all of the 
   # possible group combinations. We then assign a unique per group number.
   # Some people have no viable matches, so using a left join means that these
   # people will have NA for their values. I'd suggest using wider age ranges.
+  
   persons_matched <- left_join(persons_travel, persons_pa,
                                by=c("age_group", "sex", "ses", "walk_base", "work_status")) %>% 
     group_by(persid) %>%
@@ -432,10 +409,10 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
                                  age >= 90 & age <=  94 & sex == "female" ~ 33,
                                  age >= 85 & age <= 120 & sex == "female" ~ 34))
   
-  ### Select variables 
+  ### Select variables ### Keep participant_wt for travel survey
   
   persons_matched_final <- persons_matched_final %>%
-    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status,
+    dplyr::select(persid, participant_wt.x, age, sex, ses, dem_index, work_status,
            occupation_cat, industry_cat, work_full, study_full, mod_hr, vig_hr, walk_rc,
            work_ltpa_marg_met, walk_trans,
            
@@ -461,7 +438,7 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   
   return(persons_matched_final)
 }
-# write_csv(persons_matched_final, "Data/Processed/matched_pop.csv")
-# write_rds(persons_matched_final, "Data/Processed/matched_pop.Rds")
+# write_csv(persons_matched_final, "Data/processed/matched_pop.csv")
+
 
 

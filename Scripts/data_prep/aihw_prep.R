@@ -1,17 +1,16 @@
 
 # Generate incidence and mortality inputs from AIHW data for dismod/disbayes processing
-# Data sources: 
-# Methods: 
+### I removed function, this is only run once to generate inputs for dismod, which is an external process
 
 suppressPackageStartupMessages(library(readxl)) # for reading excel files
 suppressPackageStartupMessages(library(stringr)) # for splitting strings
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
-calculateInputsDismodAIHW <- function(incidence_AIHW, mortality_AIHW, population_deaths_location) {
-# incidence_AIHW="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx"
-# mortality_AIHW="Data/aihw/cancer_mortality_AIHW_with_projections.xlsx"
-# population_deaths_location="Data/Population and deaths/population_deaths.csv"
+# calculateInputsDismodAIHW <- function(incidence_AIHW, mortality_AIHW, population_deaths_location) {
+incidence_AIHW="Data/original/aihw/cancer_incidence_AIHW_with_projections.xlsx"
+mortality_AIHW="Data/original/aihw/cancer_mortality_AIHW_with_projections.xlsx"
+population_deaths_location="Data/original/abs/population_deaths.csv"
 
 
 ### Incidence
@@ -21,7 +20,7 @@ calculateInputsDismodAIHW <- function(incidence_AIHW, mortality_AIHW, population
   mutate(Count = as.numeric(Count)) %>%
   mutate(rate = as.numeric(rate)) %>%
   mutate(rate = rate/100000) %>%
-  filter(disease %in% c("Breast cancer", "Colon cancer", "Lung cancer", "Uterine cancer")) %>%
+  dplyr::filter(disease %in% c("Breast cancer", "Colon cancer", "Lung cancer", "Uterine cancer")) %>%
   mutate(disease = case_when(disease == "Breast cancer" ~ "brsc", 
                              disease =="Colon cancer" ~ "carc", 
                              disease =="Lung cancer" ~ "tbalc", 
@@ -44,14 +43,14 @@ incidence_97 <- filter(incidence_AIHW, age_cat == 92) %>%
 incidence_AIHW <- incidence_AIHW %>%
   mutate(Count=replace(Count, age_cat== 92, Count/2)) %>% ## divide age 92 counts by 2
   rbind(incidence_97) %>%
-  select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
+  dplyr::select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
   rename(number = Count) %>%
   `names<-`(tolower(names(.))) %>%
   pivot_wider(id_cols = c(sex, year, disease, age_cat, number, rate, `icd10 codes`), ### ALAN: Pivot wider is doing something funny with age_cat
               values_from = c(rate, number), names_from = c(disease),
               names_prefix = "incidence_aihw", 
               names_glue = "{names_prefix}_{.value}_{disease}") %>%
-              filter(sex != "Persons") %>%
+              dplyr::filter(sex != "Persons") %>%
               mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
               mutate(sex_age_cat = paste(tolower(sex), age_cat, sep = "_")) 
 
@@ -64,8 +63,7 @@ incidence_AIHW_dismod <- filter(incidence_AIHW, year == 2017) %>%
   group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
   summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
 
-
-# write.csv(incidence_AIHW_dismod, "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
+write.csv(incidence_AIHW_dismod, "Data/dismod/incidence_AIHW_dismod.csv", row.names=F, quote=T)
 
 
 ### Mortality 
@@ -76,13 +74,13 @@ mortality_AIHW <- readxl::read_xlsx(mortality_AIHW, sheet = 2, range = cell_rows
   mutate(Count = as.numeric(Count)) %>%
   mutate(rate = as.numeric(rate)) %>%
   mutate(rate = rate/100000) %>%
-  filter(disease %in% c("Breast cancer", "Colon cancer", "Lung cancer", "Uterine cancer")) %>%
+  dplyr::filter(disease %in% c("Breast cancer", "Colon cancer", "Lung cancer", "Uterine cancer")) %>%
   mutate(disease = case_when(disease == "Breast cancer" ~ "brsc", 
                              disease =="Colon cancer" ~ "carc", 
                              disease =="Lung cancer" ~ "tbalc", 
                              disease =="Uterine cancer" ~ "utrc")) %>%
-  filter(Year %in% c(2010:2020)) %>%
-  filter(`Age group (years)` %in%  c("15–19", "20–24", "25–29", "30–34", "35–39", "40–44", "45–49",
+  dplyr::filter(Year %in% c(2010:2020)) %>%
+  dplyr::filter(`Age group (years)` %in%  c("15–19", "20–24", "25–29", "30–34", "35–39", "40–44", "45–49",
                                      "50–54", "55–59", "60–64", "65–69", "70–74", "75–79", "80–84", "85–89","90+")) %>% 
   rename(age = `Age group (years)`) %>%
   mutate(age=replace(age, age=="90+", 90L)) %>%
@@ -99,14 +97,14 @@ mortality_97 <- filter(mortality_AIHW, age_cat == 92) %>%
 mortality_AIHW <- mortality_AIHW %>%
   mutate(Count=replace(Count, age_cat== 92, Count/2)) %>%
   rbind(mortality_97) %>%
-  select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
+  dplyr::select(Sex, Year, disease, age_cat, Count, rate, `ICD10 codes`) %>%
   rename(number = Count) %>%
   `names<-`(tolower(names(.))) %>%
   pivot_wider(id_cols = c(sex, year, disease, age_cat, number, rate, `icd10 codes`), 
               values_from = c(rate, number), names_from = c(disease),
               names_prefix = "mortality_aihw", 
               names_glue = "{names_prefix}_{.value}_{disease}") %>%
-  filter(sex != "Persons") %>%
+  dplyr::filter(sex != "Persons") %>%
   mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
   mutate(sex_age_cat = paste(tolower(sex), age_cat, sep = "_"))
 
@@ -114,7 +112,8 @@ mortality_AIHW <- mortality_AIHW %>%
 mortality_AIHW_dismod <- filter(mortality_AIHW, year == 2017) %>%
   group_by(sex_age_cat) %>%                                 ## this step is to remove all NAs
   summarise_all(funs(if(is.numeric(.)) sum(., na.rm = TRUE) else first(.)))
-# write.csv(mortality_AIHW_dismod, "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
+
+write.csv(mortality_AIHW_dismod, "Data/dismod/mortality_AIHW_dismod.csv", row.names=F, quote=T)
 
 
 
@@ -126,7 +125,7 @@ population_and_deaths <- population_and_deaths %>%
   ### Ages to numeric. Need to convert to a character first
   mutate(Age=as.numeric(as.character(Age)))
 
-### Keep data for Victoria, one year age intervals, last three years of data,
+
 ### population numbers and deaths numbers
 
 population_and_deaths <- population_and_deaths %>% 
@@ -139,7 +138,8 @@ population_and_deaths <- population_and_deaths %>%
                 values_from = c(Value), names_from = c(Measure)) %>%
                 mutate(rate=Deaths/Population) %>% 
                 arrange(Sex, Age)
-# write.csv(population_and_deaths , "Data/Processed/mortality_pop_AIHW.csv", row.names=F, quote=T)
 
-return(list(incidence_AIHW_dismod, mortality_AIHW_dismod, population_and_deaths))
-}
+write.csv(population_and_deaths , "Data/dismod/mortality_pop_AIHW.csv", row.names=F, quote=T)
+# 
+# return(list(incidence_AIHW_dismod, mortality_AIHW_dismod, population_and_deaths))
+# }
