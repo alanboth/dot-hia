@@ -57,7 +57,7 @@ males_deaths[[index]] <- data.frame(year, age, sex) %>%
 
 index <- index +1
 }
-deaths_males <- plyr::ldply(males_deaths, rbind)
+deaths_males <- plyr::ldply(males_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
 ### FEMALES
 # Create list with all death rates for males from 17 to 97 age cohorts
 
@@ -81,7 +81,7 @@ for (age in age_cohort) {
   index <- index +1
 }
 
-deaths_females <- plyr::ldply(females_deaths, rbind)
+deaths_females <- plyr::ldply(females_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
 
 females_deaths <- NULL
 males_deaths <- NULL
