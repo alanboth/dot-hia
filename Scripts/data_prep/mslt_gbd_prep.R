@@ -140,16 +140,16 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
                                age == 97 ~ 97))
   
   
-  
-  ### Add mortality rate all cause from Victoria (best available data, no data for Melbourne, average over three yrs 2016-18)
-  
-  deaths_melbourne <- read.csv(deaths_melbourne_location, as.is=T, fileEncoding="UTF-8-BOM") %>%
-    mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
-    mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
-    rename(mx = rate) %>%
-    dplyr::select(sex_age_cat, mx)
-  
-  mslt_df <- left_join(mslt_df, deaths_melbourne)
+  # BZ: removed, option to choose death rate from locations in mslt_code
+  # ### Add mortality rate all cause from Victoria (best available data, no data for Melbourne, average over three yrs 2016-18)
+  # 
+  # deaths_melbourne <- read.csv(deaths_melbourne_location, as.is=T, fileEncoding="UTF-8-BOM") %>%
+  #   mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
+  #   mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
+  #   rename(mx = rate) %>%
+  #   dplyr::select(sex_age_cat, mx)
+  # 
+  # mslt_df <- left_join(mslt_df, deaths_melbourne)
   
   
   ### Interpolate rates  
@@ -210,9 +210,9 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     ungroup()
   
   mslt_df_wider <- mslt_df_by_disease %>%
-    dplyr::select(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1,
+    dplyr::select(age,sex,sex_age_cat,population,age_cat,ylds_rate_allc_adj_1,
            disease,deaths_rate,ylds_rate,dw_adj)%>%
-    pivot_wider(id_cols = c(age,sex,sex_age_cat,population,age_cat,mx,ylds_rate_allc_adj_1),
+    pivot_wider(id_cols = c(age,sex,sex_age_cat,population,age_cat,ylds_rate_allc_adj_1),
                 names_from=disease,
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
     # AB: I might have this wrong

@@ -1,6 +1,5 @@
-## Mortality rates are from the 3222.0 Population Projections, Australia, 2017 (base) – 2066.
-### Original data probability rates are converted to rates as these are the requiered inputs for the PMSLT
-### Rates are per age and sex group with projections up to year 2066 based on medium and high improvements in life expectancy from ABS.
+#### Two sets of mortality rates are prepared: 1) Periodic and 2) Projections, both, for all states and Australia. The periodic rates
+#### are to test the sensitivity of results to using periodic death rates.
 
 
 #### BELEN TO ADD MORE INFO ON THE TWO TYPES OF DATA GENERATES HERE
@@ -9,25 +8,16 @@ suppressPackageStartupMessages(library(readxl)) # for reading excel files
 
 rm (list = ls())
 
+### 1) Periodic death rates
 
-
-### Periodic death rates just for melbourne, leave for now, but of interest only if we want to assess the sensitivtity of results
-### of using periodic vs projected death rates.
-GetDeathRatesPeriodic <- function(population_deaths_location) {
+GetDeathRatesPeriodic <- function(population_deaths_location, location) {
   # population_deaths_location="Data/original/abs/population_deaths.csv"
+  # location="Victoria"
   
   population_deaths <- read.csv(population_deaths_location,fileEncoding="UTF-8-BOM")
   
-  # deaths_rates <- population_deaths %>%
-  #   ### Ages to numeric. Need to convert to a character first
-  #   mutate(Age=as.numeric(as.character(Age)))
-  
-  ### Keep data for Victoria, one year age intervals, last three years of data,
-  ### population numbers and deaths numbers
-  ### Add age group 100 and repeat value for 99, Victoria data has no deaths data for 100.
-  
   deaths_rates <- population_deaths %>% 
-    dplyr::filter(States.and.Territories == "Victoria",
+    dplyr::filter(States.and.Territories == location,
                   Measure %in% c("Population", "Deaths"),
                   Age %in% c(0:99),
                   Time %in% c(2016:2018), 
@@ -58,7 +48,10 @@ GetDeathRatesPeriodic <- function(population_deaths_location) {
     filter(age==99) 
   deaths_rates_final_add_row$age <- 100
   
-  deaths_rates_final <- deaths_rates_final %>% rbind(deaths_rates_final_add_row) 
+  deaths_rates_final <- deaths_rates_final %>% rbind(deaths_rates_final_add_row) %>% mutate(location = location) %>%
+    mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
+    mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
+    rename(mx = rate)
   
   
   return(deaths_rates_final)
@@ -66,7 +59,10 @@ GetDeathRatesPeriodic <- function(population_deaths_location) {
   
 }
 
-### Death rates with projections
+### 2) Death rates with projections
+#### Mortality rates are from the 3222.0 Population Projections, Australia, 2017 (base) – 2066.
+#### Original data probability rates are converted to rates as these are the requiered inputs for the PMSLT
+#### Rates are per age and sex group with projections up to year 2066 based on medium and high improvements in life expectancy from ABS.
 
 GetDeathsRatesProjections <- function(deaths, location, assumption){
 
