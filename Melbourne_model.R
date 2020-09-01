@@ -111,22 +111,6 @@ scenario_trips <- calculateScenarioMel(trips_melbourne = in_data,
  
 write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
 
-#### For Australia wide: walking or/and cycling changes, no more calculations requiered to generate mmets for RRs calculations
-source("Scripts/scenarios_AUS.R")
-source("Scripts/data_prep/synthetic_pop.R")
-mmets_pp_Aus <- calculateMMETSperPerson_AUS (pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv", 
-                                              hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv",
-                                              MMET_CYCLING=MMET_CYCLING,
-                                              MMET_WALKING=MMET_CYCLING,
-                                              MMET_MOD=MMET_CYCLING,
-                                              MMET_VIG=MMET_CYCLING,
-                                              SCEN_WALK = 50, # user defined in minutes
-                                              SCEN_CYCLE = 0, # user defined in minutes
-                                              age_input = c("15 to 19","20 tp 24", "25 to 29", "30 to 34", 
-                                                            "35 to 39", "40 to 44", "45 to 49", "50 to 54", "55 to 59", "60 to 64", 
-                                                            "65 to 69", "70 to 74", "75 to 79", "80 to 84", "85 +" ), # user defined, default, all ages
-                                              sex_input = c("male", "female")) # user defined, default male and female
-
 ############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
 
 source("Scripts/data_prep/synthetic_pop.R")
