@@ -48,17 +48,36 @@ PA_DOSE_RESPONSE_QUANTILE <- F # Generates random numbers for each of the Relati
 
 ############################## 0) Inputs MSLT (from runDataPrepMSLT) ###############################################
 
+### MSLT has fixed inputs and inputs that change by location (death rates and population).
 ### General inputs for all models 
 mslt_general="Data/processed/mslt/mslt_df.csv"
 MSLT_DF <- read.csv(mslt_general,as.is=T,fileEncoding="UTF-8-BOM")
 
-### Death rates: filter location and assumption, MSLT_DF by default has periodic death rates for Melbourne
+#### Get death rates: 1) periodic and 2) projections. RunLifeTable has option to choose which death rates to use. Use projections for baseline
+#### and periodic for sensitivity analysis.
+
+##### Death rates in Australia are available by age (1-yr intervals) and sex for states and Australia wide. Then, choose from
+##### location = "Australia", "Australian Capital Territory", "New South Wales", "Northern Territory", "Queensland",  "South Australia", "Tasmania", "Victoria", "Western Australia"   
+
+#### 1) Death rates periodic (no projections, assumes current death rates are observed in the future) are added to mslt for selected location
+death_rate_periodic="Data/processed/mslt/deaths_periodic.csv"
+death_rate_periodic <- read.csv(death_rate_periodic,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria") %>%
+  dplyr::select("sex_age_cat", "mx")
+MSLT_DF <- left_join(MSLT_DF, death_rate_periodic)
+
+#### 2) Deaths rates with projections can be used as an option in RunLifeTable function, two assumptions are made by ABS for improvements in life
+#### expectancy: high and medium
 death_rates="Data/processed/mslt/deaths_projections.csv"
 death_rates <- read.csv(death_rates,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria", assumption == "medium")
 
-### Population: filter location population and replace in MSLT_DF
-
-
+##### Population: filter location population and replace in MSLT_DF. 
+##### location: "Greater Sydney", "Greater Melbourne", "Greater Brisbane", "Greater Perth", "Greater Adelaide", "Greater Hobart", "Greater Darwin", 
+##### "Australia"
+source("Scripts/data_prep/population_prep.R")
+population <- GetPopulation(
+population_data="Data/original/abs/population_census.xlsx",
+location= "Greater Melbourne")
+MSLT_DF <- left_join(MSLT_DF, population)
 
 ############################## 1) Run scenarios ###################################################################
 #### For Melbourne: trips change, more calculations requiered as below steps to get mmets for RRs calculation

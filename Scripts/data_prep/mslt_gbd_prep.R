@@ -91,33 +91,15 @@ calculateGBDwider <- function(gbd_location) {
   return(gbd_wider)
   
 }  
-
-calculateMSLT <- function(population_melbourne_location, deaths_melbourne_location, gbd_wider_location, dismod_output_cancers, dismod_output_non_cancers) {
-  
-  population_melbourne="Data/original/abs/population_melbourne_abs.csv"
-  # deaths_melbourne_location="Data/Processed/deaths_melbourne.csv"
-  # gbd_wider_location="Data/Processed/gbd_wider.csv"
-  # dismod_output_cancers="Data/Processed/dismod_output_cancers.csv"
-  # dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv"
+### BZ: removed population and death rates, these are now specified in the mslt_code depending on location (Greater capital cities options and australia wide)
+calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_output_non_cancers) {
+  # gbd_wider_location = "Data/processed/mslt/gbd_wider.csv"
+  # dismod_output_cancers = "Data/processed/mslt/dismod_output_cancers.csv"
+  # dismod_output_non_cancers = "Data/processed/mslt/dismod_output_non_cancers.csv"
   
   mslt_df <- data.frame(age = rep(c(0:100), 2), sex = append(rep("male", 101), 
                                                              rep("female", 101))) %>%
-    mutate(sex_age_cat = paste(sex, age, sep="_"))
-  ## Add population numbers (Melbourne population)
-  ### Pop data for Melbourne
-  
-  pop_melb <- read.csv(population_melbourne_location, as.is=T, fileEncoding="UTF-8-BOM") %>%
-    rowwise() %>%
-    mutate(from_age = as.numeric(str_split(age,'-')[[1]][1])) %>%
-    mutate(to_age = as.numeric(str_split(age,'-')[[1]][2])) %>%
-    # using rowwise() turns the dataframe into a tibble
-    data.frame() %>%
-    mutate(age_cat = from_age + 2) %>%
-    mutate(sex_age_cat = paste(tolower(sex), age_cat, sep="_")) %>%
-    dplyr::select(sex_age_cat, population)
-  
-  
-  mslt_df <- mslt_df %>% left_join(pop_melb, by = "sex_age_cat") %>%
+    mutate(sex_age_cat = paste(sex, age, sep="_")) %>%
     mutate(age_cat = case_when(age == 2 ~ 2,
                                age == 7  ~ 7,
                                age == 12  ~ 12,
@@ -139,24 +121,12 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
                                age == 92 ~ 92,
                                age == 97 ~ 97))
   
-  
-  # BZ: removed, option to choose death rate from locations in mslt_code
-  # ### Add mortality rate all cause from Victoria (best available data, no data for Melbourne, average over three yrs 2016-18)
-  # 
-  # deaths_melbourne <- read.csv(deaths_melbourne_location, as.is=T, fileEncoding="UTF-8-BOM") %>%
-  #   mutate(sex = ifelse(sex=="Males", "male", "female")) %>%
-  #   mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
-  #   rename(mx = rate) %>%
-  #   dplyr::select(sex_age_cat, mx)
-  # 
-  # mslt_df <- left_join(mslt_df, deaths_melbourne)
-  
-  
   ### Interpolate rates  
   
   gbd_df <- read.csv(gbd_wider_location, as.is=T, fileEncoding="UTF-8-BOM")
   
   gbd_df[is.na(gbd_df)] <- 0 
+  
   #### Disability weights
   
   # the row sum of all ylds_number_*disease* without ylds_number_allc
@@ -210,9 +180,9 @@ calculateMSLT <- function(population_melbourne_location, deaths_melbourne_locati
     ungroup()
   
   mslt_df_wider <- mslt_df_by_disease %>%
-    dplyr::select(age,sex,sex_age_cat,population,age_cat,ylds_rate_allc_adj_1,
+    dplyr::select(age,sex,sex_age_cat, age_cat,ylds_rate_allc_adj_1,
            disease,deaths_rate,ylds_rate,dw_adj)%>%
-    pivot_wider(id_cols = c(age,sex,sex_age_cat,population,age_cat,ylds_rate_allc_adj_1),
+    pivot_wider(id_cols = c(age,sex,sex_age_cat, age_cat,ylds_rate_allc_adj_1),
                 names_from=disease,
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
     # AB: I might have this wrong
