@@ -53,7 +53,6 @@ GetDeathRatesPeriodic <- function(population_deaths_location, location) {
     mutate(sex_age_cat = paste(tolower(sex), age, sep = "_")) %>%
     rename(mx = rate)
   
-  
   return(deaths_rates_final)
   
   
@@ -65,84 +64,84 @@ GetDeathRatesPeriodic <- function(population_deaths_location, location) {
 #### Rates are per age and sex group with projections up to year 2066 based on medium and high improvements in life expectancy from ABS.
 
 GetDeathsRatesProjections <- function(deaths, location, assumption){
-
-options(scipen=999)
-# deaths="Data/original/abs/projections.xls"
-# location= "Victoria" #"Victoria" or any state of interest.
-# assumption="medium"
-
-SHEET= ifelse(assumption == "high", "Table 4", "Table 5")
-
-data_male <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:K5107") %>% 
-  dplyr::select(Year, Age, location) %>% 
-  mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
-  mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
-                                   Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
-  dplyr::select(rate, join_variable)
-
-data_female <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:B5107") %>% 
-  bind_cols(readxl::read_xls(deaths, sheet = SHEET, range = "M7:U5107")) %>%
-  dplyr::select(Year, Age, location) %>% 
-  mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
-  mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
-                                   Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
-  dplyr::select(rate, join_variable)
-
-#Age cohorts
-
-age_cohort =seq(from = 17, to = 100, by = 5)
-
-
-### MALES
-# Create list with all death rates for males from 17 to 97 age cohorts
-
-males_deaths <- list()
-
-index <- 1
-
-for (age in age_cohort) {
-
-year=seq(from =2017, to = (2017  + (100-age)), by = 1) # min age modelled is 17 and we assume that cohort live up to 100
-age = seq(age, to = 100, by =1)
-sex ="male"
-
-males_deaths[[index]] <- data.frame(year, age, sex) %>%  
-  mutate(join_variable = case_when(year < 2067 ~ paste(year, age, sep = "_"),
-                                   year >= 2067 ~ paste("2066", age, sep = "_"))) %>% # to then create dataset by age cohort. Projected data upto 2066
-  left_join(data_male) %>%
-  mutate(age_cohort = .[1,2])
   
-
-index <- index +1
-}
-deaths_males <- plyr::ldply(males_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
-### FEMALES
-# Create list with all death rates for males from 17 to 97 age cohorts
-
-females_deaths <- list()
-
-index <- 1
-
-for (age in age_cohort) {
+  options(scipen=999)
+  # deaths="Data/original/abs/projections.xls"
+  # location= "Victoria" #"Victoria" or any state of interest.
+  # assumption="medium"
   
-  year=seq(from =2017, to = (2017  + (100-age)), by = 1) # min age modelled is 17 and we assume that cohort live up to 100
-  age = seq(age, to = 100, by =1)
-  sex ="female"
+  SHEET= ifelse(assumption == "high", "Table 4", "Table 5")
   
-  females_deaths[[index]] <- data.frame(year, age, sex) %>%  
-    mutate(join_variable = case_when(year < 2067 ~ paste(year, age, sep = "_"),
-                                     year >= 2067 ~ paste("2066", age, sep = "_"))) %>% # to then create dataset by age cohort. Projected data upto 2066
-    left_join(data_female)  %>%
-    mutate(age_cohort = paste(age))  %>%
-    mutate(age_cohort = .[1,2])
+  data_male <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:K5107") %>% 
+    dplyr::select(Year, Age, location) %>% 
+    mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
+    mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
+                                     Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
+    dplyr::select(rate, join_variable)
   
-  index <- index +1
-}
-
-deaths_females <- plyr::ldply(females_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
-
-females_deaths <- NULL
-males_deaths <- NULL
-return(list(deaths_males, deaths_females))
-
+  data_female <- readxl::read_xls(deaths, sheet = SHEET, range = "A7:B5107") %>% 
+    bind_cols(readxl::read_xls(deaths, sheet = SHEET, range = "M7:U5107")) %>%
+    dplyr::select(Year, Age, location) %>% 
+    mutate(rate = -(log(1-.[[3]]))) %>% # convert to rates 
+    mutate(join_variable = case_when(Year < 2067 ~ paste(Year, Age, sep = "_"),
+                                     Year >= 2067 ~ paste("2066", Age, sep = "_"))) %>% # to then create dataset by age cohort
+    dplyr::select(rate, join_variable)
+  
+  #Age cohorts
+  
+  age_cohort =seq(from = 17, to = 100, by = 5)
+  
+  
+  ### MALES
+  # Create list with all death rates for males from 17 to 97 age cohorts
+  
+  males_deaths <- list()
+  
+  index <- 1
+  
+  for (age in age_cohort) {
+    
+    year=seq(from =2017, to = (2017  + (100-age)), by = 1) # min age modelled is 17 and we assume that cohort live up to 100
+    age = seq(age, to = 100, by =1)
+    sex ="male"
+    
+    males_deaths[[index]] <- data.frame(year, age, sex) %>%  
+      mutate(join_variable = case_when(year < 2067 ~ paste(year, age, sep = "_"),
+                                       year >= 2067 ~ paste("2066", age, sep = "_"))) %>% # to then create dataset by age cohort. Projected data upto 2066
+      left_join(data_male) %>%
+      mutate(age_cohort = .[1,2])
+    
+    
+    index <- index +1
+  }
+  deaths_males <- plyr::ldply(males_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
+  ### FEMALES
+  # Create list with all death rates for males from 17 to 97 age cohorts
+  
+  females_deaths <- list()
+  
+  index <- 1
+  
+  for (age in age_cohort) {
+    
+    year=seq(from =2017, to = (2017  + (100-age)), by = 1) # min age modelled is 17 and we assume that cohort live up to 100
+    age = seq(age, to = 100, by =1)
+    sex ="female"
+    
+    females_deaths[[index]] <- data.frame(year, age, sex) %>%  
+      mutate(join_variable = case_when(year < 2067 ~ paste(year, age, sep = "_"),
+                                       year >= 2067 ~ paste("2066", age, sep = "_"))) %>% # to then create dataset by age cohort. Projected data upto 2066
+      left_join(data_female)  %>%
+      mutate(age_cohort = paste(age))  %>%
+      mutate(age_cohort = .[1,2])
+    
+    index <- index +1
+  }
+  
+  deaths_females <- plyr::ldply(females_deaths, rbind)  %>% mutate(location = location) %>% mutate(assumption = assumption)
+  
+  females_deaths <- NULL
+  males_deaths <- NULL
+  return(list(deaths_males, deaths_females))
+  
 }

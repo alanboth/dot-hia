@@ -6,6 +6,47 @@ suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 rm(list = ls())
 
 
+
+# Generate death rates with projections for Australia and all states
+
+source("Scripts/data_prep/death_rates_prep.R")
+
+location_assumption <- crossing(data.frame(location=c("New South Wales",	"Victoria",	"Queensland",	"South Australia",	
+                                                      "Western Australia",	"Tasmania",	"Northern Territory",	"Australian Capital Territory",	"Australia")),
+                                data.frame(assumption=c("medium", "high")))
+
+### Periodic death rates
+deaths_periodic <- list()
+for (l in c(location_assumption$location)) {
+deaths_periodic[[l]] <- GetDeathRatesPeriodic(
+  population_deaths_location="Data/original/abs/population_deaths.csv", 
+  location = l
+)
+
+}
+
+deaths_periodic <- do.call(rbind, deaths_periodic)
+
+write.csv(deaths_periodic, "Data/processed/mslt/deaths_periodic.csv")
+
+
+### Death rates with projections
+deaths_projections <- list()
+for (i in 1:nrow(location_assumption)) {
+  deaths_projections[[i]] <- GetDeathsRatesProjections( 
+    deaths="Data/original/abs/projections.xls", 
+    location= location_assumption$location[[i]], 
+    assumption= location_assumption$assumption[[i]]
+  )
+  names(deaths_projections)[i] <- paste(location_assumption$location[i], location_assumption$assumption[i], sep = "_")}
+
+### Create large data set with all data
+
+deaths_mslt <- do.call(rbind, deaths_projections)
+deaths_mslt <- do.call(rbind, deaths_mslt)
+
+write.csv(deaths_mslt, "Data/processed/mslt/deaths_projections.csv", row.names=F, quote=T)
+
 source("Scripts/data_prep/mslt_gbd_prep.R")
 
 ### Create disease names and save to use in mslt_code
@@ -16,23 +57,17 @@ disease_names <- calculateDiseaseNames(
 write.csv(disease_names, "Data/processed/mslt/disease_names.csv", row.names=F, quote=T)
 
 
+
 ### Generate mslt data frame and save to use in mslt_code
 gbd_wider <- calculateGBDwider(
   gbd_location="Data/original/gbd/gbd_mslt.csv"
 )
 write.csv(gbd_wider, "Data/processed/mslt/gbd_wider.csv", row.names=F, quote=T)
 
-source("Scripts/data_prep/death_rates_prep.R")
-deaths_melbourne <- GetDeathRatesPeriodic(
-  population_deaths_location="Data/original/abs/population_deaths.csv"
-)
-write.csv(deaths_melbourne, "Data/processed/mslt/deaths_melbourne.csv")
 
 # This function needs a good look, I don't understand enough of about health calculations
 source("Scripts/data_prep/mslt_gbd_prep.R")
 mslt <- calculateMSLT(
-  population_melbourne="Data/original/abs/population_melbourne_abs.csv",
-  deaths_melbourne="Data/processed/mslt/deaths_melbourne.csv", ### BZ: simple version
   gbd_wider="Data/processed/mslt/gbd_wider.csv",
   dismod_output_cancers="Data/processed/mslt/dismod_output_cancers.csv",
   dismod_output_non_cancers="Data/processed/mslt/dismod_output_non_cancers.csv"
@@ -57,27 +92,5 @@ write.csv(incidence_trends_m, "Data/processed/mslt/incidence_trends_m.csv", row.
 write.csv(mortality_trends_f, "Data/processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
 write.csv(mortality_trends_m, "Data/processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
 
-# Generate death rates with projections for Australia and all states
 
-source("Scripts/data_prep/death_rates_prep.R")
-
-location_assumption <- crossing(data.frame(location=c("New South Wales",	"Victoria",	"Queensland",	"South Australia",	
-                                                         "Western Australia",	"Tasmania",	"Northern Territory",	"Australian Capital Territory",	"Australia")),
-                            data.frame(assumption=c("medium", "high")))
-
-deaths_projections <- list()
-for (i in 1:nrow(location_assumption)) {
-  deaths_projections[[i]] <- GetDeathsRatesProjections( 
-  deaths="Data/original/abs/projections.xls", 
-  location= location_assumption$location[[i]], 
-  assumption= location_assumption$assumption[[i]]
-  )
-names(deaths_projections)[i] <- paste(location_assumption$location[i], location_assumption$assumption[i], sep = "_")}
-
-### Create large data set with all data
-
-deaths_mslt <- do.call(rbind, deaths_projections)
-deaths_mslt <- do.call(rbind, deaths_mslt)
-
-write.csv(deaths_mslt, "Data/processed/mslt/deaths_projections.csv", row.names=F, quote=T)
 

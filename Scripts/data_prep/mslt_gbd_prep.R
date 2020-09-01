@@ -93,10 +93,10 @@ calculateGBDwider <- function(gbd_location) {
 }  
 ### BZ: removed population and death rates, these are now specified in the mslt_code depending on location (Greater capital cities options and australia wide)
 calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_output_non_cancers) {
-  # gbd_wider_location = "Data/processed/mslt/gbd_wider.csv"
-  # dismod_output_cancers = "Data/processed/mslt/dismod_output_cancers.csv"
-  # dismod_output_non_cancers = "Data/processed/mslt/dismod_output_non_cancers.csv"
-  
+   # gbd_wider_location = "Data/processed/mslt/gbd_wider.csv"
+   # dismod_output_cancers = "Data/processed/mslt/dismod_output_cancers.csv"
+   # dismod_output_non_cancers = "Data/processed/mslt/dismod_output_non_cancers.csv"
+
   mslt_df <- data.frame(age = rep(c(0:100), 2), sex = append(rep("male", 101), 
                                                              rep("female", 101))) %>%
     mutate(sex_age_cat = paste(sex, age, sep="_")) %>%
@@ -119,7 +119,28 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
                                age == 82  ~ 82,
                                age == 87  ~ 87,
                                age == 92 ~ 92,
-                               age == 97 ~ 97))
+                               age == 97 ~ 97)) %>%
+  
+  dplyr::mutate(age_cat_2 = case_when(age_cat == 2 ~  "0 to 4",
+                                      age_cat == 7 ~  "5 to 9",
+                                      age_cat ==  12 ~ "10 to 14",
+                                      age_cat ==  17  ~ "15 to 19", 
+                                      age_cat ==  22  ~ "20 to 24",
+                                      age_cat ==  27  ~ "25 to 29",
+                                      age_cat ==  32  ~ "30 to 34", 
+                                      age_cat ==  37  ~ "35 to 39", 
+                                      age_cat ==  42  ~ "40 to 44", 
+                                      age_cat ==  47  ~ "45 to 49",
+                                      age_cat ==  52  ~ "50 to 54", 
+                                      age_cat ==  57  ~ "55 to 59", 
+                                      age_cat ==  62  ~ "60 to 64", 
+                                      age_cat ==  67  ~ "65 to 69", 
+                                      age_cat ==  72  ~ "70 to 74",
+                                      age_cat ==  77  ~ "75 to 79", 
+                                      age_cat ==  82  ~ "80 to 84",
+                                      age_cat ==  87  ~ "85 to 89",
+                                      age_cat ==  92  ~ "90 to 94", 
+                                      age_cat ==  97   ~ "95 to 100"))
   
   ### Interpolate rates  
   
@@ -180,9 +201,9 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
     ungroup()
   
   mslt_df_wider <- mslt_df_by_disease %>%
-    dplyr::select(age,sex,sex_age_cat, age_cat,ylds_rate_allc_adj_1,
+    dplyr::select(age,sex,sex_age_cat, age_cat, age_cat_2,ylds_rate_allc_adj_1,
            disease,deaths_rate,ylds_rate,dw_adj)%>%
-    pivot_wider(id_cols = c(age,sex,sex_age_cat, age_cat,ylds_rate_allc_adj_1),
+    pivot_wider(id_cols = c(age,sex,sex_age_cat, age_cat,age_cat_2,ylds_rate_allc_adj_1),
                 names_from=disease,
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
     # AB: I might have this wrong

@@ -9,9 +9,20 @@ library(readr)
 library(data.table)
 library(dplyr)
 
+### Prepare data
+#### GBD data and population
+source("Scripts/data_prep/ithim_gbd_prep.R")
+# this outputs a list containing gbd_melbourne and population_melbourne
+GBDandPopulation <- calculateGBDandPopulation(
+  gbd_melbourne_ithimr_location="Data/original/gbd/gbd_ithimr.csv",
+  population_melbourne_abs_location="Data/original/abs/population_melbourne_abs.csv"
+)
+gbd_melbourne <- GBDandPopulation[[1]]
+population_melbourne <- GBDandPopulation[[2]]
+write.csv(gbd_melbourne,"Data/processed/ithimr/gbd_melbourne.csv", row.names=F, quote=T)
+write.csv(population_melbourne,"Data/processed/ithimr/population_melbourne.csv", row.names=F, quote=T)
+ 
 
-### Get functions
-source(paste0(getwd(),"/Scripts/functions_mslt.R"))
 
 
 ### Run ITHIM set up
@@ -20,8 +31,7 @@ setup_call_summary_filename <- 'setup_call_summary.txt"'
 parameters <- ithimr::run_ithim_setup(
   seed = 1,
   setup_call_summary_filename = 'setup_call_summary.txt',
-  # PATH_TO_LOCAL_DATA = "C:\\Users\\rstudio\\Dropbox\\HIA - RMIT - DOT\\Model\\Data\\Processed\\",
-  PATH_TO_LOCAL_DATA = "Data/Processed/",
+  PATH_TO_LOCAL_DATA = "Data/input/ithimr/",
   AGE_RANGE = c(15,120),
   TEST_WALK_SCENARIO=T, 
   ADD_WALK_TO_BUS_TRIPS=F,

@@ -3,11 +3,12 @@ title: "Including health impacts in transport modelling and economic appraisal"
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document:
-    df_print: paged
-    toc : true
-    number_sections: true
   pdf_document: 
+    df_print: paged
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+  html_document:
     df_print: paged
     toc : true
     number_sections: true
@@ -94,7 +95,7 @@ analytical_framework <- grViz("digraph{
                          
                           label = 'Scenarios'
   
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
                             0[label = 'Physical activity']
                             1[label = 'Private car use']
                             2[label = 'Cycling']
@@ -123,7 +124,7 @@ analytical_framework <- grViz("digraph{
                           color = Gray
                           label = ''
                             
-                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
                             # 5[label = 'Ambient PM2.5']
                             # 6[label = 'On road PM2.5']
                              7[label = 'Physical activity']
@@ -140,7 +141,7 @@ analytical_framework <- grViz("digraph{
                           color = Gray
                           label = 'Relative risks'
                             
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
                             9[label = 'Ischemic heart disease']
                             10[label = 'Stroke']
                             # 11[label = 'COPD']
@@ -161,7 +162,7 @@ analytical_framework <- grViz("digraph{
                           color = Gray
                           label = 'Proportional multi-state life table'
                              
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
                             17[label = 'Disease processes']
                             # 18[label = 'Injuries process']
                             19[label = 'Life table']
@@ -176,12 +177,13 @@ analytical_framework <- grViz("digraph{
                           color = Gray
                           label = 'Outcomes'
                             
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 24, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
                             20[label = 'Incidence cases']
                             21[label = 'Disease deaths']
                             # 22[label = 'Road trauma pYLDs']
                             # 23[label = 'Road trauma deaths']
-                            24[label = 'Life years']
+                            
+                            [label = 'Life years']
                             25[label = 'Health-adjusted life years']
                             26[label = 'Life expectancy']
                             27[label = 'Health-adjusted life expectancy']
@@ -203,7 +205,8 @@ analytical_framework <- grViz("digraph{
                           # {17 18} -> 19
                           17 -> {20 21}
                           # 18 -> {22 23}
-                          19 -> {24 25 26 27}
+                          19 -> {
+                          25 26 27}
                           17 -> 19
                      }")
 
@@ -220,7 +223,9 @@ Table 1 outlines user inputs for each of the models: Melbourne model and Austral
 
 scenarios <- tribble(
 ~"User Input", ~"Melbourne Model", ~"Australia model",
-"Age", "All ages, 18-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-98", "All ages, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99",
+"Age", "All ages, 18-19, 20-
+, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-98", "All ages, 15-19, 20-
+, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99",
 "Sex", "Female, Male, Both",  "Female, Male, Both",
 "Physical activity minutes", "NA", "Number: 0 to xx",
 "Physical activity distance", "NA", "Number: 0 to xx", 
@@ -237,40 +242,22 @@ column_spec(1:3, width = "15em") %>%
 
 ## Potential Impact Fraction
 
-The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. We used PIFs to calculate the average change in incidence of diseases (Figure 2) in the scenarios' diseases' processes. PIFs were derived for: ishcemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R (https://github.com/ITHIM/ITHIM-R) project were used here to calculate individual level RRs for BAU and scenario which where then used to calculate individual level PIFs (\ref{eq1}). Specifically the function to generate relative risks at the individual level for BAU and sceanarios (gen_pa_rr). Inputs of gen_pa_rr are individual marginal metabolics of taks per hour (mMET-hours) per week. All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mmethrs for: colon, breatst and uterine cancers, ishcemic heart disease and stroke; 10 for lung cancer and 32 for stroke) (https://github.com/ITHIM/ITHIM-R). Table 2 oulines RRs mean, lower and upper bounds for each of the modelled diseases from which the samples were taken following normal distributions truncated to zero (https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). mMETs-hours were derived by summing up the product of physical activity duration and intensity [@RN23]. Marginal METs are calculated by subtracting one from the reported METs for a given activity [@RN21].  Individual level PIFs were averaged out by age and sex to modify incidence of diseases (Figure 2). 
-Below, calculations for mMET-hours for the Melbourne and Australian model and method to average out PIFs by age and sex are explined in turn.
+The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. We used PIFs to calculate the average change in incidence of diseases (Figure 2) in the scenarios' diseases' processes. PIFs were derived for: ishcemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R (https://github.com/ITHIM/ITHIM-R) project were used here to calculate individual level RRs for BAU and scenario which where then used to calculate individual level PIFs (\ref{eq1}).From individual level PIFs, age group and sex average PIFs were calculated to modify incidence in the age and sex cohort disease processes' (Figure 3). Specifically the function to generate relative risks at the individual level for BAU and sceanarios (gen_pa_rr). Inputs of gen_pa_rr are individual marginal metabolics of taks per hour (mMET-hours) per week. METs are metabolic equivalent of tasks and measure the energy expenditure required to carry out the physical activity, expressed as a multiple of the resting metabolic rate. Marginal METs only consider energy expended above resting metabolic rate.[@RN21]  All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mMET-hours for: colon, breatst and uterine cancers, ishcemic heart disease and stroke; 10 for lung cancer and 32 for stroke) (https://github.com/ITHIM/ITHIM-R). Table 2 oulines RRs mean, lower and upper bounds for each of the modelled diseases from which the samples were taken following normal distributions truncated to zero (https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). Individual level RRs for BAU and sceanrio and then modelled from the quantile (CHECKING with JAMES). mMETs-hours were derived by summing up the product of physical activity duration and intensity [@RN23].
+Below, calculations for mMET-hours for the Melbourne and Australian model are explained in turn and MET values with associated uncertainty (Table 4).
 
 
 $$
 \begin{align}
-\label{eq1}
  PIF_d= \frac {RR_{dBAU} - RR_{dSCENRIO}} {RR_{dBAU}}
 \end{align}
 $$
-#### Melbourne model
 
-We created a matched population to derive individual mMET-hours per week based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). PA data from the NHS were allocated to each VISTA individual. MET-hours per individual were derived from the sum of the product of hours spent weekly doing transport walking, transport cycling, vigorour PA for leisure and work, moderate PA for leisure and work and walking for leisure by their corresponding mMET-hours. Tranport walking and cycling were sourced from the VISTA survey and the rest from the NHS (Table 2).
-We used the latest VISTA survey conducted across the period 2017-18 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Walking and cycling minutes for each of the VISTA persons (n=7,117) were derived by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages).  The NHS is a representative sample of Australian adults. The data were collected by the Australian Bureau of Statistics and published as the National Health Survey, 2017-18, Basic-CURF [@RN22]. A sample of 21,315 adults was available. Minutes spent doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure during the a week were collected. The three categories are mutually exclusive [@RN24] and were translated to hours per week. Survey respondents were asked about the time they spent doing physical activity in the last week, including walking for transport, walking for recreation, moderate physical activity (excludes walking) and vigorous physical activity. A walking session was only to be recorded if the duration of the session was at least 10 minutes.
-Total mMETs per person for the BAU scenario were derived by translating minutes spent in each of the domains per week to hours and then multiplying by the MET scores [@RN21] minus one. Tables 3 outlines all types of PA activities included, by source, and correspoinding assigned MET values. VISTA individuals were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 3).  
+### Melbourne model
+
+We created a matched population to derive individual mMET-hours per week based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). PA data from the NHS were allocated to each VISTA individual. MET-hours per individual were derived from the sum of the product of hours spent weekly doing transport walking, transport cycling, vigorous PA for leisure and work, moderate PA for leisure and work and walking for leisure by their corresponding mMET-hours scores. Tranport walking and cycling were sourced from the VISTA survey and the rest from the NHS (Table 2).
+We used the latest VISTA survey conducted across the period 2017-18 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Walking and cycling minutes for each of the VISTA persons (n=7,117) were derived by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages).  The NHS is a representative sample of Australian adults. The data were collected by the Australian Bureau of Statistics and published as the National Health Survey, 2017-18, Basic-CURF [@RN22]. A sample of 21,315 adults was available. Survey respondents were asked about the time they spent doing excersice and work related physical activity in the last week, including excersice for leisure and walking for transport. A walking session was only to be recorded if the duration of the session was at least 10 minutes. Minutes spent doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure during the week were used in this analysis. The three categories are mutually exclusive [@RN24] and were translated to hours per week. 
+Total mMETs per person for the BAU scenario were derived by translating minutes spent in each of the PA categories per week to hours and then multiplying by the MET scores [@RN21] minus one. Tables 3 outlines all types of PA activities included, by source, and correspoinding assigned MET scores. VISTA individuals were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 3).  
   
-```{r, echo=FALSE, include=TRUE}
-
-mets <- tribble(
-~"Physical activity", ~"Survey", ~"METs", "Source",
-"Age", "AGE: single year of age recoded to groups to match NHS's groups", "AGEB: 0 - 4 years to 80 - 84 years in five year age groups and 85 years and over years",
-"Sex", "SEX: Male/Female", "SEX: Male/Female",
-"Socio-economic Status", "VISTA data did not provida household SES data. Australian postcode SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles Postal Area code  (POA) [@RN23] was matched to individuals' household POA to assign them an area level IRSD", "SA1SF2DN: SEIFA - Index of Relative Socio-economic Disadvantage - 2016 - SA1 - Deciles - National",
-"Walk for transport", "Whether VISTA person had transport walking trips" ,"EXLWKTNO: Number of times walked for 10 minutes or more for transport in the last week",
-"Work status","ANYWORK: employed, unemployed", "LFSBC (Labour force status): 0. Not applicable (recoded to unemployed), 1. Employed, 2. Unemployed, 3. Not in the labour force (recoded to unemployed)"
-)
-kable(matched_population, booktabs = T, caption = "Table 1: Matched poplation", longtable = TRUE) %>%
-column_spec(1:3, width = "15em") %>%
-  row_spec(0, bold = T) %>%
-  kable_styling()
-```
-
-
-
 ```{r, echo=FALSE, include=TRUE}
 
 matched_population <- tribble(
@@ -287,34 +274,30 @@ column_spec(1:3, width = "15em") %>%
   kable_styling()
 ```
 
-#### Australian model
+### Australian model
+
+The main difference between the Melbourne and Australian model is the calculation of mMETs per person. In the Australian model, only the NHS data was used, above described. Total mMET-hours were derived from all four variables form the NHS described in Table 3 (moderate, vigourus and all walking (for transport and recreation)). 
 
 
 ```{r, echo=FALSE, include=TRUE}
-
-METs <- tribble(
-~"User Input", ~"Melbourne Model", ~"Australia model",
-"Age", "All ages, 18-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-98", "All ages, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99",
-"Sex", "Female, Male, Both",  "Female, Male, Both",
-"Physical activity minutes", "NA", "Number: 0 to xx",
-"Physical activity distance", "NA", "Number: 0 to xx", 
-"Replace mode", "Walking or cycling", "N/A", 
-"Replace distance", "Number: 0 to xx", "N/A", 
-"Trip purpose", "social, buy something, work related, pick-up or drop-off someone, personal business, unknown purpose (at start of day),recreational, pick-up or deliver something, accompany someone,education, other purpose, at or go home, change mode, not stated", "N/A", 
-"Day of the week", "Weekday, Weekend day, both", "N/A"
-)
-kable(scenarios, booktabs = T, caption = "Table 1: Inputs PA-health impacts model online interface", longtable = TRUE) %>%
-column_spec(1:3, width = "15em") %>%
+mets <- tribble(
+~"Physical activity", ~"Survey", ~"mMETs", ~"Source", ~"Model", 
+"Walking for transport", "VISTA 2017-18", "2.53 (1.1)", "ITHIM-R, check with James", "Melbourne", 
+"Cycling for transport", "VISTA 2017-18", "4.63 (1.2)", "ITHIM-R, check with James", "Melbourne",
+"Walk for leisure", "NHS 2017-18", "2.53 (1.1)", "Compedium of PA [@RN21]", "Melbourne and Australia",
+"Walk for transport", "NHS 2017-18", "2.5", "Compedium of PA [@RN21]", "Australia",
+"Total moderate excersice and work", "NHS 2017-18", "3.5", "Compedium of PA [@RN21]", "Australia",
+"Total vigorous excersice and work", "NHS 2017-18", "7", "Compedium of PA [@RN21]", "Australia"
+ )
+kable(mets, booktabs = T, caption = "Table 3: Marginal METs", longtable = TRUE) %>%
+column_spec(1:4, width = "15em") %>%
   row_spec(0, bold = T) %>%
   kable_styling()
 ```
 
-### Some graphs here for distribution of physical actiity comparing melbourne modle and Australia models
-### Travel behaviour
 
 
-
-## Risk
+### Some graphs here for distribution of physical actiity (mets) comparing melbourne modle and Australia models
 
 ## Proportional multi-state life table
 
@@ -475,7 +458,8 @@ PMSLT_graph <- grViz("digraph{
                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted, group = left]
                             edge[color = DarkGray, arrowhead = normal, arrowsize = 1.25]
                             23[label = 'mx']
-                            24[label = 'pyldx']
+                            
+                            [label = 'pyldx']
                             
                           }
                           
@@ -519,7 +503,8 @@ PMSLT_graph <- grViz("digraph{
                    
                    
                     {15 20 23 25} -> 27 
-                    {17 22 24 26} -> 28 
+                    {17 22 
+                    26} -> 28 
                     27 ->7
                     28 -> 11
                      
@@ -558,95 +543,96 @@ As outlined in Table 1, the PMSLT was parametrised with population data for Melb
 
 ```{r,echo=FALSE, message=FALSE}
 
- population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
-                         fileEncoding="UTF-8-BOM") %>%
-    # population should be numeric
-    mutate(population = as.numeric(gsub(",", "", population))) %>%
-    # some ages have space at the end
-    mutate(age = gsub(" ", "", age)) %>%
-    mutate(age = gsub("-", " to ", age)) %>%
-    mutate(sex = tolower(sex)) %>% 
-    rename(`Age cohort` = age, Sex = sex, Population = population) %>%
-    arrange (Sex) %>%
-    pivot_wider(names_from=c("Sex"),
-                values_from=Population)
-
-kable(population, booktabs = T, caption = "Melbourne population in 2017") %>%
- kable_styling(latex_options = c("hold position", "repeat_header"),
-               full_width = F)%>%
-  column_spec(2, width = "15em") %>%
-  column_spec(3, width = "15em") %>%
-  row_spec(0, bold = T) %>%
-  kable_styling()
-
-
-# Deaths
-source("Scripts/data_prep/death_rates_prep.R")
-death_rates <- GetDeathsRates(
-  deaths="Data/Population and deaths/projections.xls"
-)
-
-write.csv(death_rates[[1]], "Data/Processed/deaths_rates_males.csv", row.names=F, quote=T)
-write.csv(death_rates[[2]], "Data/Processed/deaths_rates_females.csv", row.names=F, quote=T)
+#  population <- read.csv("Data/Processed/population_melbourne_abs.csv", as.is=T,
+#                          fileEncoding="UTF-8-BOM") %>%
+#     # population should be numeric
+#     mutate(population = as.numeric(gsub(",", "", population))) %>%
+#     # some ages have space at the end
+#     mutate(age = gsub(" ", "", age)) %>%
+#     mutate(age = gsub("-", " to ", age)) %>%
+#     mutate(sex = tolower(sex)) %>% 
+#     rename(`Age cohort` = age, Sex = sex, Population = population) %>%
+#     arrange (Sex) %>%
+#     pivot_wider(names_from=c("Sex"),
+#                 values_from=Population)
+# 
+# kable(population, booktabs = T, caption = "Melbourne population in 2017") %>%
+#  kable_styling(latex_options = c("hold position", "repeat_header"),
+#                full_width = F)%>%
+#   column_spec(2, width = "15em") %>%
+#   column_spec(3, width = "15em") %>%
+#   row_spec(0, bold = T) %>%
+#   kable_styling()
+# 
+# 
+# # Deaths
+# source("Scripts/data_prep/death_rates_prep.R")
+# death_rates <- GetDeathsRates(
+#   deaths="Data/Population and deaths/projections.xls"
+# )
+# 
+# write.csv(death_rates[[1]], "Data/Processed/deaths_rates_males.csv", row.names=F, quote=T)
+# write.csv(death_rates[[2]], "Data/Processed/deaths_rates_females.csv", row.names=F, quote=T)
 
 ```
 
 ```{r,echo=FALSE, message=FALSE}
-
-#### NEED TO FIX TITLES
-## Plot to check data
-
-age_cohort =seq(from = 17, to = 100, by = 5)
-age_cohort_names <- c("15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-100")
-
-data_males <- list()
-index <- 1
-  for (a in age_cohort) {
-
-    data_males[[index]] <-  as.data.frame(death_rates[[1]]) %>% filter(age_cohort == a)
-
-    # print(plotdf1[[index]])
-  index <- index +1
-  
-  }
-
-p_males <- ggplot(bind_rows(data_males, .id="Cohort"), aes(age, rate)) +
-  geom_line()
-p_males + facet_wrap(~age_cohort, scales = "free") +
-   facet_wrap(~ age_cohort, scales = "free",ncol=3, 
-      # add a labeller here:
-      labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
-  ggtitle("Deaths rates for male cohort from baseline year (2017) up to age 100") +
-  xlab("Age cohort") +
-  ylab("Mortality rate") +
-  theme(legend.title=element_blank()) +
-  theme_classic()
-
-
-
-data_females <- list()
-index <- 1
-  for (a in age_cohort) {
-
-    data_females[[index]] <-  as.data.frame(death_rates[[2]]) %>% filter(age_cohort == a)
-
-    # print(plotdf1[[index]])
-  index <- index +1
-  
-  }
-
-p_females <- ggplot(bind_rows(data_females, .id="Cohort"), aes(age, rate)) +
-  geom_line()
-p_females + facet_wrap(~age_cohort, scales = "free")  +
-   facet_wrap(~ age_cohort, scales = "free",ncol=3, 
-      # add a labeller here:
-      labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
-  ggtitle("Deaths rates for female cohort from baseline year (2017) up to age 100") +
-  xlab("Age cohort") +
-  ylab("Mortality rate") +
-  theme(legend.title=element_blank()) +
-  theme_classic()
-  
+# 
+# #### NEED TO FIX TITLES
+# ## Plot to check data
+# 
+# age_cohort =seq(from = 17, to = 100, by = 5)
+# age_cohort_names <- c("15-19", "20-
+#                       ", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-100")
+# 
+# data_males <- list()
+# index <- 1
+#   for (a in age_cohort) {
+# 
+#     data_males[[index]] <-  as.data.frame(death_rates[[1]]) %>% filter(age_cohort == a)
+# 
+#     # print(plotdf1[[index]])
+#   index <- index +1
+#   
+#   }
+# 
+# p_males <- ggplot(bind_rows(data_males, .id="Cohort"), aes(age, rate)) +
+#   geom_line()
+# p_males + facet_wrap(~age_cohort, scales = "free") +
+#    facet_wrap(~ age_cohort, scales = "free",ncol=3, 
+#       # add a labeller here:
+#       labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
+#   ggtitle("Deaths rates for male cohort from baseline year (2017) up to age 100") +
+#   xlab("Age cohort") +
+#   ylab("Mortality rate") +
+#   theme(legend.title=element_blank()) +
+#   theme_classic()
+# 
+# 
+# 
+# data_females <- list()
+# index <- 1
+#   for (a in age_cohort) {
+# 
+#     data_females[[index]] <-  as.data.frame(death_rates[[2]]) %>% filter(age_cohort == a)
+# 
+#     # print(plotdf1[[index]])
+#   index <- index +1
+#   
+#   }
+# 
+# p_females <- ggplot(bind_rows(data_females, .id="Cohort"), aes(age, rate)) +
+#   geom_line()
+# p_females + facet_wrap(~age_cohort, scales = "free")  +
+#    facet_wrap(~ age_cohort, scales = "free",ncol=3, 
+#       # add a labeller here:
+#       labeller = as_labeller(setNames(age_cohort_names, sort(unique(age_cohort))))) +
+#   ggtitle("Deaths rates for female cohort from baseline year (2017) up to age 100") +
+#   xlab("Age cohort") +
+#   ylab("Mortality rate") +
+#   theme(legend.title=element_blank()) +
+#   theme_classic()
+#   
 ```
 
 ### General life table: All cause prevalent Years with Disability (pYLDs)
@@ -725,7 +711,8 @@ trends_diseases <- tribble(
 ~"Input", ~"Inputs", ~"Assumptions", ~"Data processing",
 "General life table: all cause mortality", "TO DO", "1. Age-standardised trends by sex applied to all groups, and 2. Number of years trends applied into the future equivalent to the original trends forecast (e.g. if from 2017 to 2020, then trends were applied for 3 years and then stabilised", "TO DO", 
 "Disease life table: incidence cancers", "@RN3 forecast from 2017 to 2020", "Same above", "We derive an annual trend as the log difference between the age standardised rate in 2020 and 2017 divided by the diffence in years",
-"Disease life table: case fatality cancers", "@RN4 forecast from 2014 to 2024 for mortality", "Same above", "Same above",
+"Disease life table: case fatality cancers", "@RN4 forecast from 2014 to 20
+for mortality", "Same above", "Same above",
 "Disease life table: cardiovascular diseases incidence", "@RN5 hospitalization past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardized rates (ASR) were freest derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)", 
 "Disease life table: cardiovascular disease case fatality", "@RN5 mortality past trends (actual data) from years 2001 to 2018", "Same above and forecast trends were applied to ischemic heart disease and stroke", "Future Age standardized rates (ASR) were first derived from ASR from past trends by sex using linear regression for predominately increasing trends and log-linear regression for decreasing trends. Trends were estimated up to year 2023. Annual trends were derived as above (ln(ASR2023/ASR2018)/years)",
 "Disease life table: diabetes incidence", "@RN6 mortality past trends from years 1997 to 2023 for diabetes as the underlying or associated cause of death", "Same as above and trends only applied to incidence", "Same as above with forecast up to year 2023", 
@@ -741,21 +728,21 @@ kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mo
 ```
 
 ```{r,echo=FALSE, message=FALSE}
-# ## Alan, there is an issue with the code in the function, trace back and you can see the line.
-# source("Scripts/data_prep/trends_prep.R")
-# options(scipen=999)
-#   trends_diseases <- calculateDiseaseTrends(
-#   incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
-#   mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
-#   trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
-#   grim_books="Data/aihw/trends/grim_books_utf8.csv",
-#   trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
-# )
-# 
-# write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
-# write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
-# write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
-# write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
+## Alan, there is an issue with the code in the function, trace back and you can see the line.
+source("Scripts/data_prep/trends_prep.R")
+options(scipen=999)
+  trends_diseases <- calculateDiseaseTrends(
+  incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+  mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
+  trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
+  grim_books="Data/aihw/trends/grim_books_utf8.csv",
+  trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
+)
+
+write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
 ```
 
 ### Generate multi-state life table dataframe

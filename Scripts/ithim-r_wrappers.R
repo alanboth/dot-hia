@@ -204,12 +204,12 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
   # in_idata=MSLT_DF
   # in_sex='male'
   # in_mid_age=17
-
+  
   # Create a life table starting data frame from input data. 
   lf_df <- in_idata %>%
     dplyr::filter(age >= in_mid_age & sex == in_sex) %>%
     dplyr::select('sex', 'age', 'pyld_rate', 'mx')
-
+  
   # are we using modified mortality rates?
   if(is.data.frame(death_rates)) {
     # filter to only this cohort's death rates
