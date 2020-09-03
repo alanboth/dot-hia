@@ -276,12 +276,11 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                    "Yes", "No")) %>%
     mutate(pa_guide_older_adults = ifelse(EXNUDAYW >= 5 & EXNUDTH >=5, "Yes", "No")) %>%
     
+    dplyr::filter(age_group >4) %>%
+    
+    
     ## Add age group variable
-    mutate(age_group_scen = case_when(age_group == 1 ~ "0 to 4",
-                                 age_group == 2 ~ "5 to 9",
-                                 age_group == 3 ~ "10 to 14",
-                                 age_group == 4 ~ "15 to 19", 
-                                 age_group == 5 ~ "15 to 19",
+    mutate(age_group_scen = case_when(age_group == 5 ~ "15 to 19",
                                  age_group == 6 ~ "20 tp 24",
                                  age_group == 7 ~ "25 to 29", 
                                  age_group == 8 ~ "30 to 34", 
@@ -296,13 +295,44 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                  age_group == 17 ~ "75 to 79", 
                                  age_group == 18 ~ "80 to 84",
                                  age_group == 19 ~ "85 +")) %>%
+      
+      mutate(dem_index = case_when(age_group == 5 & sex == "male" ~  1,
+                                   age_group == 6 & sex == "male" ~  3,
+                                   age_group == 7 & sex == "male" ~  5,
+                                   age_group == 8 & sex == "male" ~  7,
+                                   age_group == 9 & sex == "male" ~  9,
+                                   age_group == 10 & sex == "male" ~ 11,
+                                   age_group == 11 & sex == "male" ~  13, 
+                                   age_group == 12 & sex == "male" ~  15,
+                                   age_group == 13 & sex == "male" ~ 17,
+                                   age_group == 14 & sex == "male" ~ 19, 
+                                   age_group == 15 & sex == "male" ~ 21,
+                                   age_group == 16 & sex == "male" ~ 23, 
+                                   age_group == 17 & sex == "male" ~ 25, 
+                                   age_group == 18 & sex == "male" ~ 27,
+                                   age_group == 19 & sex == "male" ~ 29,
+                                   age_group == 5 & sex == "female" ~  2,
+                                   age_group == 6 & sex == "female" ~  4,
+                                   age_group == 7 & sex == "female" ~  6,
+                                   age_group == 8 & sex == "female" ~  8,
+                                   age_group == 9 & sex == "female" ~  10,
+                                   age_group == 10 & sex == "female" ~  12,
+                                   age_group == 11 & sex == "female" ~  14, 
+                                   age_group == 12 & sex == "female" ~  16,
+                                   age_group == 13 & sex == "female" ~ 18,
+                                   age_group == 14 & sex == "female" ~ 20, 
+                                   age_group == 15 & sex == "female" ~ 22,
+                                   age_group == 16 & sex == "female" ~ 24, 
+                                   age_group == 17 & sex == "female" ~ 26, 
+                                   age_group == 18 & sex == "female" ~ 28,
+                                   age_group == 19 & sex == "female" ~ 30)) %>%  
 
     
     rename(participant_wt = NHIFINWT) %>%
     
     dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, ltpa_marg_met,
            work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt)
+           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt, dem_index)
   
   return(persons_pa)
 }
@@ -320,8 +350,8 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 # walk_trans
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-    pa_location="Data/processed/persons_pa.csv"
-    persons_travel_location="Data/processed/persons_travel.csv"
+    # pa_location="Data/processed/persons_pa.csv"
+    # persons_travel_location="Data/processed/persons_travel.csv"
   
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
@@ -375,44 +405,47 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   
   persons_matched_final<- persons_matched_final %>%
     mutate(dem_index = case_when(age <= 19              & sex ==   "male" ~  1,
-                                 age >= 20 & age <=  24 & sex ==   "male" ~  2,
-                                 age >= 25 & age <=  29 & sex ==   "male" ~  3,
-                                 age >= 30 & age <=  34 & sex ==   "male" ~  4,
-                                 age >= 35 & age <=  39 & sex ==   "male" ~  5,
-                                 age >= 40 & age <=  44 & sex ==   "male" ~  6,
-                                 age >= 45 & age <=  49 & sex ==   "male" ~  7,
-                                 age >= 50 & age <=  54 & sex ==   "male" ~  8, 
-                                 age >= 55 & age <=  59 & sex ==   "male" ~  9,
-                                 age >= 60 & age <=  64 & sex ==   "male" ~ 10,
-                                 age >= 65 & age <=  69 & sex ==   "male" ~ 11, 
-                                 age >= 70 & age <=  74 & sex ==   "male" ~ 12,
-                                 age >= 75 & age <=  79 & sex ==   "male" ~ 13, 
-                                 age >= 80 & age <=  84 & sex ==   "male" ~ 14, 
-                                 age >= 85 & age <=  89 & sex ==   "male" ~ 15,
-                                 age >= 90 & age <=  94 & sex ==   "male" ~ 16,
-                                 age >= 85 & age <= 120 & sex ==   "male" ~ 17,
-                                 age <= 19              & sex == "female" ~ 18,
-                                 age >= 20 & age <=  24 & sex == "female" ~ 19,
-                                 age >= 25 & age <=  29 & sex == "female" ~ 20,
-                                 age >= 30 & age <=  34 & sex == "female" ~ 21,
-                                 age >= 35 & age <=  39 & sex == "female" ~ 22,
-                                 age >= 40 & age <=  44 & sex == "female" ~ 23,
-                                 age >= 45 & age <=  49 & sex == "female" ~ 24,
-                                 age >= 50 & age <=  54 & sex == "female" ~ 25,
-                                 age >= 55 & age <=  59 & sex == "female" ~ 26,
-                                 age >= 60 & age <=  64 & sex == "female" ~ 27,
-                                 age >= 65 & age <=  69 & sex == "female" ~ 28,
-                                 age >= 70 & age <=  74 & sex == "female" ~ 29,
-                                 age >= 75 & age <=  79 & sex == "female" ~ 30,
-                                 age >= 80 & age <=  84 & sex == "female" ~ 31,
-                                 age >= 85 & age <=  89 & sex == "female" ~ 32,
-                                 age >= 90 & age <=  94 & sex == "female" ~ 33,
-                                 age >= 85 & age <= 120 & sex == "female" ~ 34))
+                                 age >= 20 & age <=  24 & sex ==   "male" ~  3,
+                                 age >= 25 & age <=  29 & sex ==   "male" ~  5,
+                                 age >= 30 & age <=  34 & sex ==   "male" ~  7,
+                                 age >= 35 & age <=  39 & sex ==   "male" ~  9,
+                                 age >= 40 & age <=  44 & sex ==   "male" ~  11,
+                                 age >= 45 & age <=  49 & sex ==   "male" ~  13,
+                                 age >= 50 & age <=  54 & sex ==   "male" ~  15, 
+                                 age >= 55 & age <=  59 & sex ==   "male" ~  17,
+                                 age >= 60 & age <=  64 & sex ==   "male" ~ 19,
+                                 age >= 65 & age <=  69 & sex ==   "male" ~ 21, 
+                                 age >= 70 & age <=  74 & sex ==   "male" ~ 23,
+                                 age >= 75 & age <=  79 & sex ==   "male" ~ 25, 
+                                 age >= 80 & age <=  84 & sex ==   "male" ~ 27, 
+                                 age >= 85 & age <=  89 & sex ==   "male" ~ 29,
+                                 age >= 90 & age <=  94 & sex ==   "male" ~ 31,
+                                 age >= 95 & age <= 120 & sex ==   "male" ~ 33,
+                                 age <= 19              & sex == "female" ~ 2,
+                                 age >= 20 & age <=  24 & sex == "female" ~ 4,
+                                 age >= 25 & age <=  29 & sex == "female" ~ 6,
+                                 age >= 30 & age <=  34 & sex == "female" ~ 8,
+                                 age >= 35 & age <=  39 & sex == "female" ~ 10,
+                                 age >= 40 & age <=  44 & sex == "female" ~ 12,
+                                 age >= 45 & age <=  49 & sex == "female" ~ 14,
+                                 age >= 50 & age <=  54 & sex == "female" ~ 16,
+                                 age >= 55 & age <=  59 & sex == "female" ~ 18,
+                                 age >= 60 & age <=  64 & sex == "female" ~ 20,
+                                 age >= 65 & age <=  69 & sex == "female" ~ 22,
+                                 age >= 70 & age <=  74 & sex == "female" ~ 24,
+                                 age >= 75 & age <=  79 & sex == "female" ~ 26,
+                                 age >= 80 & age <=  84 & sex == "female" ~ 28,
+                                 age >= 85 & age <=  89 & sex == "female" ~ 30,
+                                 age >= 90 & age <=  94 & sex == "female" ~ 32,
+                                 age >= 95 & age <= 120 & sex == "female" ~ 34)) %>%
+    
+  ### participant_w present in both PA and travel data frame, we are inteterested in the travel weights
+    rename(participant_wt = participant_wt.x)
   
   ### Select variables ### Keep participant_wt for travel survey
   
   persons_matched_final <- persons_matched_final %>%
-    dplyr::select(persid, participant_wt.x, age, sex, ses, dem_index, work_status,
+    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status,
            occupation_cat, industry_cat, work_full, study_full, mod_hr, vig_hr, walk_rc,
            work_ltpa_marg_met, walk_trans,
            
