@@ -19,7 +19,8 @@ calculateMMETSperPerson_AUS <- function(pa_location="Data/Physical activity/NHS2
                                         sex_input = c("male", "female")) # user defined 
   { 
   
-  mmets_pp_Aus <- calculatePersonsPA(pa_location, hh_location) %>% 
+  mmets_pp_Aus <- calculatePersonsPA(pa_location, hh_location) %>%
+    
     replace(is.na(.), 0) %>%
     dplyr::mutate(time_base_pedestrian = walk_rc + walk_trans) %>%
     dplyr::mutate(time_base_bicycle = 0) %>%
@@ -32,6 +33,7 @@ calculateMMETSperPerson_AUS <- function(pa_location="Data/Physical activity/NHS2
     dplyr::mutate(scen1_mmet = mod_hr * MMET_MOD + vig_hr * MMET_VIG +
                     time_scen_pedestrian * MMET_WALKING +
                     time_scen_bicycle * MMET_CYCLING)
+  
 
   return(mmets_pp_Aus)
 }

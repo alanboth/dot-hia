@@ -10,7 +10,7 @@ calculateMMETSperPerson <- function(matched_pop_location,MMET_CYCLING,MMET_WALKI
   synth_pop <- read.csv(matched_pop_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::mutate(participant_id = row_number())
   mmets_pp <- synth_pop %>% 
-    dplyr::select(participant_id, sex, age, dem_index, mod_hr, vig_hr, walk_rc, participant_wt.x,
+    dplyr::select(participant_id, sex, age, dem_index, mod_hr, vig_hr, walk_rc, participant_wt,
                   starts_with("time") & contains(c("pedestrian", "bicycle")),
                   work_ltpa_marg_met) %>%
     replace(is.na(.), 0) %>%

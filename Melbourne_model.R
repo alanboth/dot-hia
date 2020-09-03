@@ -12,7 +12,6 @@ options(scipen=999)
 
 #### TO DO: 
 
-## Add weights to matched population
 ## Add uncertainty inputs for marginal mets for NHS inputs
 
 ## Check that parameters work for running one age group at the time
@@ -167,14 +166,17 @@ source("Scripts/ithim-r_wrappers.R")
 # health_burden_2 needs a complete rewrite to be more comprehensible, but works well enough for now
 
 ### Melbourne
+#### Two options: 1) using simple avarage by age and sex or 2) using population weights, use second option. 
 pif_MEL <- health_burden_2(
   ind_ap_pa_location=RR_PA_calculations_MEL,
   disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv",
   demographic_location="Data/processed/DEMO.csv",
   combined_AP_PA=F,
   calculate_AP=F
-) %>% 
-  dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% ### ALAN, I added some lines to make it compatible with the code for running disease_life_tables
+) 
+
+pif_MEL <- pif_MEL[[2]] %>% 
+  dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% 
   dplyr::mutate(age=rep(seq(16,100,1), times = 2))
 
 ################### 6) Parameters for Mslt code running #######################################################
@@ -194,7 +196,8 @@ DISEASE_SHORT_NAMES <- DISEASE_SHORT_NAMES %>%
 ###################### 7) Run rest ##############################################################################
 source("Scripts/ithim-r_wrappers.R")
 
-pif_expanded <- read.csv("Data/processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
+pif_expanded <- pif_MEL
+  # read.csv("Data/processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
 
 # ---- chunk-2 ----
 

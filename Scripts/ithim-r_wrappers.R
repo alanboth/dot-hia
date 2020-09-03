@@ -1,6 +1,7 @@
 library(dplyr)
 library(readr)
 library(data.table)
+library(srvyr)
 
 # runs a local version of gen_pa_rr (and PA_dose_response) so ithim-r library doesn't need to be called
 # ithim-r still needs to be installed so we can access the dose response folder
@@ -22,8 +23,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
       return_vector <- PA_dose_response(cause = pa_dn, dose = doses_vector)
       for (i in 1:length(SCEN_SHORT_NAME)) {
         scen <- SCEN_SHORT_NAME[i]
-        mmets_pp[[paste("RR_pa", scen, pa_n, sep = "_")]] <- return_vector$rr[(1 + 
-                                                                                 (i - 1) * nrow(mmets_pp)):(i * nrow(mmets_pp))]
+        mmets_pp[[paste("RR_pa", scen, pa_n, sep = "_")]] <- return_vector$rr[(1 + (i - 1) * nrow(mmets_pp)):(i * nrow(mmets_pp))]
       }
     }
     mmets_pp
@@ -97,11 +97,11 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 }
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  # ind_ap_pa_location="Data/Processed/RR_PA_calculations.csv"
-  # disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv"
-  # demographic_location="Data/Processed/DEMO.csv"
-  # combined_AP_PA=F
-  # calculate_AP=F
+  ind_ap_pa_location=RR_PA_calculations_AUS
+  disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+  demographic_location="Data/processed/DEMO_AUS.csv"
+  combined_AP_PA=F
+  calculate_AP=F
 
   ind_ap_pa <- ind_ap_pa_location  #read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM") ## Alan I removed read as this inputs will have uncertainy
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
@@ -114,7 +114,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   
   pop_details <- DEMOGRAPHIC
   pif_scen <- pop_details
-  pif_scen_2 <- pop_details
+  pif_scen_2 <- ind_ap_pa_location %>% dplyr::select(dem_index, participant_wt, sex, age_group)
   # set up reference (scen1)
   reference_scenario <- SCEN_SHORT_NAME[1]
   scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]
@@ -155,7 +155,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index', 'participant_wt')])
         setnames(pif_table,base_var,'outcome')
         pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
-        pif_ref_2 <- pif_table 
+        pif_ref_2 <- pif_table[,.(outcome)] 
         ## sort pif_ref
         setorder(pif_ref,dem_index)
         for (index in 1:length(scen_vars)){
@@ -167,24 +167,29 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index', 'participant_wt')])
           setnames(pif_table,scen_var,'outcome')
           pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
-          pif_temp_2 <- pif_table 
+          pif_temp_2 <- pif_table[,.(outcome)] 
           
           
           ## sort pif_temp
           setorder(pif_temp,dem_index)
           pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1] 
+          pif_scen_2[[pif_name]] <- (pif_ref_2[,outcome]  - pif_temp_2[,outcome]) / pif_ref_2[,outcome]  
+        
           
-        # ALAN, trying to add the same calculations as above, but using weights, not working 
-        # pif_wt[[pif_name]] <- pif_temp_2 %>% mutate(pif=(pif_ref_2$outcome - .[,'outcome']) / pif_ref_2$outcome) %>%
-        # srvyr::as_survey_design(weights = participant_wt)
-        # pif_scen_2 <-  pif_wt  %>%
-        # group_by(dem_index) %>%
-        # dplyr::summarize(srvyr::survey_mean(pif))
+        ## BZ: added code to calculate pifs by subgroups (DEMO) using participant weights. 
+        ### Declare survey as weighted
+        pif_wt <- pif_scen_2 %>%
+        srvyr::as_survey_design(1 , strata = dem_index, weights = participant_wt)
+        ### Calculate mean pifs by age and sex
+        pif_weighted <-  pif_wt  %>%
+        group_by(dem_index) %>%
+        dplyr::summarise_at(vars(starts_with("pif")), survey_mean)
+
         }
       }
     }
   }
-  return(pif_scen)
+  return(list(pif_scen, pif_weighted))
 }
 
 

@@ -15,7 +15,6 @@ options(scipen=999)
 
 #### TO DO: 
 
-## Add weights to matched population
 ## Add uncertainty inputs for marginal mets for NHS inputs
 
 ## Check that parameters work for running one age group at the time
@@ -64,14 +63,14 @@ MSLT_DF <- read.csv(mslt_general,as.is=T,fileEncoding="UTF-8-BOM")
 
 #### 1) Death rates periodic (no projections, assumes current death rates are observed in the future) are added to mslt for selected location
 death_rate_periodic="Data/processed/mslt/deaths_periodic.csv"
-death_rate_periodic <- read.csv(death_rate_periodic,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria") %>%
+death_rate_periodic <- read.csv(death_rate_periodic,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Australia") %>%
   dplyr::select("sex_age_cat", "mx")
 MSLT_DF <- left_join(MSLT_DF, death_rate_periodic)
 
 #### 2) Deaths rates with projections can be used as an option in RunLifeTable function, two assumptions are made by ABS for improvements in life
 #### expectancy: high and medium
 death_rates="Data/processed/mslt/deaths_projections.csv"
-death_rates <- read.csv(death_rates,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria", assumption == "medium")
+death_rates <- read.csv(death_rates,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Australia", assumption == "medium")
 
 ##### Population: filter location population and replace in MSLT_DF. 
 ##### location: "Greater Sydney", "Greater Melbourne", "Greater Brisbane", "Greater Perth", "Greater Adelaide", "Greater Hobart", "Greater Darwin", 
@@ -79,27 +78,10 @@ death_rates <- read.csv(death_rates,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr:
 source("Scripts/data_prep/population_prep.R")
 population <- GetPopulation(
   population_data="Data/original/abs/population_census.xlsx",
-  location= "Greater Melbourne")
+  location= "Australia")
 MSLT_DF <- left_join(MSLT_DF, population)
 
 ############################## 1) Run scenarios ###################################################################
-#### For Melbourne: trips change, more calculations requiered as below steps to get mmets for RRs calculation
-# Generate trips_melbourne_scenarios.csv
-source("Scripts/scenarios_MEL.R")
-in_data="Data/processed/trips_melbourne.csv" ### BZ: fixed input
-scenario_trips <- calculateScenarioMel(trips_melbourne = in_data, 
-                                       age_input = (15:98) , ### replace with age grouping that matched age cohorts
-                                       sex_input = c("male", "female"),  # OR ONE OR THE OTHER
-                                       original_mode = "car" , # Just car trips can be replaced
-                                       replace_mode = "pedestrian" , #OR "bicycle" ## Just pedestrian or cycling
-                                       distance_replace = 5 ,
-                                       purpose_input = c("social", "buy something",  "work related", "pick-up or drop-off someone", 
-                                                         "personal business", "unknown purpose (at start of day)",
-                                                         "recreational", "pick-up or deliver something", "accompany someone", 
-                                                         "education", "other purpose", "at or go home", "change mode", "not stated"), # OR ONE OR ANY COMBINATION
-                                       day = c("weekday", "weekend day")) # OR ONE OR THE OTHER
-
-write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
 
 #### For Australia wide: walking or/and cycling changes, no more calculations requiered to generate mmets for RRs calculations
 source("Scripts/scenarios_AUS.R")
@@ -117,56 +99,9 @@ mmets_pp_Aus <- calculateMMETSperPerson_AUS (pa_location="Data/Physical activity
                                                            "65 to 69", "70 to 74", "75 to 79", "80 to 84", "85 +" ), # user defined, default, all ages
                                              sex_input = c("male", "female")) # user defined, default male and female
 
-############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
+############################## 2) Get individual RRs ############################################################
 
-source("Scripts/data_prep/synthetic_pop.R")
-
-#### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
-persons_travel <- calculatePersonsTravelScenario(
-  travel_data_location="Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-  scenario_location="Data/processed/trips_melbourne_scenarios.csv" ### BZ: Generated in step 1
-)
-write.csv(persons_travel, "Data/processed/persons_travel.csv", row.names=F, quote=T)
-
-
-#### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
-persons_matched <- calculatePersonsMatch(
-  pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-  persons_travel_location="Data/processed/persons_travel.csv"
-)
-write.csv(persons_matched, "Data/processed/matched_pop.csv", row.names=F, quote=T)
-
-
-############################# 3) mmets per person (code below, has uncertainty inputs) ############################
-
-source("Scripts/data_prep/mmet_pp.R")
-
-### change work and time marginal met to minutes and multiply by uncertain mets
-
-mmets_pp_MEL <- calculateMMETSperPerson(
-  matched_pop_location = "Data/processed/matched_pop.csv",
-  MMET_CYCLING = MMET_CYCLING,
-  MMET_WALKING = MMET_WALKING,
-  MMET_MOD = MMET_MOD,
-  MMET_VIG = MMET_VIG
-)
-
-########################## 4) RRs per person (code below, has uncertainty inputs) #################################
-### Melbourne
 source("Scripts/ithim-r_wrappers.R")
-
-### Relative risks of physical inactivity on diseases
-
-RR_PA_calculations_MEL <- gen_pa_rr_wrapper(
-  mmets_pp_MEL,
-  disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv",
-  # location of ithmr default dose response data:
-  dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
-                              "/dose_response/drpa/extdata"),
-  PA_DOSE_RESPONSE_QUANTILE=F
-)
-
-
 
 ### Australia
 RR_PA_calculations_AUS <- gen_pa_rr_wrapper(
@@ -179,42 +114,36 @@ RR_PA_calculations_AUS <- gen_pa_rr_wrapper(
 )
 
 
-### test difference of using persons' weights and below hb_2 calculation
 
 
-RR_PA_calculations_w <-  RR_PA_calculations  %>%
-  srvyr::as_survey_design(weights = participant_wt)
-
-
-###################### 5) PIFS by age and sex (with function health_burden_2) #####################################
+###################### 3) PIFS by age and sex (with function health_burden_2) #####################################
 source("Scripts/ithim-r_wrappers.R")
 
-# calculate_AP will calculate air pollution, be sure to set false if you don't have air pollution data
-# health_burden_2 needs a complete rewrite to be more comprehensible, but works well enough for now
+pif_AUS <- health_burden_2(
+   ind_ap_pa_location=RR_PA_calculations_AUS,
+   disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv",
+   demographic_location="Data/processed/DEMO_AUS.csv",
+   combined_AP_PA=F,
+   calculate_AP=F
+ )
 
-### Melbourne
-pif_MEL <- health_burden_2(
-  ind_ap_pa_location=RR_PA_calculations_MEL,
-  disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv",
-  demographic_location="Data/processed/DEMO.csv",
-  combined_AP_PA=F,
-  calculate_AP=F
-) %>% 
-  dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% ### ALAN, I added some lines to make it compatible with the code for running disease_life_tables
+### Australian data for physical activity to derive PIFs is up to age group 85 +, below code to run mslt splits age group 85+. 
+### I repeat age group 85+ which are dem_index 29 for male and 31 for female
+## ALAN, my code below is not very tidy!
+
+pif_AUS <- pif_AUS[[2]] %>% 
+ add_row(filter(., dem_index == c(29, 30))) 
+pif_AUS[31,1] <- 31
+pif_AUS[32,1] <- 32
+
+pif_AUS <- pif_AUS %>% 
+  add_row(filter(., dem_index == c(31, 32)))
+pif_AUS[33,1] <- 33
+pif_AUS[34,1] <- 34
+
+pif_AUS <- pif_AUS %>% 
+  dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% 
   dplyr::mutate(age=rep(seq(16,100,1), times = 2))
-
-### Australia (Belen to fix demo index to match age groups) 
-# 
-# pif_AUS <- health_burden_2(
-#   ind_ap_pa_location=RR_PA_calculations_AUS,
-#   disease_inventory_location="Data/Processed/disease_outcomes_lookup.csv",
-#   demographic_location="Data/Processed/DEMO.csv",
-#   combined_AP_PA=F,
-#   calculate_AP=F
-# ) %>% 
-#   dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% ### ALAN, I added some lines to make it compatible with the code for running disease_life_tables
-#   dplyr::mutate(age=rep(seq(16,100,1), times = 2))
-
 
 ###################### 6) Parameters for Mslt code running #######################################################
 
@@ -243,7 +172,7 @@ i_sex <- c('male', 'female')
 ###################### 7) Run rest ##############################################################################
 source("Scripts/ithim-r_wrappers.R")
 
-pif_expanded <- read.csv("Data/processed/pifs_pa_ap.csv",as.is=T,fileEncoding="UTF-8-BOM")
+pif_expanded <- pif_AUS
 
 # ---- chunk-2 ----
 
@@ -342,7 +271,7 @@ for (i in 1:nrow(age_sex_disease_cohorts)){
 
 
 
-
+#### All above works up to here
 # # ---- chunk-4 ----
 
 ## Create scenario life tables with new pifs,includes Diabetes loop. 
