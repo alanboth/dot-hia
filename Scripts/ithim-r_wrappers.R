@@ -97,11 +97,11 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 }
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  ind_ap_pa_location=RR_PA_calculations_AUS
-  disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
-  demographic_location="Data/processed/DEMO_AUS.csv"
-  combined_AP_PA=F
-  calculate_AP=F
+  # ind_ap_pa_location=RR_PA_calculations_AUS
+  # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+  # demographic_location="Data/processed/DEMO_AUS.csv"
+  # combined_AP_PA=F
+  # calculate_AP=F
 
   ind_ap_pa <- ind_ap_pa_location  #read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM") ## Alan I removed read as this inputs will have uncertainy
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
@@ -114,7 +114,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   
   pop_details <- DEMOGRAPHIC
   pif_scen <- pop_details
-  pif_scen_2 <- ind_ap_pa_location %>% dplyr::select(dem_index, participant_wt, sex, age_group)
+  pif_scen_2 <- ind_ap_pa_location %>% dplyr::select(dem_index, participant_wt, sex, age_group_scen)
   # set up reference (scen1)
   reference_scenario <- SCEN_SHORT_NAME[1]
   scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]

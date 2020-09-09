@@ -55,11 +55,53 @@ options(scipen=999)
 # jtw_VISTA <- read.csv("Data/Travel survey/VISTA 12-18/JTW_VISTA1218_V1.csv")
 # stop_VISTA <- read.csv("Data/Travel survey/VISTA 12-18/S_VISTA1218_V1.csv")
 
+calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
+
+  # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
+  # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
+  # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
+
+  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
+    filter(HHID!="") # some rows were completely blank
+  person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
+  trip_VISTA <- read.csv(trip_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    
+    dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
+                  TRIPPURP,LINKMODE,
+                  MODE1,MODE2,MODE3,MODE4,MODE5,MODE6,MODE7,MODE8,MODE9,
+                  DIST1,DIST2,DIST3,DIST4,DIST5,DIST6,DIST7,DIST8,DIST9,
+                  TIME1,TIME2,TIME3,TIME4,TIME5,TIME6,TIME7,TIME8,TIME9,
+                  WDTRIPWGT,WETRIPWGT) 
+  
+    trip_VISTA$WDTRIPWGT <- as.numeric(trip_VISTA$WDTRIPWGT)
+  
+    trip_VISTA$WETRIPWGT <- as.numeric(trip_VISTA$WETRIPWGT)
+    
+  hh_person <- left_join(person_VISTA, hh_VISTA, by = "HHID")
+  
+  
+  trips_melbourne  <- left_join(trip_VISTA, hh_person, by = c("PERSID","HHID") ) %>%
+    dplyr::filter(SurveyPeriod == "2017-18" &
+                    (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
+    dplyr::select(HHID, PERSID, AGE, SEX, TRIPID, DayType, SurveyPeriod, 
+                  HomeSubRegion, TRIPNO, LINKMODE, MODE1, MODE2, MODE3, MODE4, 
+                  MODE5, MODE6, MODE7, MODE8, MODE9, TIME1, TIME2, TIME3, TIME4, 
+                  TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
+                  DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
+                  WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
+    rowwise() %>% # want to sum across rows, not down columns %>%
+    mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T))
+  
+  return(trips_melbourne)}
+
+
 calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
   # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
   # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
   # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
-  
+
   
 
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
@@ -76,27 +118,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                   TIME1,TIME2,TIME3,TIME4,TIME5,TIME6,TIME7,TIME8,TIME9,
                   WDTRIPWGT,WETRIPWGT)
     
-  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
-    filter(HHID!="") # some rows were completely blank
-  person_VISTA <- read.csv(person_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT) 
-  trip_VISTA <- read.csv(trip_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
 
-    dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
-                  TRIPPURP,LINKMODE,
-                  MODE1,MODE2,MODE3,MODE4,MODE5,MODE6,MODE7,MODE8,MODE9,
-                  DIST1,DIST2,DIST3,DIST4,DIST5,DIST6,DIST7,DIST8,DIST9,
-                  TIME1,TIME2,TIME3,TIME4,TIME5,TIME6,TIME7,TIME8,TIME9,
-                  WDTRIPWGT,WETRIPWGT)
-  
-  
-  #### First check NAs for weights in the household, person and trips datasets
-  # hh_weight_NA <- hh_VISTA %>% dplyr::filter(is.na(WDHHWGT) & is.na(WEHHWGT))
-  # pers_weight_NA <- person_VISTA %>% dplyr::filter(is.na(WDPERSWGT) & is.na(WEPERSWGT))
-  # trips_weight_NA <- trip_VISTA %>% dplyr::filter(is.na(WDTRIPWGT) & is.na(WETRIPWGT))
-  
-  
   hh_person <- left_join(person_VISTA, hh_VISTA, by = "HHID")
   
   
@@ -108,17 +130,11 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                   MODE5, MODE6, MODE7, MODE8, MODE9, TIME1, TIME2, TIME3, TIME4, 
                   TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
                   DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
-                  WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA) %>% 
-    rowwise() %>% # want to sum across rows, not down columns
+                  WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
+    rowwise() %>% # want to sum across rows, not down columns %>%
     mutate(participant_wt = sum(as.numeric(WDPERSWGT),as.numeric(WEPERSWGT),na.rm=T)) %>%
     dplyr::select(-WDPERSWGT,-WEPERSWGT) %>%
     as.data.frame()
-  # these take too long to run, will do conversion to numeric later on
-  # mutate_at(vars(starts_with("TIME")),funs(as.numeric)) %>%   
-  # mutate_at(vars(starts_with("DIST")),funs(as.numeric)) 
-  
-  
-  
   
   ### Replace all character "N/A" with NA
   trips_melbourne[ trips_melbourne == "N/A" ] <- NA 
@@ -229,6 +245,11 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
     rename(persid=PERSID) %>%
     group_by(persid) %>%
     mutate(participant_id=group_indices()) %>%
+    ungroup()
+  ### Create number of trips per person
+  trips_melbourne <- trips_melbourne %>%
+  group_by(persid) %>%
+    mutate(trip_id_2 = 1:n()) %>%
     ungroup()
   
   return(trips_melbourne)

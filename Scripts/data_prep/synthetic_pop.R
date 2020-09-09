@@ -22,18 +22,11 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
 
-  
-  ### DELETE?? repeated from above
-  person_VISTA <- read.csv(person_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
-           ANZSIC1, WDPERSWGT, WEPERSWGT)
   ## Add SEIFA-IRSD
   ses_index <- read.csv(ses_index_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
-
-  # 
-  # 
+  
   ### Join persons and household, keep data for greater Melb only and create unique weights
   persons_travel <- left_join(person_VISTA, hh_VISTA, by = "HHID") %>% 
     filter(SurveyPeriod == "2017-18" &
