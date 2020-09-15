@@ -15,6 +15,16 @@ trips_melbourne <- calculateVistaTrips(
 )
 write.csv(trips_melbourne, "Data/processed/trips_melbourne.csv", row.names=F, quote=F)
 
+
+### Speed walking and cycling Melbourne
+source("Scripts/data_prep/trips_prep.R")
+speed_trips_melbourne <- CalculateAgeSexSpeed(
+  in_data="Data/processed/trips_melbourne.csv"
+)
+write.csv(speed_trips_melbourne, "Data/processed/speed_trips_melbourne.csv", row.names=F, quote=F)
+
+
+
 ### Travel data people used in mslt_code to generate matched population
 source("Scripts/data_prep/synthetic_pop.R")
 travel_data <- calculateTravelData(

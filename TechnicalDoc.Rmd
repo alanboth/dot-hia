@@ -3,15 +3,15 @@ title: "Including health impacts in transport modelling and economic appraisal-I
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  html_document:
+    df_print: paged
+    toc : true
+    number_sections: true
   pdf_document: 
     df_print: paged
     keep_tex: yes
     number_sections: yes
     toc: yes
-  html_document:
-    df_print: paged
-    toc : true
-    number_sections: true
 biblio-style: apsr
 header-includes:
 - \usepackage{graphicx}
@@ -254,8 +254,80 @@ $$
 
 ### Melbourne model
 
-We created a matched population to derive individual mMET-hours per week based on the Victorian Integrated Survey of Travel and Activity 2017-2018 (VISTA 2017-18 @RN20) and national survey data collected for physical activity surveillance (National Health Survey (NHS), @RN22). PA data from the NHS were allocated to each VISTA individual. MET-hours per individual were derived from the sum of the product of hours spent weekly doing transport walking, transport cycling, vigorous PA for leisure and work, moderate PA for leisure and work and walking for leisure by their corresponding mMET-hours scores. Tranport walking and cycling were sourced from the VISTA survey and the rest from the NHS (Table 2).
-We used the latest VISTA survey conducted across the period 2017-18 for Greater Melbourne and Geelong. For this study we limited the analysis to the Greater Melbourne area for the period 2017-18, which included 3,543 households, 7,117 individuals and 23,166 trips. Walking and cycling minutes for each of the VISTA persons (n=7,117) were derived by summing up all time spent walking and cycling during the survey day multiplied by 5 if the trips took place on a weekday or 2 if it took place on a weekend day. Walking and cycling levels were summed up at the stage level (i.e. a trip may consist of multiple stages).  The NHS is a representative sample of Australian adults. The data were collected by the Australian Bureau of Statistics and published as the National Health Survey, 2017-18, Basic-CURF [@RN22]. A sample of 21,315 adults was available. Survey respondents were asked about the time they spent doing excersice and work related physical activity in the last week, including excersice for leisure and walking for transport. A walking session was only to be recorded if the duration of the session was at least 10 minutes. Minutes spent doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure during the week were used in this analysis. The three categories are mutually exclusive [@RN24] and were translated to hours per week. 
+We created a matched population to derive individual mMET-hours per week based on the **Victorian Integrated Survey of Travel and Activity 2017-2018** (VISTA 2017-18 @RN20) and the **National Health Survey, 2017-18, Basic CURF** (NHS, @RN22) physical activity data collected for surveillance. PA data from the NHS were allocated to each VISTA individual. MET-hours per individual were derived from the sum of the product of hours spent weekly doing transport walking, transport cycling, vigorous PA for leisure and work, moderate PA for leisure and work and walking for leisure by their corresponding mMET-hours scores. Tranport walking and cycling were sourced from the VISTA survey and the rest from the NHS (Table 2).
+We used the latest VISTA survey conducted across the period 2017-18 for Greater Melbourne and Geelong. Randomly selected households were asked to complete the household form and each individual to complete a travel diary for a single specified day (or adult for children). The survey aims to capture average travel behaviour. The Greater Melbourne data includes 3,543 households, 7,117 individuals and 23,166 trips. Travel data was collected for all households' persons above the age of 5. We limited the analysis to individuals over the age of 16. The travel diary asked respondents about travel and activities on a particular travel day, specifically: 
+1) all travel over the whole day, from 4:00 am on the travel day until 4:00 am the next day,
+2) all trips to be included, even short trips (like walking to lunch or going for a jog), and
+3) includes people who do not travel on the travel survey day. 
+
+From the **VISTA** survey we obtained time and distance spent by mode of travel per week. We created time and distance variables per person by adding up all stages time and distance by mode in a trip. A trip may have up to 9 stages. The data is for one day, and the survey indicates whether travel occured on a weekday or weekend day. We derived a week total time and distance by mode by multiplying by 5 for weekdays and 2 for weekend days.
+
+
+##### ADD VISTA STATS HERE
+
+The **NHS** is a representative sample of Australian adults (>=15 years of age). The data were collected by the Australian Bureau of Statistics and published as the National Health Survey, 2017-18, Basic-CURF [@RN22]. A sample of 21,315 adults was available. Survey respondents were asked about the time they spent doing exercise (for leisure or walking for transport) and workplace physical activity in the last week. Table 3 outlines types of physical activity data collected in the NHS and table 4 all physical activity variables measured in a time unit (minutes). Table 5 depics descriptive statistics (proportion by age and sex, population, sample, means, sd and quantiles for minutes spent in leisure and transport related PA)
+```{r, echo=FALSE, include=TRUE}
+
+pa_NHS_collected_data <- tribble(
+~"Type of activity", ~"Definition",
+"Walking for fitness, recreation and sport", "Must have carried out for at least 10 minutes continuously", 
+"Walking to get from place to place", "1) Excludes activities such as walking around a shopping centre as people tend to frequently pause while shopping. 2) Must have carried out for at least 10 minutes continuously.", 
+"Moderate intensity exercise", "1) Comprises activities that caused a moderate increase in the heart rate or
+breathing of the respondent (e.g. gentle swimming, social tennis, golf). 2) Excludes any previously identified walking as well as household chores, gardening or yard work, and any activity carried out as part of a job", 
+"Vigorous intensity exercise", "1) Comprises activities that caused a large increase in the respondent's
+heart rate or breathing (e.g. jogging, cycling, aerobics, competitive tennis). 2) Excludes any previously identified walking as well as household chores, gardening or yard work, and any activity carried out as part of a job",
+"Strength or toning exercises", "1) Activities designed to increase muscle strength or tone, such as lifting
+weights, resistance training, pull-ups, push-ups, or sit ups. 2) Includes any Strengthening and toning exercises activities already mentioned",
+"Workplace physical activity", "1) Usual physical activity while at work on a typical work day. 2) Must have carried out for at least 10 minutes continuously. 3) Moderate activity in the workplace was defined as activity that caused a moderate increase in the heart rate or breathing of the respondent (e.g. brisk walking or carrying light lights). 4) Vigorous activity in the workplace was defined as activity that caused a large increase in heart rate or breathing (e.g. carrying or lifting heavy loads, digging or construction work)")
+
+kable(pa_NHS_collected_data, booktabs = T, caption = "Table 3: NHS PA variables", longtable = TRUE) %>%
+column_spec(1:1, width = "15em") %>%
+  row_spec(0, bold = T) %>%
+  kable_styling()
+```
+
+
+```{r, echo=FALSE, include=TRUE}
+
+pa_NHS_variables <- tribble(
+~"Variable name", ~"Descriptive table name",
+"EXLWTIME: Total minutes undertaken exercise for fitness, recreation, sport or transport in last week
+", "MeanTotal, QuantileTotal", 
+"EXLWTIM2	Total minutes did exercise or walked for transport in last week (vig x 2)", " MeanTotal2, QuantileTotal2", 
+"EXFSRMIN	Total minutes walked for fitness, recreation or sport in last week", "MeanWalkRec, QuantileWalkRec",
+"EXTRAMIN	Total minutes spent walking for transport in last week", "MeanWalkTrans, QuantileWalkTrans",
+"EXWLKTME	Total minutes spent walking for exercise and transport last week", "MeanWalkTotal, QuantileWalkTotal",
+"EXLWMMIN	Total minutes undertaken moderate exercise last week","MeanModExe, QuantileModExe",
+"EXLWVMIN	Total minutes undertaken vigorous exercise last week", "MeanVigExe, QuantileVigExe",
+"MODMINS	Total minutes undertaken all moderate physical activity last week", "MeanTotalMod, QuantileTotalMod", 
+"VIGMINS	Total minutes undertaken all vigorous physical activity last week", "MeanTotalVig, QuantileTotalVig", 
+"PAMINS	Total minutes undertaken all physical activity last week", "MeanTotalPA, QuantileTotalPA", 
+"PAMINS2	Total minutes undertaken all physical activity last week (vig x 2)", " MeanTotalPA2, QuantileTotalPA2")
+
+kable(pa_NHS_variables, booktabs = T, caption = "Table 4: NHS PA variables", longtable = TRUE) %>%
+  kable_styling()
+```
+
+
+```{r, echo=FALSE, include=TRUE}
+
+minutes_NHS_stats_non_work <- readRDS("SuppDocs/Tables/Minutes.Stats.rds") %>%
+  dplyr::rename(Sex = SEX, `Age group` = age_group) %>%
+  dplyr::select(-c("Proportion_se", "Population_se"))
+kable(minutes_NHS_stats_non_work  , booktabs = T, caption = "Table 5: Summary statistics NHS PA leisure and transport variables (PA variables are in hours per week", longtable = TRUE) %>%
+  kable_styling()
+```
+
+```{r, echo=FALSE, include=TRUE}
+
+minutes_NHS_stats_work <- readRDS("SuppDocs/Tables/MinutesWork.Stats.rds") %>%
+  dplyr::rename(Sex = SEX, `Age group` = age_group) %>%
+  dplyr::select(-c("Proportion_se", "Population_se"))
+kable(minutes_NHS_stats_work , booktabs = T, caption = "Table 6: Summary statistics NHS work PA variables (PA variables are in hours per week", longtable = TRUE) %>%
+  kable_styling()
+```
+
+Minutes spent doing moderate physical activity for leisure and work, vigorous physical activity for leisure and work, walking for leisure during the week were used in this analysis. The three categories are mutually exclusive [@RN24] and were translated to hours per week. 
 Total mMETs per person for the BAU scenario were derived by translating minutes spent in each of the PA categories per week to hours and then multiplying by the MET scores [@RN21] minus one. Tables 3 outlines all types of PA activities included, by source, and correspoinding assigned MET scores. VISTA individuals were matched to NHS individuals based on age, sex, socio-economic status, whether they walk for transport and work status (see Table 3).  
   
 ```{r, echo=FALSE, include=TRUE}
@@ -663,18 +735,21 @@ We used Dismod II (free at https://www.epigear.com/index_files/dismod_ii.html) t
 source("Scripts/data_prep/mslt_gbd_prep.R")
 options(scipen=999)
 gbd_wider <- calculateGBDwider(
-  gbd_location="Data/gbd/gbd_melbourne_mslt.csv"
+  gbd_location="Data/original/gbd/gbd_mslt.csv"
 )
-write.csv(gbd_wider, "Data/Processed/gbd_wider.csv", row.names=F, quote=T)
+write.csv(gbd_wider, "Data/processed/mslt/gbd_wider.csv", row.names=F, quote=T)
+
 source("Scripts/data_prep/aihw_prep.R")
 AIHW <- calculateInputsDismodAIHW (
-incidence_AIHW="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
-mortality_AIHW="Data/aihw/cancer_mortality_AIHW_with_projections.xlsx",
-population_deaths_location="Data/Population and deaths/population_deaths.csv"
+incidence_AIHW="Data/original/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+mortality_AIHW="Data/original/aihw/cancer_mortality_AIHW_with_projections.xlsx",
+population_deaths_location="Data/original/abs/population_deaths.csv"
 )
-write.csv(AIHW[[1]], "Data/Processed/incidence_AIHW_dismod.csv", row.names=F, quote=T)
-write.csv(AIHW[[2]], "Data/Processed/mortality_AIHW_dismod.csv", row.names=F, quote=T)
-write.csv(AIHW[[3]], "Data/Processed/population_and_deaths.csv", row.names=F, quote=T)
+
+
+write.csv(AIHW[[1]], "Data/dismod/incidence_AIHW_dismod.csv", row.names=F, quote=T)
+write.csv(AIHW[[2]], "Data/dismod/mortality_AIHW_dismod.csv", row.names=F, quote=T)
+write.csv(AIHW[[3]], "Data/dismod/mortality_pop_AIHW.csv", row.names=F, quote=T)
 ```
 
 
@@ -728,21 +803,21 @@ kable(trends_diseases, booktabs = T, caption = "Forecast trends for all-cause mo
 ```
 
 ```{r,echo=FALSE, message=FALSE}
-## Alan, there is an issue with the code in the function, trace back and you can see the line.
+
 source("Scripts/data_prep/trends_prep.R")
 options(scipen=999)
   trends_diseases <- calculateDiseaseTrends(
-  incidence_trends_cancers="Data/aihw/cancer_incidence_AIHW_with_projections.xlsx",
-  mortality_trends_cancers="Data/aihw/trends/cancers_trends_mortality_aihw.xls",
-  trends_cvd="Data/aihw/trends/cardiovascular_disease_trends_aihw.xlsx",
-  grim_books="Data/aihw/trends/grim_books_utf8.csv",
-  trends_diabetes="Data/aihw/trends/diabetes_trends_aihw.xls"
+ incidence_trends_cancers="Data/original/aihw/cancer_incidence_AIHW_with_projections.xlsx",
+  mortality_trends_cancers="Data/original/aihw/cancers_trends_mortality_aihw.xls",
+  trends_cvd="Data/original/aihw/cardiovascular_disease_trends_aihw.xlsx",
+  grim_books="Data/original/aihw/grim_books_utf8.csv",
+  trends_diabetes="Data/original/aihw/diabetes_trends_aihw.xls"
 )
 
-write.csv(trends_diseases[[1]], "Data/Processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[2]], "Data/Processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[3]], "Data/Processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
-write.csv(trends_diseases[[4]], "Data/Processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[1]], "Data/processed/mslt/mortality_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[2]], "Data/processed/mslt/mortality_trends_m.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[3]], "Data/processed/mslt/incidence_trends_f.csv", row.names=F, quote=T)
+write.csv(trends_diseases[[4]], "Data/processed/mslt/incidence_trends_m.csv", row.names=F, quote=T)
 ```
 
 ### Generate multi-state life table dataframe
@@ -753,11 +828,9 @@ Finally, based on the above data preparation, we use *CalculateMSLT* to generate
 source("Scripts/data_prep/mslt_gbd_prep.R")
 options(scipen=999)
 mslt <- calculateMSLT(
-  population_melbourne_location = "Data/Processed/population_melbourne_abs.csv",
-  deaths_melbourne_location= "Data/Processed/deaths_melbourne.csv",
-  gbd_wider_location= "Data/Processed/gbd_wider.csv",
-  dismod_output_cancers="Data/Processed/dismod_output_cancers.csv",
-  dismod_output_non_cancers="Data/Processed/dismod_output_non_cancers.csv")
-write.csv(mslt, "Data/Processed/mslt/mslt_df.csv", row.names=F, quote=T)
+  gbd_wider="Data/processed/mslt/gbd_wider.csv",
+  dismod_output_cancers="Data/processed/mslt/dismod_output_cancers.csv",
+  dismod_output_non_cancers="Data/processed/mslt/dismod_output_non_cancers.csv")
+write.csv(mslt, "Data/processed/mslt/mslt_df.csv", row.names=F, quote=T)
 ```
 

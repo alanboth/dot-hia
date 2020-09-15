@@ -99,8 +99,8 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
 
   mslt_df <- data.frame(age = rep(c(0:100), 2), sex = append(rep("male", 101), 
                                                              rep("female", 101))) %>%
-    mutate(sex_age_cat = paste(sex, age, sep="_")) %>%
-    mutate(age_cat = case_when(age == 2 ~ 2,
+    dplyr::mutate(sex_age_cat = paste(sex, age, sep="_")) %>%
+    dplyr::mutate(age_cat = case_when(age == 2 ~ 2,
                                age == 7  ~ 7,
                                age == 12  ~ 12,
                                age == 17  ~ 17, 
@@ -157,7 +157,7 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
   
 
   gbd_df <- gbd_df %>%
-    mutate(ylds_rate_allc_adj_1 = (ylds_number_allc - all_ylds_count)/pop)
+    dplyr::mutate(ylds_rate_allc_adj_1 = (ylds_number_allc - all_ylds_count)/pop)
   
   
   interpolateFunction <- function(valuesToInterpolate){
@@ -187,17 +187,17 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
   mslt_df_by_disease <- mslt_df_longer %>%
     pivot_wider(names_from=c("measure","rate_num"),
                 values_from=value) %>%
-    mutate(dw_adj=(ylds_number/prevalence_number)/(1-ylds_rate_allc_adj_1) ) %>%
-    mutate(dw_adj=ifelse(is.nan(dw_adj),0,dw_adj)) %>%
+    dplyr::mutate(dw_adj=(ylds_number/prevalence_number)/(1-ylds_rate_allc_adj_1) ) %>%
+    dplyr::mutate(dw_adj=ifelse(is.nan(dw_adj),0,dw_adj)) %>%
     arrange(disease,sex,age) %>%
     group_by(disease,sex) %>%
     # interpolate dw_adj
-    mutate(dw_adj=exp(interpolateFunction(dw_adj))) %>%
+    dplyr::mutate(dw_adj=exp(interpolateFunction(dw_adj))) %>%
     ## Interpolate mortality and ylds (all cause mortality is from Melbourne data)
-    mutate(deaths_rate=exp(interpolateFunction(deaths_rate))) %>%
-    mutate(ylds_rate=exp(interpolateFunction(ylds_rate))) %>%
+    dplyr::mutate(deaths_rate=exp(interpolateFunction(deaths_rate))) %>%
+    dplyr::mutate(ylds_rate=exp(interpolateFunction(ylds_rate))) %>%
     ## not sure if we were supposed to interpolate this one
-    mutate(ylds_rate_allc_adj_1=exp(interpolateFunction(ylds_rate_allc_adj_1))) %>%
+    dplyr::mutate(ylds_rate_allc_adj_1=exp(interpolateFunction(ylds_rate_allc_adj_1))) %>%
     ungroup()
   
   mslt_df_wider <- mslt_df_by_disease %>%
@@ -208,7 +208,7 @@ calculateMSLT <- function(gbd_wider_location, dismod_output_cancers, dismod_outp
                 values_from=c(deaths_rate,ylds_rate,dw_adj)) %>%
     # AB: I might have this wrong
     # BZ: this is correct
-    rename(pyld_rate=ylds_rate_allc_adj_1)
+    dplyr::rename(pyld_rate=ylds_rate_allc_adj_1)
   
 
   

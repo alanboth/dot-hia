@@ -1,5 +1,4 @@
 # SYNTHETIC POPULATION OF VISTA PERSONS AND NHS PERSONS
-
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
@@ -13,15 +12,15 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::select(HHID,SurveyPeriod,HomeSubRegion,HOMEPC) %>%
     filter(HHID!="") # some rows were completely blank
-
+  
   person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(PERSID, HHID, AGE, SEX, FULLTIMEWORK, ANYWORK, STUDYING, ANZSCO1,
-           ANZSIC1, WDPERSWGT, WEPERSWGT)
+                  ANZSIC1, WDPERSWGT, WEPERSWGT)
   ## Add SEIFA-IRSD
   ses_index <- read.csv(ses_index_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
-
+  
   ## Add SEIFA-IRSD
   ses_index <- read.csv(ses_index_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
     rename_all(~c("HOMEPC","ses")) %>%
@@ -76,24 +75,24 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     rename(persid = PERSID) %>%
     rename(hhid = HHID) %>%
     dplyr::select(persid,hhid,age,age_group,sex,work_status,work_full,study_full,
-           occupation_cat,industry_cat,SurveyPeriod,HomeSubRegion,HOMEPC,
-           participant_wt,ses)
+                  occupation_cat,industry_cat,SurveyPeriod,HomeSubRegion,HOMEPC,
+                  participant_wt,ses)
   
   return(persons_travel)
-
+  
 }
 
 
 ### trips_melbourne
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
-     # travel_data_location="Data/processed/travel_data.csv"
-     # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
+  # travel_data_location="Data/processed/travel_data.csv"
+  # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
+  # 
   
-
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
   
   trips_melbourne <- read.csv(scenario_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
- mutate(persid=toupper(persid))
+    mutate(persid=toupper(persid))
   
   ### Create total duration and distance for all modes, rather long process here. 
   ### The intervention will change the trips file (scenario trips file) which in 
@@ -101,24 +100,21 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   #### Scenario
   total_trips_time_dist_base <- trips_melbourne %>%
-   dplyr::select(persid, trip_mode_base, trip_duration_base, trip_distance_base) %>%
+    dplyr::select(persid, trip_mode_base, trip_duration_base, trip_distance_base) %>%
     # group by person and travel mode
     dplyr::group_by(persid, trip_mode_base) %>%
     # find the total distance and time traveled for each person by travel mode
     dplyr::summarise(time_base=sum(trip_duration_base),
-              distance_base=sum(trip_distance_base)) %>%
+                     distance_base=sum(trip_distance_base)) %>%
     # expand time_base and distance_base to separate pairs of columns for each
     # travel mode
     pivot_wider(names_from=trip_mode_base,values_from=c(time_base, distance_base)) %>%
     # rearrange the columns
     dplyr::select(persid,time_base_car,distance_base_car,
-           time_base_pedestrian,distance_base_pedestrian,
-           time_base_train,distance_base_train,
-           time_base_bus,distance_base_bus,
-           time_base_tram,distance_base_tram,
-           time_base_other,distance_base_other,
-           time_base_bicycle,distance_base_bicycle,
-           time_base_motorcycle,distance_base_motorcycle)
+                  time_base_walking,distance_base_walking,
+                  time_base_public.transport,distance_base_public.transport,
+                  time_base_other,distance_base_other,
+                  time_base_bicycle,distance_base_bicycle)
   
   #### Scenario
   total_trips_time_dist_scen <- trips_melbourne %>%
@@ -127,19 +123,16 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
     dplyr::group_by(persid, trip_mode_scen) %>%
     # find the total distance and time traveled for each person by travel mode
     dplyr::summarise(time_scen=sum(trip_duration_scen),
-              distance_scen=sum(trip_distance_scen)) %>%
+                     distance_scen=sum(trip_distance_scen)) %>%
     # expand time_scen and distance_scen to separate pairs of columns for each
     # travel mode
     pivot_wider(names_from=trip_mode_scen,values_from=c(time_scen, distance_scen)) %>%
     # rearrange the columns
     dplyr::select(persid,time_scen_car,distance_scen_car,
-           time_scen_pedestrian,distance_scen_pedestrian,
-           time_scen_train,distance_scen_train,
-           time_scen_bus,distance_scen_bus,
-           time_scen_tram,distance_scen_tram,
-           time_scen_other,distance_scen_other,
-           time_scen_bicycle,distance_scen_bicycle,
-           time_scen_motorcycle,distance_scen_motorcycle)
+                  time_scen_walking,distance_scen_walking,
+                  time_scen_public.transport,distance_scen_public.transport,
+                  time_scen_other,distance_scen_other,
+                  time_scen_bicycle,distance_scen_bicycle)
   
   
   ### Do this last appending all
@@ -149,10 +142,10 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   # ### Create walking yes or no
   persons_travel <- persons_travel %>%
-    mutate(walk_base = case_when(is.na(time_base_pedestrian) ~ "No",
-                                 time_base_pedestrian > 0  ~ "Yes")) %>%
-    mutate(walk_scen = case_when(is.na(time_scen_pedestrian) ~ "No",
-                                 time_scen_pedestrian > 0  ~ "Yes"))
+    mutate(walk_base = case_when(is.na(time_base_walking) ~ "No",
+                                 time_base_walking > 0  ~ "Yes")) %>%
+    mutate(walk_scen = case_when(is.na(time_scen_walking) ~ "No",
+                                 time_scen_walking > 0  ~ "Yes"))
   
   #not needed
   # names(persons_travel)[1:95] <- RemoveAllWs(tolower(names(persons_travel)[1:95]))
@@ -168,27 +161,47 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
 calculatePersonsPA <- function(pa_location,hh_location) {
   # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
   # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
-
-
+  
+  
+#### PA variables
+  
+  # EXLWTIME, #Total minutes undertaken exercise for fitness, recreation, sport or transport in last week
+  # EXLWTIM2,	#Total minutes did exercise or walked for transport in last week (vig x 2)
+  # EXFSRMIN,	#Total minutes walked for fitness, recreation or sport in last week
+  # EXTRAMIN,	#Total minutes spent walking for transport in last week
+  # EXWLKTME,	#Total minutes spent walking for exercise and transport last week
+  # EXLWMMIN,	#Total minutes undertaken moderate exercise last week
+  # EXLWVMIN,	#Total minutes undertaken vigorous exercise last week
+  # WPAMMIN,	#Total minutes undertaken moderate workplace physical activity last week
+  # WPAVMIN,	#Total minutes undertaken vigorous workplace physical activity last week
+  # WPAV2MIN,	#Total minutes undertaken vigorous workplace physical activity last week (x 2)
+  # WPATMIN,	#Total minutes undertaken all workplace physical activity last week
+  # WPATMIN2,	#Total minutes undertaken all workplace physical activity last week (vig x 2)
+  # MODMINS,	#Total minutes undertaken all moderate physical activity last week
+  # VIGMINS,	#Total minutes undertaken all vigorous physical activity last week
+  # PAMINS,	  #Total minutes undertaken all physical activity last week
+  # PAMINS2,	#Total minutes undertaken all physical activity last week (vig x 2)
+  # EXLWKTNO, #Number of times walked for 10 minutes or more for transport in the last week
+  # EXNUDAYW, #Number of days exercised for fitness, recreation, sport and to get to and from places in last week
+  # EXNUDST,  #Number of days did strength or toning activities in the last week
+  # EXWLKTME, #Total minutes spent walking for exercise and transport last week
+  # EXNUDTH, #Number of days exercised for at least 30 minutes in the last week
+  
+  
   pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
-
-    dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
-           EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
-           EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH, NHIFINWT) %>%
- mutate_all(funs(type.convert(replace(., .== 99997, 0)))) %>%
-    mutate_all(funs(type.convert(replace(., .== 99998, 0))))
-
-  
     
+    dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
+                  EXTRAMIN, EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
+                  EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH, NHIFINWT) %>%
+    mutate_all(funs(type.convert(replace(., .== 99997, 0)))) %>%
+    mutate_all(funs(type.convert(replace(., .== 99998, 0))))
   
-
-  hh <- read.csv(hh_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
-
-    dplyr::select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
+ hh <- read.csv(hh_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
+   dplyr::select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
   
   persons_pa <- left_join(pa, hh, by="ABSHIDB") %>%
     ### Sex to match persons_pa
-    rename(sex = SEX) %>%
+    dplyr::rename(sex = SEX) %>%
     mutate(sex = case_when(sex == 1 ~ "male",
                            sex == 2 ~ "female")) %>%
     ### Work status (reclassify "Not in the workforce" coded as 3 and NA coded 
@@ -250,14 +263,15 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     ### Moderate = 5   mets and 4   marginal mets,
     ### Vigorous = 7.5 mets and 6.5 marginal mets,
     ### Walking  = 3.5 mets and 2.5 marginal mets
-    rename(age_group = AGEB) %>%
-    rename(ses = SA1SF2DN) %>%
-    rename(state = STATE16) %>%
-    mutate(ltpa_marg_met = (EXLWMMIN*4 + EXLWVMIN*6.5)/60) %>%
-    mutate(work_marg_met = (WPAMMIN*4 + WPAVMIN*6.5)/60) %>%
-    mutate(work_ltpa_marg_met = (MODMINS*4 + VIGMINS*6.5 + EXFSRMIN*2.5)/60) %>%
-    mutate(mod_hr = MODMINS/60) %>%
-    mutate(vig_hr = VIGMINS/60) %>%
+    dplyr::rename(age_group = AGEB) %>%
+    dplyr::rename(ses = SA1SF2DN) %>%
+    dplyr::rename(state = STATE16) %>%
+    mutate(mod_total_hr = MODMINS/60) %>%
+    mutate(vig_total_hr = VIGMINS/60) %>%
+    mutate(mod_leis_hr = EXLWMMIN/60) %>% 
+    mutate(vig_leis_hr = EXLWVMIN/60) %>%
+    mutate(mod_work_hr = WPAMMIN/60) %>% 
+    mutate(vig_work_hr = WPAVMIN/60) %>%
     mutate(walk_rc = EXFSRMIN/60) %>%
     mutate(walk_trans = EXLWKTNO/60) %>%
     mutate(walk_base = case_when(EXLWKTNO == 0 ~ "No",
@@ -274,58 +288,58 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     
     ## Add age group variable
     mutate(age_group_scen = case_when(age_group == 5 ~ "15 to 19",
-                                 age_group == 6 ~ "20 tp 24",
-                                 age_group == 7 ~ "25 to 29", 
-                                 age_group == 8 ~ "30 to 34", 
-                                 age_group == 9 ~ "35 to 39",
-                                 age_group == 10 ~ "40 to 44",
-                                 age_group == 11 ~ "45 to 49", 
-                                 age_group == 12 ~ "50 to 54",
-                                 age_group == 13 ~ "55 to 59",
-                                 age_group == 14 ~ "60 to 64", 
-                                 age_group == 15 ~ "65 to 69",
-                                 age_group == 16 ~ "70 to 74",
-                                 age_group == 17 ~ "75 to 79", 
-                                 age_group == 18 ~ "80 to 84",
-                                 age_group == 19 ~ "85 +")) %>%
-      
-      mutate(dem_index = case_when(age_group == 5 & sex == "male" ~  1,
-                                   age_group == 6 & sex == "male" ~  3,
-                                   age_group == 7 & sex == "male" ~  5,
-                                   age_group == 8 & sex == "male" ~  7,
-                                   age_group == 9 & sex == "male" ~  9,
-                                   age_group == 10 & sex == "male" ~ 11,
-                                   age_group == 11 & sex == "male" ~  13, 
-                                   age_group == 12 & sex == "male" ~  15,
-                                   age_group == 13 & sex == "male" ~ 17,
-                                   age_group == 14 & sex == "male" ~ 19, 
-                                   age_group == 15 & sex == "male" ~ 21,
-                                   age_group == 16 & sex == "male" ~ 23, 
-                                   age_group == 17 & sex == "male" ~ 25, 
-                                   age_group == 18 & sex == "male" ~ 27,
-                                   age_group == 19 & sex == "male" ~ 29,
-                                   age_group == 5 & sex == "female" ~  2,
-                                   age_group == 6 & sex == "female" ~  4,
-                                   age_group == 7 & sex == "female" ~  6,
-                                   age_group == 8 & sex == "female" ~  8,
-                                   age_group == 9 & sex == "female" ~  10,
-                                   age_group == 10 & sex == "female" ~  12,
-                                   age_group == 11 & sex == "female" ~  14, 
-                                   age_group == 12 & sex == "female" ~  16,
-                                   age_group == 13 & sex == "female" ~ 18,
-                                   age_group == 14 & sex == "female" ~ 20, 
-                                   age_group == 15 & sex == "female" ~ 22,
-                                   age_group == 16 & sex == "female" ~ 24, 
-                                   age_group == 17 & sex == "female" ~ 26, 
-                                   age_group == 18 & sex == "female" ~ 28,
-                                   age_group == 19 & sex == "female" ~ 30)) %>%  
-
+                                      age_group == 6 ~ "20 tp 24",
+                                      age_group == 7 ~ "25 to 29", 
+                                      age_group == 8 ~ "30 to 34", 
+                                      age_group == 9 ~ "35 to 39",
+                                      age_group == 10 ~ "40 to 44",
+                                      age_group == 11 ~ "45 to 49", 
+                                      age_group == 12 ~ "50 to 54",
+                                      age_group == 13 ~ "55 to 59",
+                                      age_group == 14 ~ "60 to 64", 
+                                      age_group == 15 ~ "65 to 69",
+                                      age_group == 16 ~ "70 to 74",
+                                      age_group == 17 ~ "75 to 79", 
+                                      age_group == 18 ~ "80 to 84",
+                                      age_group == 19 ~ "85 +")) %>%
     
-    rename(participant_wt = NHIFINWT) %>%
+    mutate(dem_index = case_when(age_group == 5 & sex == "male" ~  1,
+                                 age_group == 6 & sex == "male" ~  3,
+                                 age_group == 7 & sex == "male" ~  5,
+                                 age_group == 8 & sex == "male" ~  7,
+                                 age_group == 9 & sex == "male" ~  9,
+                                 age_group == 10 & sex == "male" ~ 11,
+                                 age_group == 11 & sex == "male" ~  13, 
+                                 age_group == 12 & sex == "male" ~  15,
+                                 age_group == 13 & sex == "male" ~ 17,
+                                 age_group == 14 & sex == "male" ~ 19, 
+                                 age_group == 15 & sex == "male" ~ 21,
+                                 age_group == 16 & sex == "male" ~ 23, 
+                                 age_group == 17 & sex == "male" ~ 25, 
+                                 age_group == 18 & sex == "male" ~ 27,
+                                 age_group == 19 & sex == "male" ~ 29,
+                                 age_group == 5 & sex == "female" ~  2,
+                                 age_group == 6 & sex == "female" ~  4,
+                                 age_group == 7 & sex == "female" ~  6,
+                                 age_group == 8 & sex == "female" ~  8,
+                                 age_group == 9 & sex == "female" ~  10,
+                                 age_group == 10 & sex == "female" ~  12,
+                                 age_group == 11 & sex == "female" ~  14, 
+                                 age_group == 12 & sex == "female" ~  16,
+                                 age_group == 13 & sex == "female" ~ 18,
+                                 age_group == 14 & sex == "female" ~ 20, 
+                                 age_group == 15 & sex == "female" ~ 22,
+                                 age_group == 16 & sex == "female" ~ 24, 
+                                 age_group == 17 & sex == "female" ~ 26, 
+                                 age_group == 18 & sex == "female" ~ 28,
+                                 age_group == 19 & sex == "female" ~ 30)) %>%  
     
-    dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, ltpa_marg_met,
-           work_marg_met, work_ltpa_marg_met, walk_trans, pa_guide_adults,
-           pa_guide_older_adults, mod_hr, vig_hr, walk_rc, participant_wt, dem_index)
+    
+    dplyr::rename(participant_wt = NHIFINWT) %>%
+    
+    dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, participant_wt, dem_index, age_group_scen, 
+                  mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, walk_base,
+                  pa_guide_adults, pa_guide_older_adults)
   
   return(persons_pa)
 }
@@ -343,10 +357,10 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 # walk_trans
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-    # pa_location="Data/processed/persons_pa.csv"
-    # persons_travel_location="Data/processed/persons_travel.csv"
-  
+  # pa_location="Data/processed/persons_pa.csv"
+  # persons_travel_location="Data/processed/persons_travel.csv"
 
+  
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
   persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
@@ -386,13 +400,7 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   
   cat(paste0("The percentage of sucessful matches is: ",
              round(check_match*100,2),"%"))
-  ## Check proportion meeting PA with original data NHS
-  
-  # NOT SURE WHAT THIS CODE IS FOR, COMMENTING OUT FOR NOW
-  # pa_match_guide_adults <- filter(persons_matched_final, age >= 5 & age <=14)
-  # pa_match_guide_adults_meets <- prop.table(table(persons_matched_final$pa_guide_adults))
-  # pa_match_guide_older_adults <- filter(persons_matched_final, age >14)
-  # pa_match_guide_adults_older_meets <- prop.table(table(pa_match_guide_older_adults$pa_guide_older_adults))
+ 
   
   ### Add demographic groups to match with ITHIMR style code
   
@@ -432,35 +440,30 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
                                  age >= 90 & age <=  94 & sex == "female" ~ 32,
                                  age >= 95 & age <= 120 & sex == "female" ~ 34)) %>%
     
-  ### participant_w present in both PA and travel data frame, we are inteterested in the travel weights
+    ### participant_w present in both PA and travel data frame, we are inteterested in the travel weights
     rename(participant_wt = participant_wt.x)
   
   ### Select variables ### Keep participant_wt for travel survey
   
   persons_matched_final <- persons_matched_final %>%
-    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status,
-           occupation_cat, industry_cat, work_full, study_full, mod_hr, vig_hr, walk_rc,
-           work_ltpa_marg_met, walk_trans,
-           
-           time_base_car       , distance_base_car,
-           time_base_pedestrian, distance_base_pedestrian, 
-           time_base_train     , distance_base_train,
-           time_base_bus       , distance_base_bus,
-           time_base_tram      , distance_base_tram, 
-           time_base_other     , distance_base_other,
-           time_base_bicycle   , distance_base_bicycle,
-           time_base_motorcycle, distance_base_motorcycle,
-           
-           time_scen_car       , distance_scen_car,
-           time_scen_pedestrian, distance_scen_pedestrian, 
-           time_scen_train     , distance_scen_train,
-           time_scen_bus       , distance_scen_bus,
-           time_scen_tram      , distance_scen_tram,
-           time_scen_other     , distance_scen_other,
-           time_scen_bicycle   , distance_scen_bicycle,
-           time_scen_motorcycle, distance_scen_motorcycle,
-           
-           walk_base           , walk_scen)
+    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status, age_group_scen,
+                  occupation_cat, industry_cat, work_full, study_full,
+                  mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, walk_base,
+                  pa_guide_adults, pa_guide_older_adults,
+                  
+                  time_base_car , distance_base_car,
+                  time_base_walking, distance_base_walking, 
+                  time_base_public.transport, distance_base_public.transport,
+                  time_base_other, distance_base_other,
+                  time_base_bicycle, distance_base_bicycle,
+                  
+                  time_scen_car, distance_scen_car,
+                  time_scen_walking, distance_scen_walking, 
+                  time_scen_public.transport, distance_scen_public.transport,
+                  time_scen_other, distance_scen_other,
+                  time_scen_bicycle, distance_scen_bicycle,
+                  
+                  walk_base           , walk_scen)
   
   return(persons_matched_final)
 }

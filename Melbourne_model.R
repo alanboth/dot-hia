@@ -5,6 +5,14 @@ library(dplyr)
 library(readr)
 library(data.table)
 library(tidyr)
+suppressPackageStartupMessages(library(srvyr)) # for statistics with weightts
+suppressPackageStartupMessages(library(forcats))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(ggeasy))
+suppressPackageStartupMessages(library(ggridges))
+suppressPackageStartupMessages(library(fitdistrplus))
+
 
 options(scipen=999)
 ### All processing without uncertainty inputs left in other codes, here, all code with uncertainty
@@ -95,19 +103,68 @@ MSLT_DF <- left_join(MSLT_DF, population)
 #### The entire dataset is keept with all trips, not only those that change
 # Generate trips_melbourne_scenarios.csv
 source("Scripts/scenarios_MEL.R")
-in_data="Data/processed/trips_melbourne.csv" ### BZ: fixed input
+in_data="Data/Processed/trips_melbourne.csv"
+in_speed="Data/Processed/speed_trips_melbourne.csv"
 scenario_trips <- calculateScenarioMel(trips_melbourne = in_data, 
-                                       age_input = i_age_cohort,
-                                       sex_input = i_sex,  # OR ONE OR THE OTHER
+                                       speed = in_speed,
+                                       age_input = c("0 to 17", "18 to 40", "41 to 65", "66 plus"),
+                                       sex_input = c("male", "female"), 
                                        original_mode = "car" , # Just car trips can be replaced
-                                       replace_mode = "pedestrian" , #OR "bicycle" ## Just pedestrian or cycling
-                                       distance_replace = 5 ,
-                                       purpose_input = c("social", "buy something",  "work related", "pick-up or drop-off someone", 
-                                                         "personal business", "unknown purpose (at start of day)",
-                                                         "recreational", "pick-up or deliver something", "accompany someone", 
-                                                         "education", "other purpose", "at or go home", "change mode", "not stated"), # OR ONE OR ANY COMBINATION
-                                       day = c("weekday", "weekend day")) # OR ONE OR THE OTHER
- 
+                                       replace_mode_walk = T,
+                                       replace_mode_cycle = T,
+                                       distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
+                                       distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
+                                       purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
+                                                         "Other", "accompany someone", "education","at or go home"), 
+                                       day = c("weekday", "weekend day")) 
+
+
+scenario_trips <- scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
+
+#### Graphs
+###### Get weighted data
+
+scenario_trips_weighted <-  scenario_trips  %>%
+  srvyr::as_survey_design(weights = trips_wt)
+
+###### Table with baseline and scenario proportion by mode
+scenario_trips_mode <- scenario_trips_weighted   %>% 
+  group_by(trip_mode_scen,.drop = FALSE) %>%
+  dplyr::summarize(prop= srvyr::survey_mean()) %>%
+  rename(mode = trip_mode_scen) %>%
+  mutate(scen="scenario")
+
+baseline_trips_mode <- scenario_trips_weighted   %>% 
+  group_by(trip_mode_base,.drop = FALSE) %>%
+  dplyr::summarize(prop= srvyr::survey_mean()) %>%
+  rename(mode = trip_mode_base) %>%
+  mutate(scen="base") 
+
+data_mode_combo <- rbind(scenario_trips_mode, baseline_trips_mode) %>% mutate(mode = fct_reorder(mode, desc(prop)))
+
+#### Get bar chart modes distribution
+bar_chart_combo_sc <- data_mode_combo %>%
+  ggplot(aes(x = mode, y = prop)) +
+  geom_bar(
+    aes(color = scen, fill = scen),
+    stat = "identity" , position = "dodge"
+  ) + 
+  labs(title="Distribution trips baseline and scenario", x="", y="Proportion of all trips") +
+  theme_classic() +
+  geom_text(aes(label=paste0(round(prop*100,1),"%"), y=prop), size=3)  + 
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(colour = "black", size = 10),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +
+  scale_y_continuous(labels = percent)
+
+
+bar_chart_combo_sc
+ggsave("output/proportion_modes_sc.png")
 write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
 
 ############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
@@ -138,10 +195,10 @@ source("Scripts/data_prep/mmet_pp.R")
 
 mmets_pp_MEL <- calculateMMETSperPerson(
   matched_pop_location = "Data/processed/matched_pop.csv",
+  mets = "Data/Physical Activity/met_values.csv" ,
   MMET_CYCLING = MMET_CYCLING,
   MMET_WALKING = MMET_WALKING,
-  MMET_MOD = MMET_MOD,
-  MMET_VIG = MMET_VIG
+  TOTAL = F
 )
 
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################

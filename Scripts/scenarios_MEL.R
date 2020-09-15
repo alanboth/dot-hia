@@ -9,92 +9,79 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
 calculateScenarioMel <- function(trips_melbourne = in_data, 
-                              age_input = c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97),
+                                 speed = in_speed,
+                              age_input = c("0 to 17", "18 to 40", "41 to 65", "66 plus"),
                               sex_input = c("male", "female"), 
                               original_mode = "car" , # Just car trips can be replaced
-                              replace_mode = "pedestrian" , #"bicycle" ## Just pedestrian or cycling
-                              distance_replace = 5 ,
-                              purpose_input = c("social", "buy something",  "work related", "pick-up or drop-off someone", "personal business", "unknown purpose (at start of day)",
-                                             "recreational", "pick-up or deliver something", "accompany someone", "education", "other purpose", "at or go home", "change mode", "not stated"), 
+                              replace_mode_walk = T,
+                              replace_mode_cycle = T,
+                              distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
+                              distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
+                              purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
+                                                "Other", "accompany someone", "education","at or go home"), 
                               day = c("weekday", "weekend day")) {
                           
 
-    SPEED_WALK <- 5 # ADD AS UNCERTAIN PARAMETERS
-    SPEED_CYCLE <- 20 # ADD AS UNCEARTAIN PARAMETERS
+
     
+    # in_data="Data/processed/trips_melbourne.csv"
+    # in_speed="Data/processed/speed_trips_melbourne.csv"
     
-    # in_data="Data/Processed/trips_melbourne.csv"
   
-    trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age groups to facilitate selection above and matching  
-      #### with mslt_cohorts
-      
-      trips_melbourne <- trips_melbourne %>%
-      dplyr::mutate(age_cat = case_when(age <   5             ~  2,
-                                        age >=  5 & age <=  9 ~  7,
-                                        age >= 10 & age <= 14 ~ 12,
-                                        age >= 15 & age <= 19 ~ 17, 
-                                        age >= 20 & age <= 24 ~ 22,
-                                        age >= 25 & age <= 29 ~ 27, 
-                                        age >= 30 & age <= 34 ~ 32, 
-                                        age >= 35 & age <= 39 ~ 37, 
-                                        age >= 40 & age <= 44 ~ 42,
-                                        age >= 45 & age <= 49 ~ 47, 
-                                        age >= 50 & age <= 54 ~ 52, 
-                                        age >= 55 & age <= 59 ~ 57, 
-                                        age >= 60 & age <= 64 ~ 62, 
-                                        age >= 65 & age <= 69 ~ 67,
-                                        age >= 70 & age <= 74 ~ 72, 
-                                        age >= 75 & age <= 79 ~ 77,
-                                        age >= 80 & age <= 84 ~ 82,
-                                        age >= 85 & age <= 89 ~ 87, 
-                                        age >= 90 & age <= 94 ~ 92,
-                                        age >= 95 & age <= 100 ~ 97)) %>%
-     
-        dplyr::mutate(age_cat_2 = case_when(age_cat == 2 ~  "0 t0 4",
-                                          age_cat == 7 ~  "5 to 9",
-                                          age_cat ==  12 ~ "10 to 14",
-                                          age_cat ==  17  ~ "15 to 19", 
-                                          age_cat ==  22  ~ "20 to 24",
-                                          age_cat ==  27  ~ "25 to 29",
-                                          age_cat ==  32  ~ "30 to 34", 
-                                          age_cat ==  37  ~ "35 to 39", 
-                                          age_cat ==  42  ~ "40 to 44", 
-                                          age_cat ==  47  ~ "45 to 49",
-                                          age_cat ==  52  ~ "50 to 54", 
-                                          age_cat ==  57  ~ "55 to 59", 
-                                          age_cat ==  62  ~ "60 to 64", 
-                                          age_cat ==  67  ~ "65 to 69", 
-                                          age_cat ==  72  ~ "70 to 74",
-                                          age_cat ==  77  ~ "75 to 79", 
-                                          age_cat ==  82  ~ "80 to 84",
-                                          age_cat ==  87  ~ "85 to 89",
-                                          age_cat ==  92  ~ "90 to 94", 
-                                          age_cat ==  97   ~ "95 to 100"))
+    trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%
+      dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
+                                                  trip_mode=="bus" ~ 'public.transport', 
+                                                  trip_mode=="tram" ~ 'public.transport', 
+                                                  trip_mode=="train" ~ 'public.transport',
+                                                  trip_mode=="motorcycle" ~ 'other',
+                                                  TRUE ~ tolower(trip_mode))) ## Add age groups to facilitate selection above and matching  
+    speed <- read.csv(in_speed,as.is=T,fileEncoding="UTF-8-BOM")
     
-    trips_melbourne_scenarios <- trips_melbourne %>%  
+    
+    #### create column in trips_melbourne with speed data for age and sex (use median)
+    walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
+    cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
+    
+    trips_melbourne <- trips_melbourne %>% inner_join(walk_speed, by=c("age_group", "sex"))
+    
+    trips_melbourne <- trips_melbourne %>% inner_join(cycle_speed, by=c("age_group", "sex"))
+    
+    
+    trips_melbourne_scenarios <- trips_melbourne %>%
       dplyr::rename(trip_mode_base = trip_mode,
                     trip_duration_base = trip_duration,
                     trip_distance_base = trip_distance) %>%
-      dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base == original_mode & trip_distance_base <= distance_replace & age_cat %in% age_input &
-                                            sex %in% sex_input & trip_purpose %in% purpose_input & day_type %in% day,
-                                            replace_mode, trip_mode_base)) %>%
+      dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base == original_mode 
+                                               & dist_cat == distance_replace_walk 
+                                               & age_group %in% age_input 
+                                               & sex %in% sex_input 
+                                               & trip_purpose %in% purpose_input 
+                                               & day_type %in% day
+                                               & replace_mode_walk == T, "walking",
+                                            ifelse(trip_mode_base == original_mode 
+                                            & dist_cat == distance_replace_cycle 
+                                            & age_group %in% age_input 
+                                            & sex %in% sex_input 
+                                            & trip_purpose %in% purpose_input 
+                                            & day_type %in% day
+                                            & replace_mode_cycle == T, "bicycle", trip_mode_base))) %>%
+
       ## trip distance is the same, but time changes
       dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
-      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base != trip_mode_scen,
-                                                trip_distance_scen * ifelse(replace_mode == "pedestrian", SPEED_WALK, SPEED_CYCLE),
-                                                trip_duration_base))  %>%  
+      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_scen == "walking",
+                                                60*trip_distance_scen/walk_mean_speed,
+                                                ifelse(trip_mode_scen=="bicycle",
+                                                      60*trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
+                                                trip_duration_base)))  %>%  
       dplyr::mutate(trip_duration_base_hrs = ifelse(day_type == "weekday",
-                                                    trip_duration_base * 5,
-                                                    trip_duration_base * 2)/60) %>%
-      dplyr::mutate(trip_distance_base_hrs = ifelse(day_type == "weekday",
-                                                    trip_distance_base * 5,
-                                                    trip_distance_base * 2)/60) %>%  
+                                                    trip_duration_base * 5/60,
+                                                    trip_duration_base * 2/60)) %>%
       dplyr::mutate(trip_duration_scen_hrs = ifelse(day_type == "weekday",
-                                                    trip_duration_scen * 5,
-                                                    trip_duration_scen * 2)/60) %>%
-      dplyr::mutate(trip_distance_scen_hrs = ifelse(day_type == "weekday",
-                                                    trip_distance_scen * 5,
-                                                    trip_distance_scen * 2)/60) 
+                                                    trip_duration_scen * 5/60,
+                                                    trip_duration_scen  * 2/60)) %>%
+    mutate_if(is.character,as.factor)
+    #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
+    #                                               TRUE ~ trip_mode_scen)))
     return(trips_melbourne_scenarios)
 
 }

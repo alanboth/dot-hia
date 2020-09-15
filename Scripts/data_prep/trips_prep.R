@@ -1,45 +1,20 @@
-# ---- chunk-INTRO: ITHIM-R exposures ----
-
-# rm (list = ls())
-# library(ithimr)
-
-
-# library(srvyr)
-# library(survey)
-# library(psych)
-# library(DescTools)
-# library(Rmisc)
-# library(FSA)
-# library(plyr)
-# library(boot)
-# library(VIM)
-# library(naniar)
-# library(dplyr)
-# library(readr)
-# library(tidyverse)
-# library(CompLognormal)
-# library(pracma)
-# library(goft)
-# library(tidyr)
-# library(utils)
-# library(taRifx)
-# library(naniar)
-# library(data.table)
-# library(stringi)
-
-
+##### Generate trips data 
 suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 suppressPackageStartupMessages(library(tidyr)) # for pivoting data
 
 
 options(scipen=999)
 
+### 1) calculateVistaTrips: each row is a stage
+###  data used for: ithimr (https://github.com/ITHIM/ITHIM-R), scenarios DoT Melbourne and descriptives stages
 
-### Create inputs as per ITHMR (https://github.com/ITHIM/ITHIM-R) for: trips_CITY.csv, injuries_CITY.csv, pa_CITY.csv
-### AND AIR POLLUTION?
-### Create synthetic population
+### 2) calculateVistaTripsDescriptives: each row is main mode of travel
+#### data used for descriptive statistics only
 
-# ---- chunk-1: Create trips data  ----  
+
+### 3) Calculate speed walking and cycling by age and sex (quantiles and mean (sd))
+
+######################################  1) calculateVistaTrips ############################################################
 ### Columns ITHIMR: 
 #### -One row per trip (or stage of trip)
 #### -Minimal columns: participant_id, age, sex, trip_mode, trip_duration (or trip_distance)
@@ -50,59 +25,14 @@ options(scipen=999)
 ### One day (weekday or weekend)
 ### Final product trips_melbourne where each row is a stage
 
-# other VISTA datasets. Not used.
-# jte_VISTA <- read_csv("Data/Travel survey/VISTA 12-18/JTE_VISTA1218_V1.csv")
-# jtw_VISTA <- read.csv("Data/Travel survey/VISTA 12-18/JTW_VISTA1218_V1.csv")
-# stop_VISTA <- read.csv("Data/Travel survey/VISTA 12-18/S_VISTA1218_V1.csv")
-
-calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
-
-  # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
-  # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
-  # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
-
-  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
-    filter(HHID!="") # some rows were completely blank
-  person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
-    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
-  trip_VISTA <- read.csv(trip_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
-    
-    dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
-                  TRIPPURP,LINKMODE,
-                  MODE1,MODE2,MODE3,MODE4,MODE5,MODE6,MODE7,MODE8,MODE9,
-                  DIST1,DIST2,DIST3,DIST4,DIST5,DIST6,DIST7,DIST8,DIST9,
-                  TIME1,TIME2,TIME3,TIME4,TIME5,TIME6,TIME7,TIME8,TIME9,
-                  WDTRIPWGT,WETRIPWGT) 
-  
-    trip_VISTA$WDTRIPWGT <- as.numeric(trip_VISTA$WDTRIPWGT)
-  
-    trip_VISTA$WETRIPWGT <- as.numeric(trip_VISTA$WETRIPWGT)
-    
-  hh_person <- left_join(person_VISTA, hh_VISTA, by = "HHID")
-  
-  
-  trips_melbourne  <- left_join(trip_VISTA, hh_person, by = c("PERSID","HHID") ) %>%
-    dplyr::filter(SurveyPeriod == "2017-18" &
-                    (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
-    dplyr::select(HHID, PERSID, AGE, SEX, TRIPID, DayType, SurveyPeriod, 
-                  HomeSubRegion, TRIPNO, LINKMODE, MODE1, MODE2, MODE3, MODE4, 
-                  MODE5, MODE6, MODE7, MODE8, MODE9, TIME1, TIME2, TIME3, TIME4, 
-                  TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
-                  DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
-                  WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
-    rowwise() %>% # want to sum across rows, not down columns %>%
-    mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T))
-  
-  return(trips_melbourne)}
 
 
 calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
-  # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
-  # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
-  # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
-
-  
+   # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
+   # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
+   # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
+   # 
+   # 
 
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
@@ -133,7 +63,8 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                   WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
     rowwise() %>% # want to sum across rows, not down columns %>%
     mutate(participant_wt = sum(as.numeric(WDPERSWGT),as.numeric(WEPERSWGT),na.rm=T)) %>%
-    dplyr::select(-WDPERSWGT,-WEPERSWGT) %>%
+    mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T)) %>%
+    dplyr::select(-WDPERSWGT,-WEPERSWGT, -WDTRIPWGT, -WETRIPWGT) %>%
     as.data.frame()
   
   ### Replace all character "N/A" with NA
@@ -143,7 +74,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   trips_melbourne_tripid <- trips_melbourne %>%
     dplyr::select(HHID, PERSID, AGE, SEX, TRIPID, DayType, SurveyPeriod, 
                   HomeSubRegion, TRIPNO, LINKMODE, TRAVTIME, TRIPPURP, 
-                  participant_wt, CUMDIST, DESTLGA, ORIGLGA, HOMELGA) %>%
+                  participant_wt, trips_wt, CUMDIST, DESTLGA, ORIGLGA, HOMELGA) %>%
     ### Keep only if complete cases for MODE, DIST and TIME and participant_wt(I AM UNSURE WHY THERE ARE NA WEIGHTS)
     filter(!is.na(participant_wt))
   
@@ -223,7 +154,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
     dplyr::filter(age_cat>3) %>%
     ### Do not include age_cat as ithim is doing its own synthetic population and this causes issues to have age_cat
     dplyr::select(PERSID, cluster_id, household_id, participant_id, age, sex, year, trip_id,
-                  trip_purpose, participant_wt, trip_mode, trip_duration, trip_distance, 
+                  trip_purpose, participant_wt, trips_wt, trip_mode, trip_duration, trip_distance, 
                   day_type) %>%
     dplyr::mutate(PERSID=tolower(PERSID)) %>%
     dplyr::mutate(year=as.numeric(year)) %>%
@@ -249,12 +180,159 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   ### Create number of trips per person
   trips_melbourne <- trips_melbourne %>%
   group_by(persid) %>%
-    mutate(trip_id_2 = 1:n()) %>%
-    ungroup()
+    dplyr::mutate(trip_id_2 = 1:dplyr::n()) %>%
+    ungroup() %>% ## Add age groups
+    mutate(age_group = as.factor(case_when(age <   18  ~  "0 to 17",
+                                           age >=  18 & age <=  40 ~  "18 to 40",
+                                           age >= 41 & age <= 65 ~  "41 to 65",
+                                           age > 65             ~ "66 plus"))) %>%
+    dplyr::mutate(sex =as.factor(sex)) %>%
+    dplyr::mutate(age_group=as.factor(age_group)) %>%
+    dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 2 ~ "< 2km", 
+                                               trip_distance <= 5 & trip_distance >= 2 ~ "2-5km", 
+                                               trip_distance <=10 & trip_distance > 5 ~ "6-10km",
+                                               trip_distance > 10 ~ ">10km"))) %>%
+    dplyr::mutate(trip_purpose=as.factor(case_when(trip_purpose=="social" ~ "Leisure",
+                                                   trip_purpose=="recreational" ~ "Leisure",
+                                                   trip_purpose=="buy something" ~ "Shopping",
+                                                   trip_purpose=="pick-up or drop-off someone"  ~ "Pick-up or drop-off someone/something",
+                                                   trip_purpose=="pick-up or deliver something"  ~ "Pick-up or drop-off someone/something",
+                                                   trip_purpose=="unknown purpose (at start of day)" ~ "Other",
+                                                   trip_purpose=="other purpose" ~ "Other",
+                                                   trip_purpose=="at or go Home"  ~ "Other",
+                                                   trip_purpose=="change mode"  ~ "Other",
+                                                   trip_purpose=="not stated"   ~ "Other",
+                                                   trip_purpose=="work related"   ~ "Work related",
+                                                   TRUE ~ trip_purpose))) %>%
+    
+    dplyr::mutate(day_type =as.factor(day_type))
+  
   
   return(trips_melbourne)
 }
 
-# write.csv(trips_melbourne, "Data/Processed/trips_melbourne.csv", row.names=F, quote=F)
-# write_rds(trips_melbourne, "Data/Processed/trips_melbourne.Rds")
+######################################  2) calculateVistaTripsDescriptives ############################################################
 
+calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
+   
+  # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
+  # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
+  # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
+  
+  hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
+    filter(HHID!="") # some rows were completely blank
+  person_VISTA <- read.csv(person_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(PERSID,HHID,AGE,SEX,WDPERSWGT,WEPERSWGT)
+  trip_VISTA <- read.csv(trip_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    
+    dplyr::select(TRIPID,PERSID,HHID,TRIPNO,CUMDIST,TRAVTIME,ORIGLGA,DESTLGA,
+                  TRIPPURP,LINKMODE,
+                  MODE1,MODE2,MODE3,MODE4,MODE5,MODE6,MODE7,MODE8,MODE9,
+                  DIST1,DIST2,DIST3,DIST4,DIST5,DIST6,DIST7,DIST8,DIST9,
+                  TIME1,TIME2,TIME3,TIME4,TIME5,TIME6,TIME7,TIME8,TIME9,
+                  WDTRIPWGT,WETRIPWGT) 
+  
+  trip_VISTA$WDTRIPWGT <- as.numeric(trip_VISTA$WDTRIPWGT)
+  
+  trip_VISTA$WETRIPWGT <- as.numeric(trip_VISTA$WETRIPWGT)
+  
+  hh_person <- left_join(person_VISTA, hh_VISTA, by = "HHID")
+  
+  
+  trips_melbourne  <- left_join(trip_VISTA, hh_person, by = c("PERSID","HHID") ) %>%
+    dplyr::filter(SurveyPeriod == "2017-18" &
+                    (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
+    dplyr::select(HHID, PERSID, AGE, SEX, TRIPID, DayType, SurveyPeriod, 
+                  HomeSubRegion, TRIPNO, LINKMODE, MODE1, MODE2, MODE3, MODE4, 
+                  MODE5, MODE6, MODE7, MODE8, MODE9, TIME1, TIME2, TIME3, TIME4, 
+                  TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
+                  DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
+                  WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
+    rowwise() %>% # want to sum across rows, not down columns %>%
+    mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T)) %>%  ## Add age groups
+    mutate(age_group = as.factor(case_when(AGE <   18  ~  "0 to 17",
+                                           AGE >=  18 & AGE <=  40 ~  "18 to 40",
+                                           AGE >= 41 & AGE <= 65 ~  "41 to 65",
+                                           AGE >= 65             ~ "65 plus"))) %>%
+    rename(sex=SEX) %>%
+    mutate(sex=case_when(sex=="M" ~ 'male', sex=="F" ~ 'female')) %>% # group modes as per trips file
+    dplyr::mutate(trip_mode=as.factor(case_when(LINKMODE=="Vehicle Driver" ~ 'car', 
+                                               LINKMODE=="Vehicle Passenger" ~ 'car', 
+                                               LINKMODE=="Taxi" ~ 'car', 
+                                               LINKMODE=="School Bus" ~ 'public transport', 
+                                               LINKMODE=="Public Bus" ~ 'public transport', 
+                                               LINKMODE=="Train" ~ 'public transport',
+                                               LINKMODE=="Tram" ~ 'public transport',
+                                               LINKMODE=="Motorcycle" ~ 'other',
+                                               # if meeting none of these criteria, keep original value
+                                               TRUE ~ tolower(LINKMODE)))) %>%
+    dplyr::mutate(day_type =as.factor(DayType)) %>%
+    dplyr::mutate(sex =as.factor(sex)) %>%
+    dplyr::mutate(age_group=as.factor(age_group)) %>%
+    dplyr::mutate(dist_cat=as.factor(case_when(CUMDIST < 2 ~ "< 2km", 
+                                               CUMDIST <= 5 & CUMDIST >= 2 ~ "2-5km", 
+                                               CUMDIST <=10 & CUMDIST > 5 ~ "6-10km",
+                                               CUMDIST > 10 ~ ">10km"))) %>%
+    dplyr::mutate(TRIPPURP=as.factor(case_when(TRIPPURP=="Social" ~ "Leisure",
+                                               TRIPPURP=="Recreational" ~ "Leisure",
+                                               TRIPPURP=="Buy something" ~ "Shopping",
+                                               TRIPPURP=="Pick-up or Drop-off Someone"  ~ "Pick-up or drop-off someone/something",
+                                               TRIPPURP=="Pick-up or Deliver Something"  ~ "Pick-up or drop-off someone/something",
+                                               TRIPPURP=="Unknown purpose (at start of day)" ~ "Other",
+                                               TRIPPURP=="Other Purpose" ~ "Other",
+                                               TRIPPURP=="At or Go Home"  ~ "Other",
+                                               TRIPPURP=="Change Mode"  ~ "Other",
+                                               TRIPPURP=="Not Stated"   ~ "Other",
+                                               TRUE ~ TRIPPURP))) %>%
+    rename(trip_distance = CUMDIST, trip_duration = TRAVTIME, trip_purpose = TRIPPURP, persid=PERSID, trip_id_2=TRIPNO)
+  
+  return(trips_melbourne)}
+
+######################################### 3) Calculate speeds walking and cycling ##################################################
+
+CalculateAgeSexSpeed <- function(in_data){
+
+# in_data="Data/Processed/trips_melbourne.csv"
+
+trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age groups to facilitate selection above and matching  
+
+### USe weighted data
+
+
+#### SPEEDs by age and sex groups
+SPEED_WALK <- dplyr::filter(trips_melbourne, trip_mode == "pedestrian") %>%
+  mutate(speed_walk=trip_distance*60/trip_duration)
+
+ggplot(SPEED_WALK, aes(speed_walk)) +
+  geom_density()
+
+SPEED_WALK <-  SPEED_WALK  %>%
+  srvyr::as_survey_design(weights = trips_wt)
+
+SPEED_CYCLE <- dplyr::filter(trips_melbourne, trip_mode == "bicycle") %>%
+  mutate(speed_cycle=trip_distance*60/trip_duration)
+
+SPEED_CYCLE <-  SPEED_CYCLE  %>%
+  srvyr::as_survey_design(weights = trips_wt)
+
+### Calculate weighted statistics
+
+SPEED_WALK <- SPEED_WALK %>% 
+  group_by(sex, age_group,
+           .drop = FALSE) %>%
+  dplyr::summarize(mean= srvyr::survey_mean(speed_walk),
+                   quantiles= srvyr::survey_quantile(speed_walk,  c(.25,.5,.75),ci=TRUE)) %>% 
+  mutate(activity = "walking")
+
+SPEED_CYCLE <- SPEED_CYCLE %>% 
+  group_by(sex, age_group,
+           .drop = FALSE) %>%
+  dplyr::summarize(mean= srvyr::survey_mean(speed_cycle),
+                   quantiles= srvyr::survey_quantile(speed_cycle,  c(.25,.5,.75),ci=TRUE)) %>% 
+                     mutate(activity = "bicycle")
+
+SPEEDS <- rbind(SPEED_WALK, SPEED_CYCLE)
+
+return(SPEEDS)
+}
