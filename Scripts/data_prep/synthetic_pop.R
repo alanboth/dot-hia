@@ -100,11 +100,11 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   #### Scenario
   total_trips_time_dist_base <- trips_melbourne %>%
-    dplyr::select(persid, trip_mode_base, trip_duration_base, trip_distance_base) %>%
+    dplyr::select(persid, trip_mode_base, trip_duration_base_hrs, trip_distance_base) %>%
     # group by person and travel mode
     dplyr::group_by(persid, trip_mode_base) %>%
     # find the total distance and time traveled for each person by travel mode
-    dplyr::summarise(time_base=sum(trip_duration_base),
+    dplyr::summarise(time_base=sum(trip_duration_base_hrs),
                      distance_base=sum(trip_distance_base)) %>%
     # expand time_base and distance_base to separate pairs of columns for each
     # travel mode
@@ -118,11 +118,11 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   #### Scenario
   total_trips_time_dist_scen <- trips_melbourne %>%
-    dplyr::select(persid, trip_mode_scen, trip_duration_scen, trip_distance_scen) %>%
+    dplyr::select(persid, trip_mode_scen, trip_duration_scen_hrs, trip_distance_scen) %>%
     # group by person and travel mode
     dplyr::group_by(persid, trip_mode_scen) %>%
     # find the total distance and time traveled for each person by travel mode
-    dplyr::summarise(time_scen=sum(trip_duration_scen),
+    dplyr::summarise(time_scen=sum(trip_duration_scen_hrs),
                      distance_scen=sum(trip_distance_scen)) %>%
     # expand time_scen and distance_scen to separate pairs of columns for each
     # travel mode

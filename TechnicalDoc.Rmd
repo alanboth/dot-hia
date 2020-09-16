@@ -219,6 +219,8 @@ analytical_framework
 
 Table 1 outlines user inputs for each of the models: Melbourne model and Australian model. 
 
+### NEEDS UPDATING
+
 ```{r, echo=FALSE, include=TRUE}
 
 scenarios <- tribble(
@@ -244,6 +246,10 @@ column_spec(1:3, width = "15em") %>%
 
 The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. We used PIFs to calculate the average change in incidence of diseases (Figure 2) in the scenarios' diseases' processes. PIFs were derived for: ishcemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R (https://github.com/ITHIM/ITHIM-R) project were used here to calculate individual level RRs for BAU and scenario which where then used to calculate individual level PIFs (\ref{eq1}).From individual level PIFs, age group and sex average PIFs were calculated to modify incidence in the age and sex cohort disease processes' (Figure 3). Specifically the function to generate relative risks at the individual level for BAU and sceanarios (gen_pa_rr). Inputs of gen_pa_rr are individual marginal metabolics of taks per hour (mMET-hours) per week. METs are metabolic equivalent of tasks and measure the energy expenditure required to carry out the physical activity, expressed as a multiple of the resting metabolic rate. Marginal METs only consider energy expended above resting metabolic rate.[@RN21]  All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mMET-hours for: colon, breatst and uterine cancers, ishcemic heart disease and stroke; 10 for lung cancer and 32 for stroke) (https://github.com/ITHIM/ITHIM-R). Table 2 oulines RRs mean, lower and upper bounds for each of the modelled diseases from which the samples were taken following normal distributions truncated to zero (https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). Individual level RRs for BAU and sceanrio and then modelled from the quantile (CHECKING with JAMES). mMETs-hours were derived by summing up the product of physical activity duration and intensity [@RN23].
 Below, calculations for mMET-hours for the Melbourne and Australian model are explained in turn and MET values with associated uncertainty (Table 4).
+
+## Relative risks
+
+Type two diabetes [@RN25]
 
 Relative risks sources: https://shiny.mrc-epid.cam.ac.uk/meta-analyses-physical-activity/
 $$

@@ -201,6 +201,27 @@ mmets_pp_MEL <- calculateMMETSperPerson(
   TOTAL = F
 )
 
+mmets_pp_MEL$diff <- mmets_pp_MEL$base_mmet - mmets_pp_MEL$scen1_mmet
+
+mmets_graphs <- mmets_pp_MEL %>% 
+  pivot_longer(cols = c("base_mmet", "scen1_mmet"),
+               names_to = "scenario", 
+               values_to = "mmets")
+
+##### Graphs for mmets basline and scenario to compare with the dose response curves
+
+mmets <- ggplot(mmets_graphs, aes(x = mmets)) + 
+  geom_histogram(aes(color = scenario), fill = "white", bins = 50) + 
+  labs(title="mMETs hours baseline and scenario", x="mMETS", y="Frequency") +
+  facet_grid(. ~ scenario) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank()
+  ) +
+  theme_classic()
+
+mmets
+
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
 ### Melbourne
 source("Scripts/ithim-r_wrappers.R")
@@ -350,9 +371,6 @@ for (i in 1:nrow(age_sex_disease_cohorts)){
 
   names(disease_life_table_list_bl)[i] <- age_sex_disease_cohorts$cohort[i]
 }
-
-
-
 
 # # ---- chunk-4 ----
 

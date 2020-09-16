@@ -260,10 +260,10 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
     dplyr::mutate(trip_mode=as.factor(case_when(LINKMODE=="Vehicle Driver" ~ 'car', 
                                                LINKMODE=="Vehicle Passenger" ~ 'car', 
                                                LINKMODE=="Taxi" ~ 'car', 
-                                               LINKMODE=="School Bus" ~ 'public transport', 
-                                               LINKMODE=="Public Bus" ~ 'public transport', 
-                                               LINKMODE=="Train" ~ 'public transport',
-                                               LINKMODE=="Tram" ~ 'public transport',
+                                               LINKMODE=="School Bus" ~ 'public.transport', 
+                                               LINKMODE=="Public Bus" ~ 'public.transport', 
+                                               LINKMODE=="Train" ~ 'public.transport',
+                                               LINKMODE=="Tram" ~ 'public.transport',
                                                LINKMODE=="Motorcycle" ~ 'other',
                                                # if meeting none of these criteria, keep original value
                                                TRUE ~ tolower(LINKMODE)))) %>%

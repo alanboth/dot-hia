@@ -68,9 +68,9 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
 
       ## trip distance is the same, but time changes
       dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
-      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_scen == "walking",
+      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_scen == "walking" & replace_mode_walk == T,
                                                 60*trip_distance_scen/walk_mean_speed,
-                                                ifelse(trip_mode_scen=="bicycle",
+                                                ifelse(trip_mode_scen=="bicycle" & replace_mode_cycle == T,
                                                       60*trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
                                                 trip_duration_base)))  %>%  
       dplyr::mutate(trip_duration_base_hrs = ifelse(day_type == "weekday",
