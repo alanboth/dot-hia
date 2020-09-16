@@ -202,6 +202,16 @@ mmets_pp_MEL <- calculateMMETSperPerson(
 )
 
 mmets_pp_MEL$diff <- mmets_pp_MEL$base_mmet - mmets_pp_MEL$scen1_mmet
+mmets_pp_MEL <- mmets_pp_MEL %>%
+  mutate(age_group = as.factor(case_when(age <   18  ~  "0 to 17",
+                                  age >=  18 & age <=  40 ~  "18 to 40",
+                                  age >= 41 & age <= 65 ~  "41 to 65",
+                                  age >= 65             ~ "65 plus"))) %>%
+mutate(sex =as.factor(sex)) 
+
+
+
+
 
 mmets_graphs <- mmets_pp_MEL %>% 
   pivot_longer(cols = c("base_mmet", "scen1_mmet"),
@@ -209,18 +219,18 @@ mmets_graphs <- mmets_pp_MEL %>%
                values_to = "mmets")
 
 ##### Graphs for mmets basline and scenario to compare with the dose response curves
-
 mmets <- ggplot(mmets_graphs, aes(x = mmets)) + 
-  geom_histogram(aes(color = scenario), fill = "white", bins = 50) + 
+  geom_histogram(bins = 50) + 
   labs(title="mMETs hours baseline and scenario", x="mMETS", y="Frequency") +
-  facet_grid(. ~ scenario) + 
-  theme(
-    strip.background = element_blank(),
-    strip.text.x = element_blank()
-  ) +
+   facet_grid(. ~ scenario) +
+   theme(
+     strip.background = element_blank(),
+     strip.text.x = element_blank()
+   ) +
   theme_classic()
 
 mmets
+
 
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
 ### Melbourne

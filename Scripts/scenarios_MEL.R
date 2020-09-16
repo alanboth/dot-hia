@@ -72,13 +72,9 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                                                 60*trip_distance_scen/walk_mean_speed,
                                                 ifelse(trip_mode_scen=="bicycle" & replace_mode_cycle == T,
                                                       60*trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
-                                                trip_duration_base)))  %>%  
-      dplyr::mutate(trip_duration_base_hrs = ifelse(day_type == "weekday",
-                                                    trip_duration_base * 5/60,
-                                                    trip_duration_base * 2/60)) %>%
-      dplyr::mutate(trip_duration_scen_hrs = ifelse(day_type == "weekday",
-                                                    trip_duration_scen * 5/60,
-                                                    trip_duration_scen  * 2/60)) %>%
+                                                trip_duration_base)))  %>%
+      dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7/60) %>% ### Alan I modified here after discussing with James.
+      dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7/60) %>%
     mutate_if(is.character,as.factor)
     #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
     #                                               TRUE ~ trip_mode_scen)))
