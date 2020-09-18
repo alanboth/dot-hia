@@ -4,10 +4,10 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 calculateMMETSperPerson <- function(matched_pop_location, mets, MMET_CYCLING,MMET_WALKING,MMET_MOD,MMET_VIG, TOTAL = F) {
 # matched_pop_location = "Data/processed/matched_pop.csv"
-# mets = "Data/Physical Activity/met_values.csv" 
+# mets = "Data/Physical Activity/met_values.csv"
   
   # TOTAL = F #(only include leisure PA), T = include leisure and work PA
-  # ## Replace with PA Compedium values  
+  # ## Replace with PA Compedium values
   # MMET_CYCLING = 4.63 ## ITHIMR values, how were these obtained?
   # MMET_WALKING = 2.53
   

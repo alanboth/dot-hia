@@ -28,11 +28,11 @@ options(scipen=999)
 
 
 calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
-   # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
-   # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
-   # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
-   # 
-   # 
+   hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
+   person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
+   trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
+
+
 
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%

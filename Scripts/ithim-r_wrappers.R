@@ -97,7 +97,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 }
 
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
-  # ind_ap_pa_location=RR_PA_calculations_AUS
+  # ind_ap_pa_location=RR_PA_calculations_MEL
   # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   # demographic_location="Data/processed/DEMO_AUS.csv"
   # combined_AP_PA=F
@@ -152,7 +152,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         scen_vars <- paste0('RR_', middle_bit, scen_names, '_', ac)
         # set up pif tables
         # dies here if you don't have air pollution
-        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index', 'participant_wt')])
+        pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(base_var,'dem_index', 'participant_wt', 'age', 'sex')])
         setnames(pif_table,base_var,'outcome')
         pif_ref <- pif_table[,.(sum(outcome)),by='dem_index']
         pif_ref_2 <- pif_table[,.(outcome)] 
@@ -164,7 +164,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           scen_var <- scen_vars[index]
           pif_name <- paste0('pif_',ac)
           # Calculate PIFs for selected scenario
-          pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index', 'participant_wt')])
+          pif_table <- setDT(ind_ap_pa[,colnames(ind_ap_pa)%in%c(scen_var,'dem_index', 'participant_wt', 'age', 'sex')])
           setnames(pif_table,scen_var,'outcome')
           pif_temp <- pif_table[,.(sum(outcome)),by='dem_index']
           pif_temp_2 <- pif_table[,.(outcome)] 
@@ -179,7 +179,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         ## BZ: added code to calculate pifs by subgroups (DEMO) using participant weights. 
         ### Declare survey as weighted
         pif_wt <- pif_scen_2 %>%
-        srvyr::as_survey_design(1 , strata = dem_index, weights = participant_wt)
+        srvyr::as_survey_design(weights = participant_wt)
         ### Calculate mean pifs by age and sex
         pif_weighted <-  pif_wt  %>%
         group_by(dem_index) %>%
@@ -189,7 +189,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
       }
     }
   }
-  return(list(pif_scen, pif_weighted))
+  return(list(pif_scen, pif_weighted, pif_scen_2))
 }
 
 

@@ -18,15 +18,14 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                               distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
                               distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
                               purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
-                                                "Other", "accompany someone", "education","at or go home"), 
-                              day = c("weekday", "weekend day")) {
+                                                "Other", "accompany someone", "education","at or go home")) {
                           
 
+# 
+#     
+#     in_data="Data/processed/trips_melbourne.csv"
+#     in_speed="Data/processed/speed_trips_melbourne.csv"
 
-    
-    # in_data="Data/processed/trips_melbourne.csv"
-    # in_speed="Data/processed/speed_trips_melbourne.csv"
-    
   
     trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%
       dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
@@ -51,30 +50,31 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
       dplyr::rename(trip_mode_base = trip_mode,
                     trip_duration_base = trip_duration,
                     trip_distance_base = trip_distance) %>%
+      dplyr::mutate(trip_duration_base = trip_duration_base/60) %>% 
       dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base == original_mode 
                                                & dist_cat == distance_replace_walk 
                                                & age_group %in% age_input 
                                                & sex %in% sex_input 
                                                & trip_purpose %in% purpose_input 
-                                               & day_type %in% day
                                                & replace_mode_walk == T, "walking",
                                             ifelse(trip_mode_base == original_mode 
                                             & dist_cat == distance_replace_cycle 
                                             & age_group %in% age_input 
                                             & sex %in% sex_input 
-                                            & trip_purpose %in% purpose_input 
-                                            & day_type %in% day
+                                            & trip_purpose %in% purpose_input
                                             & replace_mode_cycle == T, "bicycle", trip_mode_base))) %>%
 
       ## trip distance is the same, but time changes
       dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
-      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_scen == "walking" & replace_mode_walk == T,
-                                                60*trip_distance_scen/walk_mean_speed,
-                                                ifelse(trip_mode_scen=="bicycle" & replace_mode_cycle == T,
-                                                      60*trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
+      dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
+                                                & trip_mode_scen == "walking" & replace_mode_walk == T,
+                                                trip_distance_scen/walk_mean_speed,
+                                                ifelse(trip_mode_base == original_mode
+                                                       &trip_mode_scen=="bicycle" & replace_mode_cycle == T,
+                                                      trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
                                                 trip_duration_base)))  %>%
-      dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7/60) %>% ### Alan I modified here after discussing with James.
-      dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7/60) %>%
+      dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>% ### Alan I modified here after discussing with James.
+      dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7) %>%
     mutate_if(is.character,as.factor)
     #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
     #                                               TRUE ~ trip_mode_scen)))

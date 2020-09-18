@@ -87,7 +87,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
   # travel_data_location="Data/processed/travel_data.csv"
   # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
-  # 
+
   
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
   
@@ -145,8 +145,13 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
     mutate(walk_base = case_when(is.na(time_base_walking) ~ "No",
                                  time_base_walking > 0  ~ "Yes")) %>%
     mutate(walk_scen = case_when(is.na(time_scen_walking) ~ "No",
-                                 time_scen_walking > 0  ~ "Yes"))
-  
+                                 time_scen_walking > 0  ~ "Yes"))  %>%
+    
+  ### Create walking min of 2 (to improve matching)
+  mutate(walk_base_min = case_when(time_base_walking <=2 ~ "No",
+                                   is.na(time_base_walking) ~ "No",
+                                   time_base_walking > 2  ~ "Yes")) %>%
+    mutate_if(is.numeric, ~replace(., is.na(.), 0))
   #not needed
   # names(persons_travel)[1:95] <- RemoveAllWs(tolower(names(persons_travel)[1:95]))
   
@@ -161,7 +166,7 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
 calculatePersonsPA <- function(pa_location,hh_location) {
   # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
   # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
-  
+
   
 #### PA variables
   
@@ -193,8 +198,8 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
                   EXTRAMIN, EXLWMMIN, EXLWVMIN, WPAMMIN, WPAVMIN, MODMINS, VIGMINS, EXFSRMIN,
                   EXLWKTNO, EXNUDAYW, EXNUDST, EXWLKTME, EXNUDTH, NHIFINWT) %>%
-    mutate_all(funs(type.convert(replace(., .== 99997, 0)))) %>%
-    mutate_all(funs(type.convert(replace(., .== 99998, 0))))
+    mutate_all(funs(type.convert(replace(., .== 99997, NA)))) %>%
+    mutate_all(funs(type.convert(replace(., .== 99998, NA))))
   
  hh <- read.csv(hh_location,as.is=T, fileEncoding="UTF-8-BOM") %>% 
    dplyr::select(ABSHIDB, STATE16, SA1SF2DN, INCDECU1)
@@ -258,11 +263,6 @@ calculatePersonsPA <- function(pa_location,hh_location) {
                                   STDYFTPT == 1 ~ "Full time",
                                   STDYFTPT  == 2 ~ "Part time")) %>%
     mutate(study_full = ifelse(study_full=="NA",NA,study_full)) %>%
-    ### Sort data names and create PA variables. SES here is for SA2 and in 
-    ### travel data for postcode, need to check.
-    ### Moderate = 5   mets and 4   marginal mets,
-    ### Vigorous = 7.5 mets and 6.5 marginal mets,
-    ### Walking  = 3.5 mets and 2.5 marginal mets
     dplyr::rename(age_group = AGEB) %>%
     dplyr::rename(ses = SA1SF2DN) %>%
     dplyr::rename(state = STATE16) %>%
@@ -273,9 +273,11 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     mutate(mod_work_hr = WPAMMIN/60) %>% 
     mutate(vig_work_hr = WPAVMIN/60) %>%
     mutate(walk_rc = EXFSRMIN/60) %>%
-    mutate(walk_trans = EXLWKTNO/60) %>%
-    mutate(walk_base = case_when(EXLWKTNO == 0 ~ "No",
-                                 EXLWKTNO > 0  ~ "Yes")) %>%
+    mutate(walk_trans = EXTRAMIN/60) %>%
+    mutate(walk_base = case_when(EXTRAMIN == 0 ~ "No",
+                                 EXTRAMIN > 0  ~ "Yes")) %>%
+    mutate(walk_base_min = case_when(walk_trans < 2 ~ "No",
+                                     walk_trans >= 2  ~ "Yes")) %>%
     ### Add whether participants meet PA guidelines (difference for adults and 
     ### older adults)
     mutate(pa_guide_adults =ifelse((EXNUDAYW >=5 & EXNUDST >=2 & 
@@ -338,8 +340,9 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     dplyr::rename(participant_wt = NHIFINWT) %>%
     
     dplyr::select(ABSHIDB, age_group, age_group_scen, sex, ses, walk_base, work_status, participant_wt, dem_index, age_group_scen, 
-                  mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, walk_base,
-                  pa_guide_adults, pa_guide_older_adults)
+                  mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, EXTRAMIN, walk_base_min,
+                  pa_guide_adults, pa_guide_older_adults) %>%
+    mutate_if(is.numeric, ~replace(., is.na(.), 0)) ### Replace NAs with zeros, then in descriptive stats all taken into acccount, not only those with values
   
   return(persons_pa)
 }
@@ -350,17 +353,21 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 
 # I am aiming to randomly assign the following variables from dataset persons_pa
 # to dataset persons_travel (both datasets are attached): 
-# ltpa_marg_met
-# work_marg_met
-# work_ltpa_met
-# work_ltpa_marg_met
-# walk_trans
+### mod_total_hr
+###  vig_total_hr
+### mod_leis_hr
+### vig_leis_hr
+### mod_work_hr
+### vig_work_hr
+### walk_rc
+### walk_trans
+### walk_base
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # pa_location="Data/processed/persons_pa.csv"
   # persons_travel_location="Data/processed/persons_travel.csv"
 
-  
+
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
   persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
@@ -370,7 +377,7 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # people will have NA for their values. I'd suggest using wider age ranges.
   
   persons_matched <- left_join(persons_travel, persons_pa,
-                               by=c("age_group", "sex", "ses", "walk_base", "work_status")) %>% 
+                               by=c("age_group", "sex", "ses", "walk_base", "walk_base_min", "work_status")) %>% 
     group_by(persid) %>%
     # group_number is a unique number (1:n) for each of a persid's possible matches
     dplyr::mutate(group_number=row_number()) %>%
@@ -450,20 +457,17 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
                   occupation_cat, industry_cat, work_full, study_full,
                   mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, walk_base,
                   pa_guide_adults, pa_guide_older_adults,
-                  
                   time_base_car , distance_base_car,
                   time_base_walking, distance_base_walking, 
                   time_base_public.transport, distance_base_public.transport,
                   time_base_other, distance_base_other,
                   time_base_bicycle, distance_base_bicycle,
-                  
                   time_scen_car, distance_scen_car,
                   time_scen_walking, distance_scen_walking, 
                   time_scen_public.transport, distance_scen_public.transport,
                   time_scen_other, distance_scen_other,
                   time_scen_bicycle, distance_scen_bicycle,
-                  
-                  walk_base           , walk_scen)
+                  walk_base, walk_scen)
   
   return(persons_matched_final)
 }

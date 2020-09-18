@@ -115,12 +115,11 @@ scenario_trips <- calculateScenarioMel(trips_melbourne = in_data,
                                        distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
                                        distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
                                        purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
-                                                         "Other", "accompany someone", "education","at or go home"), 
-                                       day = c("weekday", "weekend day")) 
+                                                         "Other", "accompany someone", "education","at or go home")) 
 
 
 scenario_trips <- scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
-
+write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
 #### Graphs
 ###### Get weighted data
 
@@ -165,7 +164,7 @@ bar_chart_combo_sc <- data_mode_combo %>%
 
 bar_chart_combo_sc
 ggsave("output/proportion_modes_sc.png")
-write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
+
 
 ############################## 2) Matched population with mets baseline and scenario (from run_Scenario) ##########
 
@@ -216,20 +215,31 @@ mutate(sex =as.factor(sex))
 mmets_graphs <- mmets_pp_MEL %>% 
   pivot_longer(cols = c("base_mmet", "scen1_mmet"),
                names_to = "scenario", 
-               values_to = "mmets")
+               values_to = "mmets") 
+
+scenario.labs <- c("Baseline", "Scenario")
+names(scenario.labs) <- c("base_mmet", "scen1_mmet")
 
 ##### Graphs for mmets basline and scenario to compare with the dose response curves
 mmets <- ggplot(mmets_graphs, aes(x = mmets)) + 
-  geom_histogram(bins = 50) + 
-  labs(title="mMETs hours baseline and scenario", x="mMETS", y="Frequency") +
-   facet_grid(. ~ scenario) +
-   theme(
-     strip.background = element_blank(),
-     strip.text.x = element_blank()
-   ) +
-  theme_classic()
+  geom_histogram(bins = 50)  + 
+  labs(title="mMET-hours per week baseline and scenario", x="mMETs-hours", y="Frequency") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+   facet_grid(. ~scenario, 
+              labeller = labeller(scenario = scenario.labs))+
+  scale_colour_brewer(type = "seq", palette = "Spectral") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "black"))+ 
+  theme_classic() 
 
 mmets
+
+
 
 
 ########################## 4) RRs per person (code below, has uncertainty inputs) #################################
@@ -263,9 +273,15 @@ pif_MEL <- health_burden_2(
   calculate_AP=F
 ) 
 
+write.csv(pif_MEL[[2]], "SuppDocs/Tables/Pifs.csv" )
+
 pif_MEL <- pif_MEL[[2]] %>% 
   dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% 
-  dplyr::mutate(age=rep(seq(16,100,1), times = 2))
+  dplyr::mutate(age=rep(seq(16,100,1), times = 2)) %>%
+  mutate(sex == case_when(dem_index >=17 ~ "male", 
+                          dem_index))
+pif_MEL<-pif_MEL[!(pif_MEL$age==16),]### drop age 16 best to generate without age 16
+  
 
 ################### 6) Parameters for Mslt code running #######################################################
 
