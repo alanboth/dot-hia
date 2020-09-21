@@ -522,6 +522,45 @@ for (i in 1:length(disease_life_table_list_sc)) {
 index <- index + 1
   }
 
+
+### BZ: graph to check difference values
+
+### Number of tables 202
+### outcomes: incidence, px, mx
+
+# Make plots.
+incidence_check <- list()
+
+for(i in 1:length(disease_life_table_list_sc)) {
+
+  line_chart_change <- disease_life_table_list_sc[[i]] %>%
+  ggplot(aes(x = age, y = incidence_disease)) +
+  geom_line(aes(color="Scenario")) + 
+  geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = incidence_disease, color="Baseline")) +
+  labs(color="") +
+ labs(x = "Age",
+            title = paste0(names(disease_life_table_list_sc[i]))) +
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(colour = "black", size = 10),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_classic()
+
+  incidence_check[[i]] <- line_chart_change 
+}
+
+# Save plots to tiff. Makes a separate file for each plot.
+for(i in 1:length(disease_life_table_list_sc)) {
+  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_incidence_", ".tiff", sep="")
+  tiff(file_name)
+  print(incidence_check[[i]])
+  dev.off()
+}
+
 # ---- chunk-5 ----
 
 ## Generate total change in mortality rate to recalculate scenario general life tables
