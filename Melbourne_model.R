@@ -454,7 +454,7 @@ for (iage in i_age_cohort){
             (disease_life_table_list_bl[[dia_col]]$px * (relative_risk-1) + 1)
           # modify pif for target disease: new pif =  (1 - old pif) * (1 - diabetes pif)
           pif_disease[[target_disease]] <- 1- (1-pif_disease[[target_disease]]) * (1-pif_dia)
-          # print(sum(old_pif-pif_disease[[target_disease]]))
+         # print(sum(old_pif-pif_disease[[target_disease]]))
           
         }
         
@@ -472,7 +472,9 @@ for (iage in i_age_cohort){
          ## on cardiovarcular diseases taken into account. 
       
         disease_life_table_list_sc_temp <- RunDisease(in_idata = td1_age_sex, in_sex = isex,
-                                                       in_mid_age = iage, in_disease = DISEASE_SHORT_NAMES$sname[d])
+                                                       in_mid_age = iage, in_disease = DISEASE_SHORT_NAMES$sname[d],
+                                                      incidence_trends = incidence_trends,
+                                                      mortality_trends = mortality_trends)
 
         disease_life_table_list_sc[[index]] <- disease_life_table_list_sc_temp
                 
