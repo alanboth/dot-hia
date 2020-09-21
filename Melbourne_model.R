@@ -97,6 +97,7 @@ population <- GetPopulation(
 population_data="Data/original/abs/population_census.xlsx",
 location= "Greater Melbourne")
 MSLT_DF <- left_join(MSLT_DF, population)
+MSLT_DF$age <- as.numeric(MSLT_DF$age)
 
 ############################## 1) Run scenarios ###################################################################
 #### For Melbourne: trips change, more calculations requiered as below steps to get mmets for RRs calculation
@@ -200,17 +201,13 @@ mmets_pp_MEL <- calculateMMETSperPerson(
   TOTAL = F
 )
 
-mmets_pp_MEL$diff <- mmets_pp_MEL$base_mmet - mmets_pp_MEL$scen1_mmet
+### mmets_pp_MEL$diff <- mmets_pp_MEL$base_mmet - mmets_pp_MEL$scen1_mmet # to check for errors. If difference is not negative, there is an error
 mmets_pp_MEL <- mmets_pp_MEL %>%
   mutate(age_group = as.factor(case_when(age <   18  ~  "0 to 17",
                                   age >=  18 & age <=  40 ~  "18 to 40",
                                   age >= 41 & age <= 65 ~  "41 to 65",
                                   age >= 65             ~ "65 plus"))) %>%
 mutate(sex =as.factor(sex)) 
-
-
-
-
 
 mmets_graphs <- mmets_pp_MEL %>% 
   pivot_longer(cols = c("base_mmet", "scen1_mmet"),
@@ -273,16 +270,16 @@ pif_MEL <- health_burden_2(
   calculate_AP=F
 ) 
 
-write.csv(pif_MEL[[2]], "SuppDocs/Tables/Pifs.csv" )
+# write.csv(pif_MEL[[2]], "SuppDocs/Tables/Pifs.csv" )
 
-pif_MEL <- pif_MEL[[2]] %>% 
-  dplyr::slice(rep(1:dplyr::n(), each = 5)) %>% 
-  dplyr::mutate(age=rep(seq(16,100,1), times = 2)) %>%
-  mutate(sex == case_when(dem_index >=17 ~ "male", 
-                          dem_index))
-pif_MEL<-pif_MEL[!(pif_MEL$age==16),]### drop age 16 best to generate without age 16
-  
+pif_MEL <- pif_MEL[[2]] %>% dplyr::rename(age=age_group_2) %>%
+  dplyr::slice(rep(1:dplyr::n(), each = 5))
 
+age <- rep(seq(16,100,1), times = 2)
+
+pif_MEL$age <- age
+
+pif_MEL <- pif_MEL %>% dplyr::filter(age !=16)
 ################### 6) Parameters for Mslt code running #######################################################
 
 DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM")
@@ -400,7 +397,7 @@ for (i in 1:nrow(age_sex_disease_cohorts)){
 
 # # ---- chunk-4 ----
 
-###ALAN: from here
+###ALAN: you got to here, I continue, please read my notes, my aim was for the code to work. 
 ## Create scenario life tables with new pifs,includes Diabetes loop. 
 
 ### Read disease inventory and only include PA related diseases
@@ -417,13 +414,19 @@ strk_index <- which(DISEASE_SHORT_NAMES$sname=='strk')
 dia_index <- which(DISEASE_SHORT_NAMES$sname=='dmt2')
 dia_order <- c(dia_index,c(1:nrow(DISEASE_SHORT_NAMES))[-dia_index])
 for (iage in i_age_cohort){
+  # iage=22
   td1_age <- MSLT_DF[MSLT_DF$age>=iage,] 
   pif_disease_age <- pif_expanded[pif_expanded$age>=iage,]
   for (isex in i_sex){
+    # isex="male"
     td1_age_sex <- td1_age[td1_age$sex==isex,]
     pif_disease_age_sex <- pif_disease_age[pif_disease_age$sex==isex,]
     for (d in c(1:nrow(DISEASE_SHORT_NAMES))[dia_order]){
       
+      
+      
+      
+      #### BZ: creates PIF columns by age and sex
       ## Exclude non-males diseases and non-chronic diseases and road injuries and disease with no pif
       if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))|| 
           DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
@@ -463,28 +466,33 @@ for (iage in i_age_cohort){
         new_col[is.na(new_col)] <- 0
         td1_age_sex[[paste('incidence', DISEASE_SHORT_NAMES$sname[d], sep = '_')]] <- new_col
         
-        
-        
-        ## Instead of idata, feed td to run scenarios. Now all diseases are run again, with the effect of diabetes
-        ## on cardiovarcular diseases taken into account. 
-        
+         
+         
+         ## Instead of idata, feed td to run scenarios. Now all diseases are run again, with the effect of diabetes
+         ## on cardiovarcular diseases taken into account. 
+      
         disease_life_table_list_sc_temp <- RunDisease(in_idata = td1_age_sex, in_sex = isex,
-                                                      in_mid_age = iage, in_disease = DISEASE_SHORT_NAMES$sname[d])
-        
-        
-        
-        disease_life_table_list_sc_temp$diff_inc_disease <-
-          disease_life_table_list_sc_temp$incidence_disease -   disease_life_table_list_bl[[index]]$incidence_disease
-        disease_life_table_list_sc_temp$diff_prev_disease <-
-          disease_life_table_list_sc_temp$px  - disease_life_table_list_bl[[index]]$px
-        disease_life_table_list_sc_temp$diff_mort_disease <-
-          disease_life_table_list_sc_temp$mx - disease_life_table_list_bl[[index]]$mx
-        disease_life_table_list_sc_temp$diff_pylds_disease <-
-          (disease_life_table_list_sc_temp$px - disease_life_table_list_bl[[index]]$px) * disease_life_table_list_bl[[index]]$dw_disease
-        
+                                                       in_mid_age = iage, in_disease = DISEASE_SHORT_NAMES$sname[d])
+
         disease_life_table_list_sc[[index]] <- disease_life_table_list_sc_temp
+                
         names(disease_life_table_list_sc)[index] <- paste(iage, isex, DISEASE_SHORT_NAMES$sname[d], sep = '_')
         
+        # disease_life_table_list_bl <- disease_life_table_list_bl[names(disease_life_table_list_sc)]
+
+         # 
+         # disease_life_table_list_sc[[index]]$diff_inc_disease <-
+         #  disease_life_table_list_sc[[index]]$incidence_disease -   disease_life_table_list_bl[[index]]$incidence_disease
+         #  disease_life_table_list_sc[[index]]$diff_prev_disease <-
+         #    disease_life_table_list_sc[[index]]$px  - disease_life_table_list_bl[[index]]$px
+         #  disease_life_table_list_sc[[index]]$diff_mort_disease <-
+         #    disease_life_table_list_sc[[index]]$mx - disease_life_table_list_bl[[index]]$mx
+         #  disease_life_table_list_sc[[index]]$diff_pylds_disease <-
+         #    (disease_life_table_list_sc[[index]]$px - disease_life_table_list_bl[[index]]$px) * disease_life_table_list_bl[[index]]$dw_disease
+         # 
+         # 
+
+
         index <- index + 1
       }
     }
@@ -492,6 +500,25 @@ for (iage in i_age_cohort){
 }
 ## Uncomment to check scenario life tables
 # View(disease_life_table_list_sc[[3]])
+
+
+### Alan please note that the calculation of differences between basline and sceanrio was originally in the above code, but
+### with your new script for the calculation of the baselies disease life tables I am unsure on how to match the list names above.
+
+disease_life_table_list_bl <- disease_life_table_list_bl[names(disease_life_table_list_sc)]
+
+index <- 1
+for (i in 1:length(disease_life_table_list_sc)) {
+ disease_life_table_list_sc[[index]]$diff_inc_disease <-
+  disease_life_table_list_sc[[index]]$incidence_disease -   disease_life_table_list_bl[[index]]$incidence_disease
+  disease_life_table_list_sc[[index]]$diff_prev_disease <-
+    disease_life_table_list_sc[[index]]$px  - disease_life_table_list_bl[[index]]$px
+  disease_life_table_list_sc[[index]]$diff_mort_disease <-
+    disease_life_table_list_sc[[index]]$mx - disease_life_table_list_bl[[index]]$mx
+  disease_life_table_list_sc[[index]]$diff_pylds_disease <-
+    (disease_life_table_list_sc[[index]]$px - disease_life_table_list_bl[[index]]$px) * disease_life_table_list_bl[[index]]$dw_disease
+index <- index + 1
+  }
 
 # ---- chunk-5 ----
 

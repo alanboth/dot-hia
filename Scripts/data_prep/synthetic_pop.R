@@ -56,6 +56,27 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
                                  age >= 75 & age <= 79 ~ 17,
                                  age >= 80 & age <= 84 ~ 18,
                                  age >= 85             ~ 19)) %>%
+    mutate(age_group_2 = case_when(age <   5             ~  2, ### for pifs calculations Melbourne model
+                                 age >=  5 & age <=  9 ~  7,
+                                 age >= 10 & age <= 14 ~  12,
+                                 age >= 15 & age <= 17 ~  17, 
+                                 age >= 18 & age <= 19 ~  17,
+                                 age >= 20 & age <= 24 ~  22,
+                                 age >= 25 & age <= 29 ~  27, 
+                                 age >= 30 & age <= 34 ~  32, 
+                                 age >= 35 & age <= 39 ~  37, 
+                                 age >= 40 & age <= 44 ~ 42,
+                                 age >= 45 & age <= 49 ~ 47, 
+                                 age >= 50 & age <= 54 ~ 52, 
+                                 age >= 55 & age <= 59 ~ 57, 
+                                 age >= 60 & age <= 64 ~ 62, 
+                                 age >= 65 & age <= 69 ~ 67,
+                                 age >= 70 & age <= 74 ~ 72, 
+                                 age >= 75 & age <= 79 ~ 77,
+                                 age >= 80 & age <= 84 ~ 82,
+                                 age >= 85 & age <= 89 ~ 87,
+                                 age >= 90 & age <= 94 ~ 92,
+                                 age >=95 ~ 97)) %>%
     #### Only keep adults over 18
     filter(age_group>4) %>%
     ### Sex to match persons_pa sex variable
@@ -74,7 +95,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     rename(work_full = FULLTIMEWORK) %>%
     rename(persid = PERSID) %>%
     rename(hhid = HHID) %>%
-    dplyr::select(persid,hhid,age,age_group,sex,work_status,work_full,study_full,
+    dplyr::select(persid,hhid,age,age_group, age_group_2, sex,work_status,work_full,study_full,
                   occupation_cat,industry_cat,SurveyPeriod,HomeSubRegion,HOMEPC,
                   participant_wt,ses)
   
@@ -364,8 +385,8 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 ### walk_base
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-  # pa_location="Data/processed/persons_pa.csv"
-  # persons_travel_location="Data/processed/persons_travel.csv"
+  pa_location="Data/processed/persons_pa.csv"
+  persons_travel_location="Data/processed/persons_travel.csv"
 
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
@@ -453,7 +474,7 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   ### Select variables ### Keep participant_wt for travel survey
   
   persons_matched_final <- persons_matched_final %>%
-    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status, age_group_scen,
+    dplyr::select(persid, participant_wt, age, sex, ses, dem_index, work_status, age_group_scen, age_group_2,
                   occupation_cat, industry_cat, work_full, study_full,
                   mod_total_hr, vig_total_hr, mod_leis_hr, vig_leis_hr, mod_work_hr, vig_work_hr, walk_rc, walk_trans, walk_base,
                   pa_guide_adults, pa_guide_older_adults,

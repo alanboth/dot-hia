@@ -21,10 +21,8 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                                                 "Other", "accompany someone", "education","at or go home")) {
                           
 
-# 
-#     
-#     in_data="Data/processed/trips_melbourne.csv"
-#     in_speed="Data/processed/speed_trips_melbourne.csv"
+     # in_data="Data/processed/trips_melbourne.csv"
+     # in_speed="Data/processed/speed_trips_melbourne.csv"
 
   
     trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%

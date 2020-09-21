@@ -99,7 +99,7 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
 health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demographic_location,combined_AP_PA=T,calculate_AP=T){
   # ind_ap_pa_location=RR_PA_calculations_MEL
   # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
-  # demographic_location="Data/processed/DEMO_AUS.csv"
+  # demographic_location="Data/processed/DEMO.csv"
   # combined_AP_PA=F
   # calculate_AP=F
 
@@ -114,7 +114,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   
   pop_details <- DEMOGRAPHIC
   pif_scen <- pop_details
-  pif_scen_2 <- ind_ap_pa_location %>% dplyr::select(dem_index, participant_wt, sex, age_group_scen)
+  pif_scen_2 <- ind_ap_pa_location %>% dplyr::select(dem_index, participant_wt, sex, age_group_2)
   # set up reference (scen1)
   reference_scenario <- SCEN_SHORT_NAME[1]
   scen_names <- SCEN_SHORT_NAME[SCEN_SHORT_NAME!=reference_scenario]
@@ -182,14 +182,14 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
         srvyr::as_survey_design(weights = participant_wt)
         ### Calculate mean pifs by age and sex
         pif_weighted <-  pif_wt  %>%
-        group_by(dem_index) %>%
+        group_by(sex, age_group_2) %>%
         dplyr::summarise_at(vars(starts_with("pif")), survey_mean)
 
         }
       }
     }
   }
-  return(list(pif_scen, pif_weighted, pif_scen_2))
+  return(list(pif_scen, pif_weighted))
 }
 
 
