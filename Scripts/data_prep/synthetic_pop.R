@@ -106,8 +106,8 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
 
 ### trips_melbourne
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
-  travel_data_location="Data/processed/travel_data.csv"
-  scenario_location="Data/processed/trips_melbourne_scenarios_srl.csv"
+  # travel_data_location="Data/processed/travel_data.csv"
+  # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
     
   ### Original set
     # "Data/processed/trips_melbourne_scenarios.csv"
