@@ -104,8 +104,8 @@ MSLT_DF$age <- as.numeric(MSLT_DF$age)
 #### The entire dataset is keept with all trips, not only those that change
 # Generate trips_melbourne_scenarios.csv
 source("Scripts/scenarios_MEL.R")
-in_data="Data/Processed/trips_melbourne.csv"
-in_speed="Data/Processed/speed_trips_melbourne.csv"
+in_data="Data/processed/trips_melbourne.csv"
+in_speed="Data/processed/speed_trips_melbourne.csv"
 scenario_trips <- calculateScenarioMel(trips_melbourne = in_data, 
                                        speed = in_speed,
                                        age_input = c("0 to 17", "18 to 40", "41 to 65", "66 plus"),
