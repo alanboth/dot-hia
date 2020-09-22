@@ -506,6 +506,7 @@ for (iage in i_age_cohort){
 
 ### Alan please note that the calculation of differences between basline and sceanrio was originally in the above code, but
 ### with your new script for the calculation of the baselies disease life tables I am unsure on how to match the list names above.
+### Here I reorder baseline to match scenario names
 
 disease_life_table_list_bl <- disease_life_table_list_bl[names(disease_life_table_list_sc)]
 
@@ -529,37 +530,46 @@ index <- index + 1
 ### outcomes: incidence, px, mx
 
 # Make plots.
-incidence_check <- list()
 
-for(i in 1:length(disease_life_table_list_sc)) {
-
-  line_chart_change <- disease_life_table_list_sc[[i]] %>%
-  ggplot(aes(x = age, y = incidence_disease)) +
-  geom_line(aes(color="Scenario")) + 
-  geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = incidence_disease, color="Baseline")) +
-  labs(color="") +
- labs(x = "Age",
-            title = paste0(names(disease_life_table_list_sc[i]))) +
-  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=10)) +
-  theme(legend.position = "right",
-        legend.title = element_blank(),
-        legend.text = element_text(colour = "black", size = 10),
-        legend.key = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  theme_classic()
-
-  incidence_check[[i]] <- line_chart_change 
-}
-
-# Save plots to tiff. Makes a separate file for each plot.
-for(i in 1:length(disease_life_table_list_sc)) {
-  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_incidence_", ".tiff", sep="")
-  tiff(file_name)
-  print(incidence_check[[i]])
-  dev.off()
-}
+# graphs_check <- list()
+# index <- 1
+# for(i in 1:length(disease_life_table_list_sc)) {
+#   for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
+# 
+#   line_chart_change <- disease_life_table_list_sc[[i]] %>%
+#   ggplot(aes(x = age, y = o)) +
+#   geom_line(aes(color="Scenario")) + 
+#   geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = o, color="Baseline")) +
+#   labs(color="") +
+#  labs(x = "Age",
+#             title = paste0(names(disease_life_table_list_sc[i])),
+#       y = o) +
+#   theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+#         axis.text=element_text(size=10),
+#         axis.title=element_text(size=10)) +
+#   theme(legend.position = "right",
+#         legend.title = element_blank(),
+#         legend.text = element_text(colour = "black", size = 10),
+#         legend.key = element_blank(),
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+#   theme_classic()
+# 
+#   graphs_check[[i]] <- line_chart_change 
+#   index <- index + 1
+#   }
+# }
+# 
+# # Save plots to tiff. Makes a separate file for each plot.
+# index <- 1
+# for(i in 1:length(disease_life_table_list_sc)) {
+#   for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
+#   file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
+#   tiff(file_name)
+#  
+#   dev.off()
+#   index <- index + 1
+#   }
+# }
 
 # ---- chunk-5 ----
 
@@ -952,7 +962,7 @@ output_life_years_change <- output_df %>%
 
 
 
-# ---- chunk-11.1.2 Diseases deaths, incidence and ylds (lri) ----
+# ---- chunk-11.1.2 Diseases deaths, incidence and ylds ----
 #### Add uncertainty intervals
 #### Accumulated over the life of the cohort. For example, total life years change for females 16-19 over their life course
 
@@ -967,8 +977,82 @@ output_diseases_change <- output_df %>%
 
 
 
+# ---- chunk-11.1.3 Graphs by outcome and cohort ----
+### Variables for creating loops for graphs
+i_cohort <- unique(output_df$.id)
+i_plot <- c("bl", "sc", "diff")
+i_disease <- DISEASE_SHORT_NAMES$sname
+i_output <- c("mx", "inc")
+
+# data <- dplyr::filter(output_df, .id == "17_male")
+# 
+# plot <- data %>%
+#   ggplot(aes(x = age, y = paste0("_num_bl_"))) +
+#   geom_line()
+# print(plot)
+# ggsave("output/diseases/test.png")
+
+
+graphs_diseases <- list()
+index <- 1
+for(c in i_cohort){
+  for (o in i_plot){
+    for (d in i_disease){
+      for (i in i_output){
+        
+
+        data <- dplyr::filter(output_df, .id == c)
+        
+ plot <- data %>%
+          ggplot(aes(x = age, y = paste0(i, "_num_bl_", d))) +
+  geom_line() +aes(color= paste0("Baseline", i)) +
+  geom_line(data = data, aes(y = paste0(i, "_num_sc_", d), color= paste0("Scenario", i))) +
+  # geom_line(data = data, aes(y = paste0(i, "_num_diff_", d), color= paste0("Difference", i))) +
+          labs(x = "Year",
+            title = paste0(i, d),
+      y = "Numbers") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(colour = "black", size = 10),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_classic()
+
+  graphs_diseases[[index]] <- plot
+  
+  ggsave(graphs_diseases[[index]], file==paste0(paste("output/diseases/", c, "_", d, "_", i, ".tiff")))
+  
+  dev.off()
+  index <- index + 1
+      }
+    }  
+  }
+}
+
+# Save plots to tiff. Makes a separate file for each plot.
+
+index <- 1
+for(c in i_cohort){
+  for (o in i_plot){
+    for (d in i_disease){
+      for (i in i_output){
+  file_name = paste("output/diseases/", c, "_", d, "_", i, ".tiff", sep="")
+  tiff(file_name)
+
+  dev.off()
+  index <- index + 1
+      }
+    }  
+  }
+}
+
 
 # # ---- chunk-11.2 Graphs ---- CHECK GRAPHS AND WHAT WE WANT
+
+
 # # ---- chunk-11.2.1 Graphs cohorts age and sex ----
 # 
 # ### DISEASE DEATHS AND INCIDENCE NUMBERS: graphs by age and sex cohort, over the life course of cohort.  
@@ -1008,42 +1092,7 @@ output_diseases_change <- output_df %>%
 # }
 # 
 # 
-# ### NON-DISEASE DEATHS AND YLDS NUMBERS: graphs by age and sex cohort, over the life course of cohort.  
-# 
-# #### Define variables names
-# bl <- 'num_bl'
-# sc <- 'num_sc'
-# diff <- 'num_diff'
-# i_outcome_nd <- c('mx', 'ylds')
-# 
-# 
-# for (iage in i_age_cohort){
-#   for (isex in i_sex) {
-#     for (ioutcome in i_outcome_nd) {
-#       for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-#         
-#        
-#         ## Exclude chronic disease and all-cause mortality and  pyld
-#         if (DISEASE_SHORT_NAMES$is_not_dis[d] != 1 || DISEASE_SHORT_NAMES$acronym[d] == 'other' || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif'){
-#         }
-#         else {
-#          
-#           pdf(paste0(output_dir, 'graphs/cohorts/', DISEASE_SHORT_NAMES$acronym[d],'_', isex, '_', iage, '_', ioutcome, '.pdf'),width=5.5,height=4)
-#            
-#           p_index  <- PlotOutput(in_data = output_df, in_age = iage, in_population = isex, in_outcomes = c('age', paste(ioutcome, bl, DISEASE_SHORT_NAMES$acronym[d], sep = '_'), paste(ioutcome, sc, DISEASE_SHORT_NAMES$acronym[d], sep = '_'), paste(ioutcome, diff, DISEASE_SHORT_NAMES$acronym[d], sep = '_')), in_legend = ifelse(ioutcome == 'ylds', 'YLDs', 'Deaths'), in_disease = DISEASE_SHORT_NAMES$acronym[d])
-#           
-#           # ggsave(p_index, file=paste0(output_dir, DISEASE_SHORT_NAMES$acronym[d],'_', isex, '_', iage, '_', ioutcome, '.jpeg'), width = 14, height = 10, units = 'cm')
-#           
-#           print(p_index)
-#           dev.off()
-#           
-#         }
-#       }
-#     }
-#   }
-# }
-# 
-# 
+
 # # ---- chunk-11.2.1 Graphs aggreagated cohorts ----
 # 
 # ### First create aggregated data frames

@@ -27,9 +27,9 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     filter(!is.na(HOMEPC))
   
   ### Join persons and household, keep data for greater Melb only and create unique weights
-  persons_travel <- left_join(person_VISTA, hh_VISTA, by = "HHID") %>% 
-    filter(SurveyPeriod == "2017-18" &
-             (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
+  persons_travel <- left_join(person_VISTA, hh_VISTA, by = "HHID") %>%  ### Alan: here I am now excluding 2016-2017 and 20017-18, so using same years as sceanrio
+    filter(SurveyPeriod != "2017-18" &
+             (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%  ## Alan: do you 
     rowwise() %>% # want to sum across rows, not down columns
     mutate(participant_wt = sum(as.numeric(WDPERSWGT),as.numeric(WEPERSWGT),na.rm=T)) %>%
     dplyr::select(-WDPERSWGT,-WEPERSWGT) %>%
@@ -136,8 +136,9 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
     # rearrange the columns
     dplyr::select(persid,time_base_car,distance_base_car,
                   time_base_walking,distance_base_walking,
-                  time_base_public.transport,distance_base_public.transport,
-                  time_base_other,distance_base_other,
+                  'time_base_public transport','distance_base_public transport',
+                  time_base_pt.walk,distance_base_pt.walk,
+                  time_base_pt.drive,distance_base_pt.drive,
                   time_base_bicycle,distance_base_bicycle)
   
   #### Scenario
@@ -154,10 +155,10 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
     # rearrange the columns
     dplyr::select(persid,time_scen_car,distance_scen_car,
                   time_scen_walking,distance_scen_walking,
-                  time_scen_public.transport,distance_scen_public.transport,
-                  time_scen_other,distance_scen_other,
+                  'time_scen_public transport','distance_scen_public transport',
+                  time_scen_pt.walk,distance_scen_pt.walk,
+                  time_scen_pt.drive,distance_scen_pt.drive,
                   time_scen_bicycle,distance_scen_bicycle)
-  
   
   ### Do this last appending all
   persons_travel <- travel_data %>%
@@ -388,12 +389,12 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 ### walk_base
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-  pa_location="Data/processed/persons_pa.csv"
-  persons_travel_location="Data/processed/persons_travel.csv"
+  # pa_location="Data/processed/persons_pa.csv"
+  # persons_travel_location="Data/processed/persons_travel.csv"
 
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
-  persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
+  persons_travel <- persons_travel #read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
   # This joins the two tables based on the match variables. This is all of the 
   # possible group combinations. We then assign a unique per group number.
