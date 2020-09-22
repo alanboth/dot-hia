@@ -531,6 +531,7 @@ index <- index + 1
 
 # Make plots.
 
+<<<<<<< HEAD
 # graphs_check <- list()
 # index <- 1
 # for(i in 1:length(disease_life_table_list_sc)) {
@@ -570,6 +571,47 @@ index <- index + 1
 #   index <- index + 1
 #   }
 # }
+=======
+graphs_check <- list()
+index <- 1
+for(i in 1:length(disease_life_table_list_sc)) {
+  for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
+
+  line_chart_change <- disease_life_table_list_sc[[i]] %>%
+  ggplot(aes(x = age, y = o)) +
+  geom_line(aes(color="Scenario")) + 
+  geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = o, color="Baseline")) +
+  labs(color="") +
+ labs(x = "Age",
+            title = paste0(names(disease_life_table_list_sc[i])),
+      y = o) +
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(colour = "black", size = 10),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_classic()
+
+  graphs_check[[i]] <- line_chart_change 
+  index <- index + 1
+  }
+}
+
+# Save plots to tiff. Makes a separate file for each plot.
+index <- 1
+for(i in 1:length(disease_life_table_list_sc)) {
+  for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
+  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
+  tiff(file_name)
+ 
+  dev.off()
+  index <- index + 1
+  }
+}
+>>>>>>> 202c6068a218aafa570c2773109f90334a3f4a37
 
 # ---- chunk-5 ----
 
