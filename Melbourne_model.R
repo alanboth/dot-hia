@@ -506,6 +506,7 @@ for (iage in i_age_cohort){
 
 ### Alan please note that the calculation of differences between basline and sceanrio was originally in the above code, but
 ### with your new script for the calculation of the baselies disease life tables I am unsure on how to match the list names above.
+### Here I reorder baseline to match scenario names
 
 disease_life_table_list_bl <- disease_life_table_list_bl[names(disease_life_table_list_sc)]
 
@@ -529,17 +530,20 @@ index <- index + 1
 ### outcomes: incidence, px, mx
 
 # Make plots.
-incidence_check <- list()
 
+graphs_check <- list()
+index <- 1
 for(i in 1:length(disease_life_table_list_sc)) {
+  for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
 
   line_chart_change <- disease_life_table_list_sc[[i]] %>%
-  ggplot(aes(x = age, y = incidence_disease)) +
+  ggplot(aes(x = age, y = o)) +
   geom_line(aes(color="Scenario")) + 
-  geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = incidence_disease, color="Baseline")) +
+  geom_line(data = disease_life_table_list_bl[[i]], aes(x = age, y = o, color="Baseline")) +
   labs(color="") +
  labs(x = "Age",
-            title = paste0(names(disease_life_table_list_sc[i]))) +
+            title = paste0(names(disease_life_table_list_sc[i])),
+      y = o) +
   theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
         axis.text=element_text(size=10),
         axis.title=element_text(size=10)) +
@@ -550,15 +554,21 @@ for(i in 1:length(disease_life_table_list_sc)) {
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme_classic()
 
-  incidence_check[[i]] <- line_chart_change 
+  graphs_check[[i]] <- line_chart_change 
+  index <- index + 1
+  }
 }
 
 # Save plots to tiff. Makes a separate file for each plot.
+index <- 1
 for(i in 1:length(disease_life_table_list_sc)) {
-  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_incidence_", ".tiff", sep="")
+  for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
+  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
   tiff(file_name)
-  print(incidence_check[[i]])
+ 
   dev.off()
+  index <- index + 1
+  }
 }
 
 # ---- chunk-5 ----
