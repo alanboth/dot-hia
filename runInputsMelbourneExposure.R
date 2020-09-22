@@ -40,7 +40,7 @@ persons_pa <- calculatePersonsPA(
   pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv",
   hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 )
-write.csv(persons_pa, "Data/Processed/persons_pa.csv", row.names=F, quote=F)
+write.csv(persons_pa, "Data/processed/persons_pa.csv", row.names=F, quote=F)
 
 
 

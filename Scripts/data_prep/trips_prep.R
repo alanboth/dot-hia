@@ -293,7 +293,7 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
 
 CalculateAgeSexSpeed <- function(in_data){
 
-in_data="Data/Processed/trips_melbourne.csv"
+# in_data="Data/processed/trips_melbourne.csv"
 
 trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age groups to facilitate selection above and matching  
 

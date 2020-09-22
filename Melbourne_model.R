@@ -531,7 +531,6 @@ index <- index + 1
 
 # Make plots.
 
-<<<<<<< HEAD
 # graphs_check <- list()
 # index <- 1
 # for(i in 1:length(disease_life_table_list_sc)) {
@@ -571,7 +570,6 @@ index <- index + 1
 #   index <- index + 1
 #   }
 # }
-=======
 graphs_check <- list()
 index <- 1
 for(i in 1:length(disease_life_table_list_sc)) {
@@ -604,14 +602,13 @@ for(i in 1:length(disease_life_table_list_sc)) {
 index <- 1
 for(i in 1:length(disease_life_table_list_sc)) {
   for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
-  file_name = paste("SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
+  file_name = paste("./SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
   tiff(file_name)
  
   dev.off()
   index <- index + 1
   }
 }
->>>>>>> 202c6068a218aafa570c2773109f90334a3f4a37
 
 # ---- chunk-5 ----
 
