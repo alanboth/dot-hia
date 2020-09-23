@@ -235,6 +235,7 @@ mmets <- ggplot(mmets_graphs, aes(x = mmets)) +
         panel.border = element_rect(colour = "black"))+ 
   theme_classic() 
 
+## Check graph mMET=hours
 mmets
 
 
@@ -254,6 +255,46 @@ RR_PA_calculations_MEL <- gen_pa_rr_wrapper(
                               "/dose_response/drpa/extdata"),
   PA_DOSE_RESPONSE_QUANTILE=F
 )
+
+## Check distributions relative risks and mmets
+
+rr_ihd <- RR_PA_calculations_MEL %>%
+  ggplot(aes(x = base_mmet, y = RR_pa_base_ihd)) +
+  geom_line() + 
+  geom_line(RR_PA_calculations_MEL, aes(y=RR_pa_scen1_ihd))
+
+graphs_rr <- list()
+index <- 1
+for(i in 1:length(disease_life_table_list_sc)) {
+  data <- disease_life_table_list_sc[[i]]
+  line_chart_change <-  ggplot(data = data, aes(x = age, y = diff_inc_disease)) +
+  geom_line(aes(color="Incidence")) +
+  geom_line(data = data, aes(y = diff_prev_disease, color="Prevalence")) +
+  geom_line(data = data, aes(y = diff_mort_disease, color="Mortality")) +
+    geom_line(data = data, aes(y = diff_pylds_disease, color="pYLDs")) +
+    labs(color="") +
+ labs(x = "Age",
+            title = paste(data[1, "age"], data[1, "sex"], data[1, "disease"], sep=" "),
+      y = "Rates difference") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10)) +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(colour = "black", size = 10),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_classic() +
+  geom_hline(yintercept=0, linetype='dashed', color = 'black')
+  ggsave(line_chart_change, file=paste("./SuppDocs/CheckGraphs/diseases/", names(disease_life_table_list_sc[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
+  graphs_check[[i]] <- line_chart_change
+
+  # dev.off()
+  index <- index + 1
+
+}
+
+
 
 ###################### 5) PIFS by age and sex (with function health_burden_2) #####################################
 source("Scripts/ithim-r_wrappers.R")
@@ -550,19 +591,31 @@ for (i in 1:nrow(age_sex_cohorts)){
   mx_pylds_sc_total_disease_df_cohort <- mx_pylds_sc_total_disease_df %>%
     filter(age_sex_cohort==age_sex_cohorts$cohort[i]) %>%
     dplyr::select(age,mortality_sum,pylds_sum)
-  td2 <- MSLT_DF %>%
+ 
+### Modify rates in static MSLT  (pylds are always static, mx can include future trends)
+   td2 <- MSLT_DF %>%
     filter(sex==age_sex_cohorts$sex[i]) %>%
     left_join(mx_pylds_sc_total_disease_df_cohort,by="age") %>%
     mutate(mx=mx+replace_na(mortality_sum,0),
            pyld_rate=pyld_rate+replace_na(pylds_sum,0)) %>%
     dplyr::select(-mortality_sum,-pylds_sum)
-  
+
+### Modify death rates with future trends
+   td3 <- death_rates %>%
+     mutate(cohort=paste(age_cohort, sex, sep = "_")) %>% # variable to match change in mortality rates df
+     filter(cohort==age_sex_cohorts$cohort[i]) %>%
+     left_join(mx_pylds_sc_total_disease_df_cohort) %>%
+     mutate(rate=rate+replace_na(mortality_sum,0))%>%
+     dplyr::select(-mortality_sum,-pylds_sum)   
+   
+   
+   
   suppressWarnings(
     general_life_table_list_sc[[i]] <- RunLifeTable(
       in_idata    = td2,
       in_sex      = age_sex_cohorts$sex[i],
       in_mid_age  = age_sex_cohorts$age[i],
-      death_rates = death_rates
+      death_rates = td3
   ))
   names(general_life_table_list_sc)[i] <- age_sex_cohorts$cohort[i]
 }
@@ -573,34 +626,34 @@ general_life_table_sc <- bind_rows(general_life_table_list_sc, .id = "age_group"
 
 ### Graph check, commented out
 # 
-# graphs_check_lt <- list()
-# index <- 1
-#  for(i in 1:length(general_life_table_list_bl)) {
-#    data_bl <- general_life_table_list_bl[[i]]
-#    data_sc <- general_life_table_list_sc[[i]]
-#    plot <-  ggplot(data = data_bl, aes(x = age, y = mx)) +
-#    geom_line(aes(color="Mortality rate baseline")) +
-#    geom_line(data = data_sc, aes(y = mx, color="Mortality rate scenario")) +
-#      labs(color="") +
-#   labs(x = "Age",
-#              title = paste(data_bl[1, "age"], data_bl[1, "sex"], sep=" "),
-#        y = "Rates difference") +
-#    theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-#          axis.text=element_text(size=10),
-#          axis.title=element_text(size=10)) +
-#    theme(legend.position = "right",
-#          legend.title = element_blank(),
-#          legend.text = element_text(colour = "black", size = 10),
-#          legend.key = element_blank(),
-#          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-#    theme_classic() +
-#    geom_hline(yintercept=0, linetype='dashed', color = 'black')
-#    ggsave(plot, file=paste("./SuppDocs/CheckGraphs/lifetables/", names(general_life_table_list_bl[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
-#    graphs_check_lt[[i]] <- plot
-# 
-#    # dev.off()
-#    index <- index + 1
-# }
+graphs_check_lt <- list()
+index <- 1
+ for(i in 1:length(general_life_table_list_bl)) {
+   data_bl <- general_life_table_list_bl[[i]]
+   data_sc <- general_life_table_list_sc[[i]]
+   plot <-  ggplot(data = data_bl, aes(x = age, y = mx)) +
+   geom_line(aes(color="Mortality rate baseline")) +
+   geom_line(data = data_sc, aes(y = mx, color="Mortality rate scenario")) +
+     labs(color="") +
+  labs(x = "Age",
+             title = paste(data_bl[1, "age"], data_bl[1, "sex"], sep=" "),
+       y = "Rates difference") +
+   theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+         axis.text=element_text(size=10),
+         axis.title=element_text(size=10)) +
+   theme(legend.position = "right",
+         legend.title = element_blank(),
+         legend.text = element_text(colour = "black", size = 10),
+         legend.key = element_blank(),
+         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+   theme_classic() +
+   geom_hline(yintercept=0, linetype='dashed', color = 'black')
+   ggsave(plot, file=paste("./SuppDocs/CheckGraphs/lifetables/", names(general_life_table_list_bl[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
+   graphs_check_lt[[i]] <- plot
+
+   # dev.off()
+   index <- index + 1
+}
 # ---- chunk-7 ----
 
 ## In the following list 'output_life_table', 34 data frames are nested per age and sex cohort
