@@ -473,8 +473,7 @@ for (iage in i_age_cohort){
       
         disease_life_table_list_sc_temp <- RunDisease(in_idata = td1_age_sex, in_sex = isex,
                                                        in_mid_age = iage, in_disease = DISEASE_SHORT_NAMES$sname[d],
-                                                      incidence_trends = incidence_trends,
-                                                      mortality_trends = mortality_trends)
+                                                      incidence_trends = incidence_trends ,mortality_trends = mortality_trends)
 
         disease_life_table_list_sc[[index]] <- disease_life_table_list_sc_temp
                 
@@ -525,84 +524,38 @@ index <- index + 1
 
 
 ### BZ: graph to check difference values for incidence, prevalence, mortality and yYLDs diseases
+### Uncomment to run
+# graphs_check <- list()
+# index <- 1
+# for(i in 1:length(disease_life_table_list_sc)) {
+#   data <- disease_life_table_list_sc[[i]]
+#   line_chart_change <-  ggplot(data = data, aes(x = age, y = diff_inc_disease)) +
+#   geom_line(aes(color="Incidence")) + 
+#   geom_line(data = data, aes(y = diff_prev_disease, color="Prevalence")) +
+#   geom_line(data = data, aes(y = diff_mort_disease, color="Mortality")) + 
+#     geom_line(data = data, aes(y = diff_pylds_disease, color="pYLDs")) +
+#     labs(color="") +
+#  labs(x = "Age",
+#             title = paste(data[1, "age"], data[1, "sex"], data[1, "disease"], sep=" "),
+#       y = "Rates difference") +
+#   theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+#         axis.text=element_text(size=10),
+#         axis.title=element_text(size=10)) +
+#   theme(legend.position = "right",
+#         legend.title = element_blank(),
+#         legend.text = element_text(colour = "black", size = 10),
+#         legend.key = element_blank(),
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+#   theme_classic() +
+#   geom_hline(yintercept=0, linetype='dashed', color = 'black')
+#   ggsave(line_chart_change, file=paste("./SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
+#   graphs_check[[i]] <- line_chart_change 
+#   
+#   # dev.off()
+#   index <- index + 1
+#   
+# }
 
-graphs_check <- list()
-index <- 1
-for(i in 1:length(disease_life_table_list_sc)) {
-  data <- disease_life_table_list_sc[[i]]
-  line_chart_change <-  ggplot(data = data, aes(x = age, y = diff_inc_disease)) +
-  geom_line(aes(color="Incidence")) + 
-  geom_line(data = data, aes(y = diff_prev_disease, color="Prevalence")) +
-  geom_line(data = data, aes(y = diff_mort_disease, color="Mortality")) + 
-    geom_line(data = data, aes(y = diff_pylds_disease, color="pYLDs")) +
-    labs(color="") +
- labs(x = "Age",
-            title = paste0(names(disease_life_table_list_sc[i])),
-      y = o) +
-  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=10)) +
-  theme(legend.position = "right",
-        legend.title = element_blank(),
-        legend.text = element_text(colour = "black", size = 10),
-        legend.key = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  theme_classic()
-  ggsave(line_chart_change, file=paste("./SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
-  graphs_check[[i]] <- line_chart_change 
-  
-  # dev.off()
-  index <- index + 1
-  
-}
-
-# Save plots to tiff. Makes a separate file for each plot.
-index <- 1
-for(i in 1:length(disease_life_table_list_sc)) {
-  for (o in c("incidence_disease", "px", "mx", "case_fatality_disease")){
-  file_name = paste("./SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), "_", o, ".tiff", sep="")
-  tiff(file_name)
- 
-  dev.off()
-  index <- index + 1
-  }
-}
-
-# for (ioutcome in i_outcome_d) {
-  #   for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-  #     
-  #     if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
-  #         || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other' || DISEASE_SHORT_NAMES$is_not_dis[d] !=0){
-  #     }
-  #     else{
-  #       
-  #       pdf(paste0(output_dir, 'graphs/aggregated/', 'total_', DISEASE_SHORT_NAMES$sname[d],'_', 'female', '_', ioutcome, '.pdf'),width=5.5,height=4)
-  #       
-  #       p_aggr_males_d_list <- ggplot(aggregate_males_df[1:84,], aes(x = aggregate_males_df[['simulation_yr']])) +
-  #         
-  #         geom_line(mapping = aes(y = aggregate_males_df[[paste('total', ioutcome, 'num_bl', DISEASE_SHORT_NAMES$sname[d], sep = '_')]], colour = paste('total', ioutcome, 'num_bl', DISEASE_SHORT_NAMES$sname[d], sep = '_'))) +
-  #         theme_classic() +
-  #         geom_hline(yintercept=0, linetype='dashed', color = 'black') +
-  #         geom_line(mapping = aes(y = aggregate_males_df[[paste('total', ioutcome, 'num_sc', DISEASE_SHORT_NAMES$sname[d], sep = '_')]], colour = paste('total', ioutcome, 'num_sc', DISEASE_SHORT_NAMES$sname[d], sep = '_'))) +
-  #         geom_line(mapping = aes(y = aggregate_males_df[[paste('total', ioutcome, 'num_diff', DISEASE_SHORT_NAMES$sname[d], sep = '_')]], colour = paste('total', ioutcome, 'num_diff', DISEASE_SHORT_NAMES$sname[d], sep = '_'))) +
-  #         xlab ('Simulation years') + ylab ('Cases') + labs (title = paste(DISEASE_SHORT_NAMES$disease[d], ifelse(ioutcome == 'inc', 'incidence', 'deaths'))) +
-  #         theme(plot.title = element_text(hjust = 0.5, size = 12)) +
-  #         scale_color_discrete(name = paste(''), labels = c('Baseline', 'Difference', 'Scenario')) +
-  #         theme(plot.title = element_text(hjust = 0.5))
-  #       print(p_aggr_males_d_list)
-  #       dev.off()
-  #       
-  #       
-  #       
-  #       
-  #       
-  #       # p_aggr_males_list <- p_aggr_list_index
-  #       # index <- index + 1
-  #       # 
-  #     }
-  #   }
-  # }
-  # 
 
 # ---- chunk-5 ----
 
@@ -724,7 +677,8 @@ for (iage in i_age_cohort){
     
     
     # Instead of idata, feed td to run scenarios
-    general_life_table_list_sc[[index]] <- RunLifeTable(in_idata = td2, in_sex = isex, in_mid_age = iage)
+    general_life_table_list_sc[[index]] <- RunLifeTable(in_idata = td2, in_sex = isex, in_mid_age = iage,
+                                                        death_rates= death_rates)
     #
     names(general_life_table_list_sc)[index] <- paste(iage, isex, sep = '_')
     
@@ -733,6 +687,7 @@ for (iage in i_age_cohort){
   }
 }
 
+general_life_table_list_bl <- general_life_table_list_bl [names(general_life_table_list_sc)]
 # ---- chunk-7 ----
 
 ## In the following list 'output_life_table', 34 data frames are nested per age and sex cohort
@@ -1011,77 +966,96 @@ output_diseases_change <- output_df %>%
 
 
 # ---- chunk-11.1.3 Graphs by outcome and cohort ----
-### Variables for creating loops for graphs
+### changes in life years and health-adjusted life years by age and sex cohort over cohorts life course.
+### Difference positive: cohort increased life years (negative, decreased)
 i_cohort <- unique(output_df$.id)
-i_plot <- c("bl", "sc", "diff")
-i_disease <- DISEASE_SHORT_NAMES$sname
-i_output <- c("mx", "inc")
+# i_plot <- c("bl", "sc", "diff")
+# i_disease <- DISEASE_SHORT_NAMES$sname
+# i_output <- c("mx", "inc")
 
-# data <- dplyr::filter(output_df, .id == "17_male")
-# 
-# plot <- data %>%
-#   ggplot(aes(x = age, y = paste0("_num_bl_"))) +
-#   geom_line()
-# print(plot)
-# ggsave("output/diseases/test.png")
-
-
-graphs_diseases <- list()
+graphs_ly_lwy <- list()
 index <- 1
 for(c in i_cohort){
-  for (o in i_plot){
-    for (d in i_disease){
-      for (i in i_output){
         
 
-        data <- dplyr::filter(output_df, .id == c)
+  data <- dplyr::filter(output_df, .id == c) %>% dplyr::select(".id", "Age group", "sex", "age", "Lx_sc", "Lx_bl", 
+                                                               "Lx_diff", "Lwx_sc", "Lwx_bl", "Lwx_diff")
         
  plot <- data %>%
-          ggplot(aes(x = age, y = paste0(i, "_num_bl_", d))) +
-  geom_line() +aes(color= paste0("Baseline", i)) +
-  geom_line(data = data, aes(y = paste0(i, "_num_sc_", d), color= paste0("Scenario", i))) +
-  # geom_line(data = data, aes(y = paste0(i, "_num_diff_", d), color= paste0("Difference", i))) +
-          labs(x = "Year",
-            title = paste0(i, d),
+          ggplot(aes(x = age, y = Lx_bl)) +
+  geom_line() +aes(color= "Baseline life years") +
+  geom_line(data = data, aes(y = Lx_sc, color= "Scenario life year")) +
+  geom_line(data = data, aes(y = Lx_diff, color= "Difference life years")) +
+   geom_line(data = data, aes(y = Lwx_bl, color= "Baseline health-adjuste life year")) +
+   geom_line(data = data, aes(y = Lwx_sc, color= "Scenario health-adjuste life year")) +
+   geom_line(data = data, aes(y = Lwx_diff, color= "Difference health-adjusted life years"))  + 
+          labs(x = "Age cohort",
+            title = paste("Life years and HALYs over the life course \n of age cohort", data[1, "Age group"], data[1, "sex"], sep = " "),
       y = "Numbers") +
-  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=10)) +
-  theme(legend.position = "right",
-        legend.title = element_blank(),
-        legend.text = element_text(colour = "black", size = 10),
-        legend.key = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  theme_classic()
+      labs(color="") +
+   theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+         axis.text=element_text(size=10),
+         axis.title=element_text(size=10)) +
+   theme(legend.position = "right",
+         legend.title = element_blank(),
+         legend.text = element_text(colour = "black", size = 10),
+         legend.key = element_blank(),
+         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+   theme_classic() +
+   geom_hline(yintercept=0, linetype='dashed', color = 'black')
+   ggsave(plot, file=paste("./output/LifeYears/", data[1, "Age group"], data[1, "sex"], ".png", sep=" "), width = 14, height = 10, units = "cm")
+   # graphs_ly_lwy[[index]] <- line_chart_change
 
-  graphs_diseases[[index]] <- plot
-  
-  ggsave(graphs_diseases[[index]], file==paste0(paste("output/diseases/", c, "_", d, "_", i, ".tiff")))
-  
-  dev.off()
-  index <- index + 1
-      }
-    }  
-  }
-}
+   # dev.off()
+   index <- index + 1
 
-# Save plots to tiff. Makes a separate file for each plot.
+ }
+ 
+# ---- chunk-11.1.4 Graphs by outcome and cohort ----
+### changes in disease incidence numbers and mortality numbers by age and sex cohort over cohorts life course.
+### Difference negative: cohort decreased numbers (positive, increased)
+i_cohort <- unique(output_df$.id)
+# i_plot <- c("bl", "sc", "diff")
+# i_disease <- DISEASE_SHORT_NAMES$sname
+# i_output <- c("mx", "inc")
 
+graphs_ly_lwy <- list()
 index <- 1
 for(c in i_cohort){
-  for (o in i_plot){
-    for (d in i_disease){
-      for (i in i_output){
-  file_name = paste("output/diseases/", c, "_", d, "_", i, ".tiff", sep="")
-  tiff(file_name)
-
-  dev.off()
+  
+  
+  data <- dplyr::filter(output_df, .id == c) %>% dplyr::select(".id", "Age group", "sex", "age", "Lx_sc", "Lx_bl", 
+                                                               "Lx_diff", "Lwx_sc", "Lwx_bl", "Lwx_diff")
+  
+  plot <- data %>%
+    ggplot(aes(x = age, y = Lx_bl)) +
+    geom_line() +aes(color= "Baseline life years") +
+    geom_line(data = data, aes(y = Lx_sc, color= "Scenario life year")) +
+    geom_line(data = data, aes(y = Lx_diff, color= "Difference life years")) +
+    geom_line(data = data, aes(y = Lwx_bl, color= "Baseline health-adjuste life year")) +
+    geom_line(data = data, aes(y = Lwx_sc, color= "Scenario health-adjuste life year")) +
+    geom_line(data = data, aes(y = Lwx_diff, color= "Difference health-adjusted life years"))  + 
+    labs(x = "Age cohort",
+         title = paste("Life years and HALYs over the life course \n of age cohort", data[1, "Age group"], data[1, "sex"], sep = " "),
+         y = "Numbers") +
+    labs(color="") +
+    theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+          axis.text=element_text(size=10),
+          axis.title=element_text(size=10)) +
+    theme(legend.position = "right",
+          legend.title = element_blank(),
+          legend.text = element_text(colour = "black", size = 10),
+          legend.key = element_blank(),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    theme_classic() +
+    geom_hline(yintercept=0, linetype='dashed', color = 'black')
+  ggsave(plot, file=paste("./output/LifeYears/", data[1, "Age group"], data[1, "sex"], ".png", sep="_"), width = 14, height = 10, units = "cm")
+  # graphs_ly_lwy[[index]] <- line_chart_change
+  
+  # dev.off()
   index <- index + 1
-      }
-    }  
-  }
+  
 }
-
 
 # # ---- chunk-11.2 Graphs ---- CHECK GRAPHS AND WHAT WE WANT
 
