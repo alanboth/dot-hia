@@ -528,7 +528,8 @@ mx_pylds_sc_total_disease_df <- disease_life_table_sc %>%
   group_by(age_group,sex,age) %>%
   summarise(mortality_sum=sum(diff_mort_disease,na.rm=T),
             pylds_sum=sum(diff_pylds_disease,na.rm=T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(age_sex_cohort=paste0(age_group,'_',sex))
 
 
 # ---- chunk-6 ----
@@ -537,17 +538,20 @@ mx_pylds_sc_total_disease_df <- disease_life_table_sc %>%
 ## Original mortality rate is modified by the mx_sc_total (total change in mortality from diseases)
 ## Original pyld rate is modified by the change in each disease pylds
 
-# modify idata's mortality and pyld total for the said scenario
-td2 <- MSLT_DF %>%
-  left_join(mx_pylds_sc_total_disease_df%>%dplyr::select(-age_group),
-            by=c("age","sex")) %>%
-  mutate(mx=mx+replace_na(mortality_sum,0),
-         pyld_rate=pyld_rate+replace_na(pylds_sum,0)) %>%
-  dplyr::select(-mortality_sum,-pylds_sum)
-
 general_life_table_list_sc <- list()
 
 for (i in 1:nrow(age_sex_cohorts)){
+  # modify idata's mortality and pyld total for the said scenario
+  mx_pylds_sc_total_disease_df_cohort <- mx_pylds_sc_total_disease_df %>%
+    filter(age_sex_cohort==age_sex_cohorts$cohort[i]) %>%
+    dplyr::select(age,mortality_sum,pylds_sum)
+  td2 <- MSLT_DF %>%
+    filter(sex==age_sex_cohorts$sex[i]) %>%
+    left_join(mx_pylds_sc_total_disease_df_cohort,by="age") %>%
+    mutate(mx=mx+replace_na(mortality_sum,0),
+           pyld_rate=pyld_rate+replace_na(pylds_sum,0)) %>%
+    dplyr::select(-mortality_sum,-pylds_sum)
+  
   suppressWarnings(
     general_life_table_list_sc[[i]] <- RunLifeTable(
       in_idata    = td2,
@@ -612,13 +616,19 @@ l_sc_cols <- which(colnames(general_life_table_list_sc[[l_index]])%in%c('Lx', 'L
 l_bl_cols <- which(colnames(general_life_table_list_bl[[l_index]])%in%c('Lx', 'Lwx', 'ex', 'ewx'))
 
 for (iage in i_age_cohort){
+  # iage=17
   for (isex in i_sex){
+    # isex="female"
     
     
     # We create a TRUE/FALSE variable for the loop to move into the next disease
     
     create_new <- T
     for (d in c(1:nrow(DISEASE_SHORT_NAMES))[dia_order]){
+      # d=1
+      # index="17_female_dmt2"
+      # index="17_female_ishd"
+      # l_index="17_female"
       if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
           || DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
       }
@@ -626,7 +636,7 @@ for (iage in i_age_cohort){
         
         if (create_new){
           
-          output_burden_sc <- output_burden_sc <- disease_life_table_list_sc[[index]][,sc_cols]
+          output_burden_sc <- disease_life_table_list_sc[[index]][,sc_cols]
           
           names(output_burden_sc)[names(output_burden_sc) == 'incidence_disease'] <-
             paste('incidence_disease', DISEASE_SHORT_NAMES$sname[d], 'sc', sep = '_')
@@ -778,7 +788,7 @@ for (iage in i_age_cohort){
     l_index <- l_index + 1
     
   }
-}  
+}
 
 # ---- chunk-11 ---- 
 
