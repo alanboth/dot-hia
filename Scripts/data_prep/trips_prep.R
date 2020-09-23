@@ -304,14 +304,21 @@ trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age
 SPEED_WALK <- dplyr::filter(trips_melbourne, trip_mode == "pedestrian") %>%
   mutate(speed_walk=trip_distance*60/trip_duration)
 
-ggplot(SPEED_WALK, aes(speed_walk)) +
-  geom_density()
+# Exclude 0 speed, some values have time but not distance
+
+SPEED_WALK <- dplyr::filter(SPEED_WALK, trip_distance != 0)
+
 
 SPEED_WALK <-  SPEED_WALK  %>%
   srvyr::as_survey_design(weights = trips_wt)
 
 SPEED_CYCLE <- dplyr::filter(trips_melbourne, trip_mode == "bicycle") %>%
   mutate(speed_cycle=trip_distance*60/trip_duration)
+
+# Exclude 0 speed, some values have time but not distance
+
+SPEED_CYCLE <- dplyr::filter(SPEED_CYCLE, trip_distance != 0)
+
 
 SPEED_CYCLE <-  SPEED_CYCLE  %>%
   srvyr::as_survey_design(weights = trips_wt)
