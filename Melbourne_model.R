@@ -203,10 +203,11 @@ mmets_pp_MEL <- calculateMMETSperPerson(
 
 ### mmets_pp_MEL$diff <- mmets_pp_MEL$base_mmet - mmets_pp_MEL$scen1_mmet # to check for errors. If difference is not negative, there is an error
 mmets_pp_MEL <- mmets_pp_MEL %>%
-  mutate(age_group = as.factor(case_when(age <   18  ~  "0 to 17",
-                                  age >=  18 & age <=  40 ~  "18 to 40",
-                                  age >= 41 & age <= 65 ~  "41 to 65",
-                                  age >= 65             ~ "65 plus"))) %>%
+  mutate(age_group = as.factor(case_when(
+    age <  18             ~ "0 to 17" ,
+    age >= 18 & age <= 40 ~ "18 to 40",
+    age >= 41 & age <= 65 ~ "41 to 65",
+    age >= 65             ~ "65 plus"))) %>%
 mutate(sex =as.factor(sex)) 
 
 mmets_graphs <- mmets_pp_MEL %>% 
@@ -319,16 +320,14 @@ age_sex_cohorts <- crossing(data.frame(age=i_age_cohort),
 
 
 
-# index <- 1
-
 for (i in 1:nrow(age_sex_cohorts)){
   suppressWarnings(
-    general_life_table_list_bl[[i]] <- RunLifeTable(in_idata   = MSLT_DF,
-                                                    in_sex     = age_sex_cohorts$sex[i],
-                                                    in_mid_age = age_sex_cohorts$age[i],
-                                                    death_rates= death_rates)
-  )
-    
+    general_life_table_list_bl[[i]] <- RunLifeTable(
+      in_idata    = MSLT_DF,
+      in_sex      = age_sex_cohorts$sex[i],
+      in_mid_age  = age_sex_cohorts$age[i],
+      death_rates = death_rates
+  ))
   names(general_life_table_list_bl)[i] <- age_sex_cohorts$cohort[i]
 }
 
@@ -373,13 +372,14 @@ age_sex_disease_cohorts <- crossing(age_sex_cohorts,disease_cohorts) %>%
 disease_life_table_list_bl <- list()
 
 for (i in 1:nrow(age_sex_disease_cohorts)){
-  disease_life_table_list_bl[[i]] <- RunDisease(in_idata         = MSLT_DF,
-                                                in_mid_age       = age_sex_disease_cohorts$age[i],
-                                                in_sex           = age_sex_disease_cohorts$sex[i],
-                                                in_disease       = age_sex_disease_cohorts$sname[i],
-                                                incidence_trends = incidence_trends,
-                                                mortality_trends = mortality_trends)
-
+  disease_life_table_list_bl[[i]] <- RunDisease(
+    in_idata         = MSLT_DF,
+    in_mid_age       = age_sex_disease_cohorts$age[i],
+    in_sex           = age_sex_disease_cohorts$sex[i],
+    in_disease       = age_sex_disease_cohorts$sname[i],
+    incidence_trends = incidence_trends,
+    mortality_trends = mortality_trends
+  )
   names(disease_life_table_list_bl)[i] <- age_sex_disease_cohorts$cohort[i]
 }
 
@@ -445,10 +445,10 @@ for (i in 1:nrow(age_sex_disease_cohorts)){
   ## on cardiovascular diseases taken into account. 
   
   disease_life_table_list_sc[[i]] <- RunDisease(
-    in_idata = td1_age_sex,
-    in_sex = age_sex_disease_cohorts$sex[i],
-    in_mid_age = age_sex_disease_cohorts$age[i],
-    in_disease = age_sex_disease_cohorts$sname[i],
+    in_idata         = td1_age_sex,
+    in_sex           = age_sex_disease_cohorts$sex[i],
+    in_mid_age       = age_sex_disease_cohorts$age[i],
+    in_disease       = age_sex_disease_cohorts$sname[i],
     incidence_trends = incidence_trends,
     mortality_trends = mortality_trends
   )
@@ -530,104 +530,6 @@ mx_pylds_sc_total_disease_df <- disease_life_table_sc %>%
             pylds_sum=sum(diff_pylds_disease,na.rm=T)) %>%
   ungroup()
 
-# pylds_sc_total_disease
-# mx_sc_total_disease
-
-# 
-# ### Vector in common by all calculations for change in mx and pylds.
-# 
-# index <- 1
-# age_sex_cols <- which(colnames(disease_life_table_list_sc[[index]])%in%c('age', 'sex'))
-# 
-# 
-# 
-# 
-# #### Diseases
-# mx_sc_total_disease <- list()
-# l_index <- 1
-# index <- 1
-# for (iage in i_age_cohort){
-#   # iage=17
-#   for (isex in i_sex){
-#     # isex="female"
-#     mortality_sum <- NULL
-#     
-#     create_new <- T
-#     
-#     ## Sum all diseases mortality rates
-#     
-#     for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-#       # d=3
-#       if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
-#           || DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-#       }
-#       else {
-#         
-#         # print(paste(isex, DISEASE_SHORT_NAMES$disease[d]))
-#         
-#         if (create_new){
-#           mortality_sum <- disease_life_table_list_sc[[index]][,age_sex_cols]
-#           mortality_sum$total <- 0
-#           create_new <- F
-#           mortality_sum$total <- mortality_sum$total +
-#             (disease_life_table_list_sc[[index]]$diff_mort_disease)
-#         }else{
-#           mortality_sum$total <- mortality_sum$total +
-#             (disease_life_table_list_sc[[index]]$diff_mort_disease)
-#         }
-#         
-#         # cat(age, ' - ', sex,' - ',  disease,' - ',  index, ' - ', l_index,  '\n')
-#         index <- index + 1
-#       }
-#     }
-#     mx_sc_total_disease[[l_index]] <- mortality_sum 
-#     names(mx_sc_total_disease)[l_index] <- paste(iage, isex)
-#     
-#     l_index <- l_index + 1
-#     
-#   }
-# }
-# 
-# ## YLDs change
-# ### Diseases
-# 
-# pylds_sc_total_disease <- list()
-# l_index <- 1
-# index <- 1
-# for (iage in i_age_cohort){
-#   for (isex in i_sex){
-#     pylds_sum <- NULL
-#     create_new <- T
-#     
-#     for (d in 1:nrow(DISEASE_SHORT_NAMES)) {
-#       if (isex == 'male' && (DISEASE_SHORT_NAMES$disease[d] %in% c('breast cancer', 'uterine cancer'))
-#           || DISEASE_SHORT_NAMES$is_not_dis[d] != 0 || DISEASE_SHORT_NAMES$acronym[d] == 'no_pif' || DISEASE_SHORT_NAMES$acronym[d] == 'other'){
-#       }
-#       else {
-#         
-#         if (create_new){
-#           
-#           pylds_sum <- disease_life_table_list_sc[[index]][,age_sex_cols]
-#           pylds_sum$total <- 0
-#           create_new <- F
-#           pylds_sum$total <- pylds_sum$total +
-#             (disease_life_table_list_sc[[index]]$diff_pylds_disease)
-#         }else{
-#           pylds_sum$total <- pylds_sum$total +
-#             (disease_life_table_list_sc[[index]]$diff_pylds_disease)
-#         }
-#         
-#         # cat(age, ' - ', sex,' - ',  disease,' - ',  index, ' - ', l_index,  '\n')
-#         index <- index + 1
-#       }
-#       
-#     }
-#     pylds_sc_total_disease[[l_index]] <- pylds_sum
-#     names(pylds_sc_total_disease)[l_index] <- paste(iage, isex)
-#     l_index <- l_index + 1
-#   }
-# }
-
 
 # ---- chunk-6 ----
 
@@ -648,12 +550,11 @@ general_life_table_list_sc <- list()
 for (i in 1:nrow(age_sex_cohorts)){
   suppressWarnings(
     general_life_table_list_sc[[i]] <- RunLifeTable(
-      in_idata   = td2,
-      in_sex     = age_sex_cohorts$sex[i],
-      in_mid_age = age_sex_cohorts$age[i],
-      death_rates= death_rates
-    )
-  )
+      in_idata    = td2,
+      in_sex      = age_sex_cohorts$sex[i],
+      in_mid_age  = age_sex_cohorts$age[i],
+      death_rates = death_rates
+  ))
   names(general_life_table_list_sc)[i] <- age_sex_cohorts$cohort[i]
 }
 
