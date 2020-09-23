@@ -687,7 +687,7 @@ for (iage in i_age_cohort){
   }
 }
 
-general_life_table_list_bl <- general_life_table_list_bl [names(general_life_table_list_sc)]
+general_life_table_list_bl <- general_life_table_list_bl[names(general_life_table_list_sc)]
 
 
 ### Graph check, commented out
@@ -696,7 +696,7 @@ general_life_table_list_bl <- general_life_table_list_bl [names(general_life_tab
 # index <- 1
 #  for(i in 1:length(general_life_table_list_bl)) {
 #    data_bl <- general_life_table_list_bl[[i]]
-#    data_sc <- general_life_table_list_sc[[i]]  
+#    data_sc <- general_life_table_list_sc[[i]]
 #    plot <-  ggplot(data = data_bl, aes(x = age, y = mx)) +
 #    geom_line(aes(color="Mortality rate baseline")) +
 #    geom_line(data = data_sc, aes(y = mx, color="Mortality rate scenario")) +
