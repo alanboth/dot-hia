@@ -548,7 +548,7 @@ index <- index + 1
 #         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
 #   theme_classic() +
 #   geom_hline(yintercept=0, linetype='dashed', color = 'black')
-#   ggsave(line_chart_change, file=paste("./SuppDocs/CheckGraphs/", names(disease_life_table_list_sc[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
+#   ggsave(line_chart_change, file=paste("./SuppDocs/CheckGraphs/diseases/", names(disease_life_table_list_sc[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
 #   graphs_check[[i]] <- line_chart_change 
 #   
 #   # dev.off()
@@ -688,6 +688,38 @@ for (iage in i_age_cohort){
 }
 
 general_life_table_list_bl <- general_life_table_list_bl [names(general_life_table_list_sc)]
+
+
+### Graph check, commented out
+# 
+# graphs_check_lt <- list()
+# index <- 1
+#  for(i in 1:length(general_life_table_list_bl)) {
+#    data_bl <- general_life_table_list_bl[[i]]
+#    data_sc <- general_life_table_list_sc[[i]]  
+#    plot <-  ggplot(data = data_bl, aes(x = age, y = mx)) +
+#    geom_line(aes(color="Mortality rate baseline")) +
+#    geom_line(data = data_sc, aes(y = mx, color="Mortality rate scenario")) +
+#      labs(color="") +
+#   labs(x = "Age",
+#              title = paste(data_bl[1, "age"], data_bl[1, "sex"], sep=" "),
+#        y = "Rates difference") +
+#    theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+#          axis.text=element_text(size=10),
+#          axis.title=element_text(size=10)) +
+#    theme(legend.position = "right",
+#          legend.title = element_blank(),
+#          legend.text = element_text(colour = "black", size = 10),
+#          legend.key = element_blank(),
+#          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+#    theme_classic() +
+#    geom_hline(yintercept=0, linetype='dashed', color = 'black')
+#    ggsave(plot, file=paste("./SuppDocs/CheckGraphs/lifetables/", names(general_life_table_list_bl[i]), ".png", sep=""), width = 14, height = 10, units = "cm")
+#    graphs_check_lt[[i]] <- plot
+# 
+#    # dev.off()
+#    index <- index + 1
+# }
 # ---- chunk-7 ----
 
 ## In the following list 'output_life_table', 34 data frames are nested per age and sex cohort
