@@ -227,6 +227,7 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
       dplyr::select(sex, age, pyld_rate, mx=rate)
   }
   
+  
   # Create list life table variables. First as vector and then added to the data frame at the end.
   ## We model up to 100, that is the reason for the age limit in the function
   
