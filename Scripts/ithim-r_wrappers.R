@@ -189,7 +189,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
       }
     }
   }
-  return(list(pif_scen, pif_weighted))
+  return(list(pif_scen, pif_weighted, pif_scen_2))
 }
 
 
