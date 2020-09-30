@@ -115,7 +115,7 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
   
-  trips_melbourne <- read.csv(scenario_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
+  trips_melbourne <- scenario_trips %>% #read.csv(scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
     mutate(persid=toupper(persid))
   
   ### Create total duration and distance for all modes, rather long process here. 
@@ -388,12 +388,12 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 ### walk_base
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-  pa_location="Data/processed/persons_pa.csv"
-  persons_travel_location="Data/processed/persons_travel.csv"
+  # pa_location="Data/processed/persons_pa.csv"
+  # persons_travel_location="Data/processed/persons_travel.csv"
 
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
-  persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
+  persons_travel <- persons_travel #read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
   
   # This joins the two tables based on the match variables. This is all of the 
   # possible group combinations. We then assign a unique per group number.
