@@ -128,12 +128,13 @@ persons_matched <- calculatePersonsMatch(
 ### 1) Get HIA parameters
 source("Scripts/ithim-r_wrappers.R")
 
+### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
 parameters <- GetParamters(
-  NSAMPLES = 100, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+  NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
   matched_population = persons_matched,
   MMET_CYCLING = c(4.63, 1.2), 
   MMET_WALKING = c(2.53, 1.1),
-  PA_DOSE_RESPONSE_QUANTILE = F)
+  PA_DOSE_RESPONSE_QUANTILE = F) ### True to run uncertainty  (creates quantiles files for RR physical activity)
 
 ### Model paramters
 i_age_cohort <-  c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
