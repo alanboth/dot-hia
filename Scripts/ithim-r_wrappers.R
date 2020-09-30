@@ -438,9 +438,9 @@ GetStDevRR <- function(RR, LB, UB){
   # RR=2.82
   # LB=2.35
   # UB=3.38
-  # SE=((UB-LB)/3.92)
-  stDevRR=sqrt(exp((2*log(RR) + 2*((UB-LB)/3.92)*(log(RR))^2)) - exp((2*log(RR) + ((UB-LB)/3.92)*(log(RR))^2)))
-  return(exp(stDevRR)) ### Belen to check calculation 
+  SE=exp(((UB-LB)/3.92))
+  # stDevRR=exp(sqrt(exp((2*log(RR) + 2*((UB-LB)/3.92)*(log(RR))^2)) - exp((2*log(RR) + ((UB-LB)/3.92)*(log(RR))^2))))
+  return(SE) ### Belen to check calculation 
 }                   
 
 GetParamters <- function(NSAMPLES = 1,
@@ -495,7 +495,7 @@ GetParamters <- function(NSAMPLES = 1,
   if (NSAMPLES > 1) {
   
   ### Variables with normal distribution
-  ### MMETS and RRs
+  ### MMETS
     
   ### Get Stdev diabetes
     DIABETES_IHD_RR_F <- c(2.82, GetStDevRR(2.82, 2.35, 3.38))

@@ -129,9 +129,9 @@ persons_matched <- calculatePersonsMatch(
 source("Scripts/ithim-r_wrappers.R")
 
 parameters <- GetParamters(
-  NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+  NSAMPLES = 100, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
   matched_population = persons_matched,
-  MMET_CYCLING = c(4.63, (1.2)), 
+  MMET_CYCLING = c(4.63, 1.2), 
   MMET_WALKING = c(2.53, 1.1),
   PA_DOSE_RESPONSE_QUANTILE = F)
 
