@@ -563,11 +563,12 @@ CalculationModel <- function(parameters, seed=1){
   #################################################### Calculate PIFs by age and sex groups #####################################################
   # 3 calculations: mmets_pp, RR_PA_calculations and pif
   
-  ### 1) Generate marginal mets for matched population, then used to derive RRs per person
+  ### 1) Generate marginal mets for matched population, then used to derive RRs per person. Total defauls is FALSE, do not include work mmets.
   mmets_pp <- calculateMMETSperPerson(
     matched_pop_location = persons_matched,
     MMET_CYCLING = MMET_CYCLING, 
-    MMET_WALKING = MMET_WALKING
+    MMET_WALKING = MMET_WALKING,
+    TOTAL = F
   )
   #### Create age groups for easier presentation changes and convert variables to factors for summaries
   mmets_pp <- mmets_pp %>%
