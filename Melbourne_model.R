@@ -15,7 +15,7 @@ suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(scales))
 suppressPackageStartupMessages(library(ggeasy))
 suppressPackageStartupMessages(library(ggridges))
-
+suppressPackageStartupMessages(library(stringr))
 ### Clean Global Environment
 rm (list = ls())
 
