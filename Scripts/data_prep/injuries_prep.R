@@ -22,16 +22,16 @@ calculateInjuries <- function(accident_location,accident_event_location,person_l
   # vehicle_location="Data/VicRoads Road Injuries/Original_VEHICLE.csv"
   
   ACCIDENT <- read.csv(accident_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(ACCIDENT_NO, ACCIDENTDATE, NO_OF_VEHICLES, Accident.Type.Desc)
+    dplyr::select(ACCIDENT_NO, ACCIDENTDATE, NO_OF_VEHICLES, Accident.Type.Desc)
   
   ACCIDENT_EVENT <- read.csv(accident_event_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   PERSON <- read.csv(person_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(ACCIDENT_NO, PERSON_ID, VEHICLE_ID, SEX, AGE, Age.Group,
+    dplyr::select(ACCIDENT_NO, PERSON_ID, VEHICLE_ID, SEX, AGE, Age.Group,
            Inj.Level.Desc, Road.User.Type.Desc)
   
   VEHICLE <- read.csv(vehicle_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    select(ACCIDENT_NO, VEHICLE_ID, vehicle_type=Vehicle.Type.Desc) %>%
+    dplyr::select(ACCIDENT_NO, VEHICLE_ID, vehicle_type=Vehicle.Type.Desc) %>%
     mutate(vehicle_type = case_when(vehicle_type == "Motor Cycle" ~ 'motorcycle',
                                     vehicle_type == "Light Commercial Vehicle (Rigid) <= 4.5 Tonnes GVM" ~ 'lightcom',
                                     vehicle_type == "Panel Van" ~ 'van',
@@ -82,9 +82,9 @@ calculateInjuries <- function(accident_location,accident_event_location,person_l
     left_join(VEHICLE, by=c("ACCIDENT_NO", "VEHICLE_ID")) %>%
     rename(cas_type=Inj.Level.Desc) %>%
     ### Keep persons with injuries or fatality
-    filter(cas_type %in% c("Other injury","Serious injury","Fatality")) %>%
+    dplyr::filter(cas_type %in% c("Other injury","Serious injury","Fatality")) %>%
     ### Drop SEX "U", this needs revisions, not sure what sex U means (it's Unknown). 
-    filter(SEX %in% c("M","F")) %>%
+    dplyr::filter(SEX %in% c("M","F")) %>%
     mutate(cas_mode=ifelse(is.na(vehicle_type), tolower(Road.User.Type.Desc), tolower(vehicle_type)))
   
   ### Sort vehicle type in VEHICLE FILE to then match with injuires MEL for striking mode
@@ -93,34 +93,34 @@ calculateInjuries <- function(accident_location,accident_event_location,person_l
   hierc_max <- VEHICLE %>%
     # Keep ACCIDENT_NO that match injuries_melbourne (road accidents with
     # causalities or deaths)
-    filter(ACCIDENT_NO %in% injuries_melbourne$ACCIDENT_NO) %>%
+    dplyr::filter(ACCIDENT_NO %in% injuries_melbourne$ACCIDENT_NO) %>%
     group_by(ACCIDENT_NO) %>%
     slice(which.max(hierc)) %>%
     ungroup() %>%
-    select(ACCIDENT_NO, vehicle_type, hierc) %>%
+    dplyr::select(ACCIDENT_NO, vehicle_type, hierc) %>%
     rename(strike_mode=hierc)
     
   #### ACCIDENT data derive (to derive accidents where there is no other vehicle involved)
   ACCIDENT <- ACCIDENT %>%
-    filter(ACCIDENT_NO %in% injuries_melbourne$ACCIDENT_NO)
+    dplyr::filter(ACCIDENT_NO %in% injuries_melbourne$ACCIDENT_NO)
   
   ##### Join injuries mel (from PERSON data frame), strike_mode_id (from VEHICLE data frame) and ACCIDENT
   injuries_melbourne2 <- injuries_melbourne %>%
     inner_join(hierc_max, by = "ACCIDENT_NO") %>%
     inner_join(ACCIDENT, by = "ACCIDENT_NO") %>% 
-    select(ACCIDENT_NO, PERSON_ID, VEHICLE_ID, AGE, SEX, Age.Group, 
+    dplyr::select(ACCIDENT_NO, PERSON_ID, VEHICLE_ID, AGE, SEX, Age.Group, 
            cas_type, vehicle_type.x, hierc, cas_mode, vehicle_type.y,
            strike_mode, ACCIDENTDATE, NO_OF_VEHICLES, Accident.Type.Desc) %>%
     #### Create year and weight data and clean data
     separate(ACCIDENTDATE, into =  c(NA, "year"), sep = c(-4)) %>%
-    mutate(strike_mode=vehicle_type.y) %>%
+    mutate(strike_mode=ifelse(NO_OF_VEHICLES == 1, "nov", vehicle_type.y)) %>%
     mutate(year=as.numeric(year)) %>%
     rename(cas_age=AGE) %>%
     rename(cas_gender=SEX) %>%
     rename(event_id=ACCIDENT_NO) %>%
     mutate(cas_gender = case_when(cas_gender == "F" ~ 'female',
                                   cas_gender == "M" ~ 'male')) %>%
-    select(event_id, cas_age, cas_gender, cas_mode, strike_mode, year) %>%
+    dplyr::select(event_id, cas_age, cas_gender, cas_mode, strike_mode, year, cas_type) %>%
     mutate(cas_mode = case_when(cas_mode == "van" ~ "car",
                                 cas_mode == "lightcom" ~ "truck",
                                 cas_mode == "utility" ~ "car",
