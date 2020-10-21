@@ -59,7 +59,7 @@ options(scipen = 999)
 
 # Introduction
 
-In this document we present the methods and data sources for the development of the quantitative health impact assessment model for the impacts of physical activity scenarios on population health. We developed two models: 1) Melbourne model and 2) Australia model. The Melbourne model quantifies physial activity related health impacts of changes in transport, and the Australia model quantifies health impacts of changes in physical activity directly, not informed by changes in transport. 
+In this document we present the methods and data sources for the development of the quantitative health impact assessment model for the impacts of physical activity scenarios on population health. We developed two models: 1) Melbourne model and 2) Australia model. The Melbourne model quantifies physical activity related health impacts of changes in transport, and the Australia model quantifies health impacts of changes in physical activity directly, not informed by changes in transport. 
 In what follows, Section 2 explains the quantitative health impact model, including methods, data inputs and modelling assumptions. Section 3 explains an application of the Melbourne model to an active transport scenario developed in collaboration with the Victorian Department of Transport and its results. Section 4 demonstrates the use of the web interface throught the Australian Urban Observatory. 
 
 # Quantitative health impact assessment model overview
