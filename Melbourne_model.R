@@ -6,8 +6,8 @@
 
 ### Packages to run code
 suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(readr))
-suppressPackageStartupMessages(library(data.table))
+# suppressPackageStartupMessages(library(readr))
+# suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(tidyr))
 suppressPackageStartupMessages(library(srvyr)) 
 suppressPackageStartupMessages(library(forcats))
@@ -16,6 +16,8 @@ suppressPackageStartupMessages(library(scales))
 suppressPackageStartupMessages(library(ggeasy))
 suppressPackageStartupMessages(library(ggridges))
 suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(doParallel))
+
 ### Clean Global Environment
 rm (list = ls())
 
@@ -73,7 +75,8 @@ baseline_trips_mode <- scenario_trips_weighted   %>%
   rename(mode = trip_mode_base) %>%
   mutate(scen="base") 
 
-data_mode_combo <- rbind(scenario_trips_mode, baseline_trips_mode) %>% mutate(mode = fct_reorder(mode, desc(prop)))
+data_mode_combo <- bind_rows(scenario_trips_mode, baseline_trips_mode) %>% 
+  mutate(mode = fct_reorder(mode, desc(prop)))
 
 ### Get bar chart modes distribution
 bar_chart_combo_sc <- data_mode_combo %>%
@@ -121,30 +124,65 @@ persons_matched <- calculatePersonsMatch(
   persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
 )
 # write.csv(persons_matched, "Data/processed/matched_pop.csv", row.names=F, quote=T)
+persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
 
 ############################################## Run intervention Melbourne ###############################################################################
 ############################################## Run HIA ###############################################################################
 
 ### 1) Get HIA parameters
 source("Scripts/ithim-r_wrappers.R")
+# 
+# ### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
+# parameters <- GetParamters(
+#   NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+#   matched_population = persons_matched,
+#   MMET_CYCLING = c(4.63, 1.2), 
+#   MMET_WALKING = c(2.53, 1.1),
+#   PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
 
-### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
-parameters <- GetParamters(
-  NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
-  matched_population = persons_matched,
-  MMET_CYCLING = c(4.63, 1.2), 
-  MMET_WALKING = c(2.53, 1.1),
-  PA_DOSE_RESPONSE_QUANTILE = F) ### True to run uncertainty  (creates quantiles files for RR physical activity)
-
-### Model paramters
-i_age_cohort <-  c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
-i_sex <- c('male', 'female')
-DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM") ## Alan, not sure whether this should
 
 
 ### 2) Run model
 
-outputs <- CalculationModel(parameters)
+### Get functions
+persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
+source("Scripts/data_prep/mmet_pp.R")
+source("Scripts/ithim-r_wrappers.R")
+source("Scripts/data_prep/population_prep.R")
+
+
+
+number_cores <- max(1,floor(as.integer(detectCores())*0.5))
+cl <- makeCluster(number_cores)
+cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
+
+seeds<-1:100
+registerDoParallel(cl)
+start_time = Sys.time()
+# persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
+# source("Scripts/ithim-r_wrappers.R")
+results <- foreach(seed_current=seeds,
+                   # output_location_current="modelOutput",
+                   # persons_matched_current=persons_matched,
+                   .combine=rbind,
+                   .verbose=F,
+                   .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
+                   .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr_wrapper",
+                             "GetParamters","GetPopulation","GetStDevRR","health_burden_2",
+                             "RunDisease","RunLifeTable")
+) %dopar%
+  CalculationModel(seed=seed_current,
+                   output_location="modelOutput",
+                   persons_matched)
+end_time = Sys.time()
+end_time - start_time
+stopCluster(cl)
+
+CalculationModel(seed=1,
+                 output_location="modelOutput",
+                 persons_matched=persons_matched)
+
+
 
 ############################################## Mode outputs ###############################################################################
 

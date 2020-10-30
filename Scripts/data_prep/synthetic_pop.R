@@ -108,6 +108,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
   # travel_data_location="Data/processed/travel_data.csv"
   # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
+  # scenario_location=scenario_trips
     
   ### Original set
     # "Data/processed/trips_melbourne_scenarios.csv"
@@ -115,8 +116,16 @@ calculatePersonsTravelScenario <- function(travel_data_location,scenario_locatio
   
   travel_data <- read.csv(travel_data_location,as.is=T, fileEncoding="UTF-8-BOM")
   
-  trips_melbourne <- scenario_trips %>% #read.csv(scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-    mutate(persid=toupper(persid))
+  # if scenario_location is a file location, read the csv. If not, then use it
+  # as a dataframe.
+  trips_melbourne <- NULL
+   if(is.character(scenario_location)) {
+     trips_melbourne <- read.csv(scenario_location,as.is=T,fileEncoding="UTF-8-BOM")
+  }
+  if(!is.character(scenario_location)) {
+    trips_melbourne <- scenario_location
+  }
+  trips_melbourne <- trips_melbourne %>% mutate(persid=toupper(persid))
   
   ### Create total duration and distance for all modes, rather long process here. 
   ### The intervention will change the trips file (scenario trips file) which in 
@@ -390,11 +399,21 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # pa_location="Data/processed/persons_pa.csv"
   # persons_travel_location="Data/processed/persons_travel.csv"
+  # persons_travel_location=persons_travel
 
 
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
-  persons_travel <- persons_travel #read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
-  
+
+  # if persons_travel_location is a file location, read the csv. If not, then
+  # use it as a dataframe.
+  persons_travel <- NULL
+  if(is.character(persons_travel_location)) {
+    persons_travel <- read.csv(persons_travel_location,as.is=T, fileEncoding="UTF-8-BOM")
+  }
+  if(!is.character(persons_travel_location)) {
+    persons_travel <- persons_travel_location
+  }
+
   # This joins the two tables based on the match variables. This is all of the 
   # possible group combinations. We then assign a unique per group number.
   # Some people have no viable matches, so using a left join means that these

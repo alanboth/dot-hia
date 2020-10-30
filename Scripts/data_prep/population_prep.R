@@ -2,6 +2,7 @@
 ### (5-yr age groups up to 95-100 needed) and location, other data sources are not. 
 
 library(readr)
+library(readxl)
 GetPopulation <- function(population_data, location){
   # population_data="Data/original/abs/population_census.xlsx"
   # location= "Greater Melbourne" # (other options)

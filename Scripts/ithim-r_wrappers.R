@@ -1,17 +1,26 @@
-library(dplyr)
-library(readr)
-library(data.table)
-library(srvyr)
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(srvyr))
+suppressPackageStartupMessages(library(stringr))
 
 # runs a local version of gen_pa_rr (and PA_dose_response) so ithim-r library doesn't need to be called
 # ithim-r still needs to be installed so we can access the dose response folder
-gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_response_folder,PA_DOSE_RESPONSE_QUANTILE) {
+gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,
+                              dose_response_folder,PA_DOSE_RESPONSE_QUANTILE,
+                              parameters=NULL) {
   # mmets_pp_location=mmets_pp_MEL
   # disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   # # location of ithmr default dose response data:
   # dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
   #                             "/dose_response/drpa/extdata")
   # PA_DOSE_RESPONSE_QUANTILE=F
+  
+  # if local environment parameters have been supplied, use them
+  if(!is.null(parameters)) {
+    list2env(parameters,environment()) ### move all elements in parameters list to global environment 
+  }
   
   ## loading copies of the ithm-r functions called
   gen_pa_rr <- function(mmets_pp) {
@@ -77,8 +86,17 @@ gen_pa_rr_wrapper <- function(mmets_pp_location,disease_inventory_location,dose_
     }
   }
   
-  mmets_pp <- mmets_pp_location ### Alan, I changed here, as in mslt mmets have uncertainty, so should not be read from fixed file
-  DISEASE_INVENTORY <-  read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
+  # if mmets_pp_location is a file location, read the csv. If not, then
+  # use it as a dataframe.
+  mmets_pp <- NULL
+  if(is.character(mmets_pp_location)) {
+    mmets_pp <- read.csv(mmets_pp_location,as.is=T, fileEncoding="UTF-8-BOM")
+  }
+  if(!is.character(mmets_pp_location)) {
+    mmets_pp <- mmets_pp_location ### Alan, I changed here, as in mslt mmets have uncertainty, so should not be read from fixed file
+  }
+  
+  DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   
   # filtering down to columns with 'mmet' in their name
   SCEN_SHORT_NAME <- colnames(mmets_pp)[grep("mmet",colnames(mmets_pp))]
@@ -105,7 +123,16 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   # combined_AP_PA=F
   # calculate_AP=F
 
-  ind_ap_pa <- ind_ap_pa_location  #read.csv(ind_ap_pa_location,as.is=T,fileEncoding="UTF-8-BOM") ## Alan I removed read as this inputs will have uncertainy
+  
+  # if ind_ap_pa_location is a file location, read the csv. If not, then
+  # use it as a dataframe.
+  ind_ap_pa <- NULL
+  if(is.character(ind_ap_pa_location)) {
+    ind_ap_pa <- read.csv(ind_ap_pa_location,as.is=T, fileEncoding="UTF-8-BOM")
+  }
+  if(!is.character(ind_ap_pa_location)) {
+    ind_ap_pa <- ind_ap_pa_location ## Alan I removed read as this inputs will have uncertainy
+  }
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
   DEMOGRAPHIC <- read.csv(demographic_location,as.is=T,fileEncoding="UTF-8-BOM")
   
@@ -300,7 +327,7 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
 ## Function to generate age and sex disease life table for baseline and scenario.
 ## Remission is not modelled.
 
-RunDisease <- function(in_idata,  in_sex, in_mid_age, in_disease, incidence_trends=NA, mortality_trends=NA) {
+RunDisease <- function(in_idata, in_sex, in_mid_age, in_disease, incidence_trends=NA, mortality_trends=NA) {
   # in_idata=MSLT_DF
   # in_sex='male'
   # in_mid_age=17
@@ -444,26 +471,26 @@ GetStDevRR <- function(RR, LB, UB){
 }                   
 
 GetParamters <- function(NSAMPLES = 1,
-                                    matched_population=matched_population, # from running step two Melbourne Model
-                                    MMET_CYCLING = MMET_CYCLING,
-                                    MMET_WALKING = MMET_WALKING,
-                                    PA_DOSE_RESPONSE_QUANTILE = F,
-                                    location_deaths_periodic="Victoria",
-                                    location_deaths_projections="Victoria",
-                                    location_population="Greater Melbourne"){
- parameters <- list()
-
- ### FIXED INPUTS
- 
+                         matched_population=matched_population, # from running step two Melbourne Model
+                         MMET_CYCLING = MMET_CYCLING,
+                         MMET_WALKING = MMET_WALKING,
+                         PA_DOSE_RESPONSE_QUANTILE = F,
+                         location_deaths_periodic="Victoria",
+                         location_deaths_projections="Victoria",
+                         location_population="Greater Melbourne"){
+  parameters <- list()
+  
+  ### FIXED INPUTS
+  
   mslt_general="Data/processed/mslt/mslt_df.csv"
   death_rate_periodic="Data/processed/mslt/deaths_periodic.csv"
   death_rates_projections="Data/processed/mslt/deaths_projections.csv"
   population_data="Data/original/abs/population_census.xlsx"
-  disease_inventory_location= "Data/original/ithimr/disease_outcomes_lookup.csv"
- 
- 
+  disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
+  
+  
   DISEASE_INVENTORY <- read.csv(disease_inventory_location,as.is=T,fileEncoding="UTF-8-BOM")
- 
+  
   MSLT_DF <- read.csv(mslt_general,as.is=T,fileEncoding="UTF-8-BOM")
   
   death_rate_periodic <- read.csv(death_rate_periodic,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == location_deaths_periodic) %>%
@@ -471,8 +498,7 @@ GetParamters <- function(NSAMPLES = 1,
   MSLT_DF <- left_join(MSLT_DF, death_rate_periodic)
   
   death_rates <- read.csv(death_rates_projections,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria", assumption == "medium")
-
-  source("Scripts/data_prep/population_prep.R")
+  
   population <- GetPopulation(
     population_data=population_data,
     location= location_population)
@@ -489,50 +515,51 @@ GetParamters <- function(NSAMPLES = 1,
   parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
   parameters$population <- population  
   
-### RANDOM INPUTS  
+  ### RANDOM INPUTS  
   ### Use random inputs if NSAMPLES is >1
   
-  if (NSAMPLES > 1) {
-  
-  ### Variables with normal distribution
-  ### MMETS
+  # if (NSAMPLES > 1) {
+  if (PA_DOSE_RESPONSE_QUANTILE==T) {
     
-  ### Get Stdev diabetes
+    ### Variables with normal distribution
+    ### MMETS
+    
+    ### Get Stdev diabetes
     DIABETES_IHD_RR_F <- c(2.82, GetStDevRR(2.82, 2.35, 3.38))
     DIABETES_STROKE_RR_F <- c(2.28, GetStDevRR(2.28, 1.93, 2.69))
     DIABETES_IHD_RR_M <- c(2.16, GetStDevRR(2.16, 1.82, 2.56)) 
     DIABETES_STROKE_RR_M <- c(1.83, GetStDevRR(1.83, 1.60, 2.08))
     
-  normVariables <- c("MMET_CYCLING",
-                     "MMET_WALKING", 
-                     "DIABETES_IHD_RR_F",
-                     "DIABETES_STROKE_RR_F",
-                     "DIABETES_IHD_RR_M",
-                     "DIABETES_STROKE_RR_M"
-                     )
-  for (i in 1:length(normVariables)) {
-    name <- normVariables[i]
-    val <- get(normVariables[i])
-    if (length(val) == 1) {
-      assign(name, val, envir = .GlobalEnv)
-    } else {
-      # Use mean and sd values in log form
-      parameters[[name]] <-
-        rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+    normVariables <- c("MMET_CYCLING",
+                       "MMET_WALKING", 
+                       "DIABETES_IHD_RR_F",
+                       "DIABETES_STROKE_RR_F",
+                       "DIABETES_IHD_RR_M",
+                       "DIABETES_STROKE_RR_M"
+    )
+    for (i in 1:length(normVariables)) {
+      name <- normVariables[i]
+      val <- get(normVariables[i])
+      if (length(val) == 1) {
+        assign(name, val, envir = .GlobalEnv)
+      } else {
+        # Use mean and sd values in log form
+        parameters[[name]] <-
+          rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+      }
     }
-  }
-  ### RR DIABATES
-  
-  ### To do
-  
-  ### Variables with quantiles distributions
-  ## PA DOSE RESPONSE 
-  # parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
-  if(PA_DOSE_RESPONSE_QUANTILE == T ) {
-    pa_diseases <- subset(DISEASE_INVENTORY,physical_activity==1)
-    dr_pa_list <- list()
-    for(disease in pa_diseases$pa_acronym)
-      parameters[[paste0('PA_DOSE_RESPONSE_QUANTILE_',disease)]] <- runif(NSAMPLES,0,1)
+    ### RR DIABATES
+    
+    ### To do
+    
+    ### Variables with quantiles distributions
+    ## PA DOSE RESPONSE 
+    # parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
+    if(PA_DOSE_RESPONSE_QUANTILE == T ) {
+      pa_diseases <- subset(DISEASE_INVENTORY,physical_activity==1)
+      dr_pa_list <- list()
+      for(disease in pa_diseases$pa_acronym)
+        parameters[[paste0('PA_DOSE_RESPONSE_QUANTILE_',disease)]] <- runif(NSAMPLES,0,1)
     }
   }
   
@@ -546,30 +573,46 @@ GetParamters <- function(NSAMPLES = 1,
   }
   
   
-   parameters
+  parameters
 }
 
 # ---- CalculateModel ----
 
-CalculationModel <- function(parameters, seed=1){
+CalculationModel <- function(seed=1,
+                             output_location="modelOutput",
+                             persons_matched
+                             ){
   
-  list2env(parameters,globalenv()) ### move all elements in parameters list to global environment 
+  ### Model parameters
+  i_age_cohort <-  c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+  i_sex <- c('male', 'female')
+  DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM") ## Alan, not sure whether this should
+  
   set.seed(seed)
   
-  ### Get functions
-  source("Scripts/data_prep/mmet_pp.R")
-  source("Scripts/ithim-r_wrappers.R")
+  cat(paste0("have set seed=", seed,"\n"))
+  parameters <- GetParamters(
+    NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+    matched_population = persons_matched,
+    MMET_CYCLING = c(4.63, 1.2), 
+    MMET_WALKING = c(2.53, 1.1),
+    PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
   
+  list2env(parameters,environment()) ### move all elements in parameters list to global environment 
+  cat(paste0("have set parameters\n"))
+
   #################################################### Calculate PIFs by age and sex groups #####################################################
   # 3 calculations: mmets_pp, RR_PA_calculations and pif
   
-  ### 1) Generate marginal mets for matched population, then used to derive RRs per person. Total defauls is FALSE, do not include work mmets.
+  ### 1) Generate marginal mets for matched population, then used to derive RRs per person. Total defaults is FALSE, do not include work mmets.
   mmets_pp <- calculateMMETSperPerson(
     matched_pop_location = persons_matched,
     MMET_CYCLING = MMET_CYCLING, 
     MMET_WALKING = MMET_WALKING,
     TOTAL = F
   )
+  cat(paste0("have run calculateMMETSperPerson\n"))
+  
   #### Create age groups for easier presentation changes and convert variables to factors for summaries
   mmets_pp <- mmets_pp %>%
     dplyr::mutate(age_group = as.factor(case_when(
@@ -577,30 +620,33 @@ CalculationModel <- function(parameters, seed=1){
       age >= 18 & age <= 40 ~ "18 to 40",
       age >= 41 & age <= 65 ~ "41 to 65",
       age >= 65             ~ "65 plus"))) %>%
-    mutate(sex =as.factor(sex)) 
+    mutate(sex=as.factor(sex)) 
   
   ### 2) Create RRs per person to calculate PIFs
   
   #### Relative risks of physical activity
   
   RR_PA_calculations <- gen_pa_rr_wrapper(
-    mmets_pp,
-    disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in paramters list
+    mmets_pp_location=mmets_pp,
+    disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in parameters list
     # location of ithmr default dose response data:
     dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'),
                                 "/dose_response/drpa/extdata"),
-    PA_DOSE_RESPONSE_QUANTILE=PA_DOSE_RESPONSE_QUANTILE ### Alan, if this is true, it picks up values from the RR quantiles in the paramters list
+    PA_DOSE_RESPONSE_QUANTILE=PA_DOSE_RESPONSE_QUANTILE, ### Alan, if this is true, it picks up values from the RR quantiles in the parameters list
+    parameters=parameters
   )
+  cat(paste0("have run gen_pa_rr_wrapper\n"))
   
   ### 3) Calculate PIFs by age and sex groups
   
   pif <- health_burden_2(
     ind_ap_pa_location=RR_PA_calculations,
-    disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in paramters list
+    disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in parameters list
     demographic_location="Data/processed/DEMO.csv",
     combined_AP_PA=F,
     calculate_AP=F
   ) 
+  cat(paste0("have run health_burden_2\n"))
   
   pif_age_sex <- pif[[2]] %>% dplyr::rename(age=age_group_2) %>%
     dplyr::slice(rep(1:dplyr::n(), each = 5))
@@ -627,7 +673,7 @@ CalculationModel <- function(parameters, seed=1){
   
   ### Steps 
   # 1) Run general life table baseline
-  # 2) Run disase life tables baseline
+  # 2) Run disease life tables baseline
   # 3) Run scenario life tables (where incidence is mofified by pif_expanded)
   # 4) Collect changes in mx and pylds from differences between baseline and sceanrio disease life tables
   # 5) Recalculate general life table with mx and totalpylds modified by 4
@@ -657,7 +703,7 @@ CalculationModel <- function(parameters, seed=1){
   
   
   
-  # 2) Run disase life tables baseline
+  # 2) Run disease life tables baseline
   
   ### Change order in disease short_names to start with diabetes. This is important when calculating the scenario disease life tables as diabetes is calculated first to then 
   ### impact on cardiovascular disease calculations. 
@@ -916,27 +962,7 @@ CalculationModel <- function(parameters, seed=1){
                           general_lf,
                           by=c("age","sex","age_group"))
   
-  # 7) Summary data frame by age and sex and total 
-  
-  ######## Dataframe with all outputs aggregated by year of simlation by sex
-  output_df_agg_sex  <- output_df   %>% ### Create a simulation year columns
-    group_by(age_group, sex, .add=TRUE) %>%
-    dplyr::mutate(year = 1:dplyr::n()) %>%
-    dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-    ungroup() %>%
-    group_by(year, sex, .add=TRUE) %>% 
-    summarise_if(is.numeric, funs(sum)) %>%
-    ungroup() 
-  
-  ######## Dataframe with all outputs aggregated by year of simlation all
-  output_df_agg_all  <- output_df   %>% ### Create a simulation year columns
-    group_by(age_group, sex, .add=TRUE) %>%
-    dplyr::mutate(year = 1:dplyr::n()) %>%
-    dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-    ungroup() %>%
-    group_by(year, .add=TRUE) %>% 
-    summarise_if(is.numeric, funs(sum)) %>%
-    ungroup() 
+ 
   
   ### Create age groups variable, easier to read
   
@@ -962,65 +988,91 @@ CalculationModel <- function(parameters, seed=1){
     mutate(cohort=paste(sex, age_group, sep = "_")) %>%
     rename(`Age group` = age_group_2, Gender = sex)
   
+  # # 7) Summary data frame by age and sex and total 
+  # 
+  # ######## Dataframe with all outputs aggregated by year of simulation by sex
+  # output_df_agg_sex  <- output_df   %>% ### Create a simulation year columns
+  #   group_by(age_group, sex, .add=TRUE) %>%
+  #   dplyr::mutate(year = 1:dplyr::n()) %>%
+  #   dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+  #   ungroup() %>%
+  #   group_by(year, sex, .add=TRUE) %>% 
+  #   summarise_if(is.numeric, funs(sum)) %>%
+  #   ungroup() 
+  # 
+  # ######## Dataframe with all outputs aggregated by year of simulation all
+  # output_df_agg_all  <- output_df   %>% ### Create a simulation year columns
+  #   group_by(age_group, sex, .add=TRUE) %>%
+  #   dplyr::mutate(year = 1:dplyr::n()) %>%
+  #   dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+  #   ungroup() %>%
+  #   group_by(year, .add=TRUE) %>% 
+  #   summarise_if(is.numeric, funs(sum)) %>%
+  #   ungroup()
+  # 
+  # #### Add population numbers for presentation purposes
+  # population <- population %>% 
+  #   rename(cohort = sex_age_cat) %>%
+  #   dplyr::filter(cohort %in% unique(output_df$cohort))
+  # 
+  # 
+  # ##################### Below outcomes for presentation ####################################################
+  # 
+  # # Table: Life expectancy and health adjusted life expectancy 
+  # 
+  # output_life_expectancy_change <- output_df[!duplicated(output_df$cohort), c("Age group", "cohort", "Gender", "ex_bl", "ex_sc", "ewx_bl", "ewx_sc", 
+  #                                                                             "ex_diff", "ewx_diff")] %>%
+  #   dplyr::rename(`Life expectancy at baseline` = ex_bl, 
+  #                 `Life expectancy scenario` = ex_sc, 
+  #                 `Health adjusted life expectancy baseline` = ewx_bl, 
+  #                 `Health adjusted life expectancy scenario` = ewx_sc) %>%
+  #   dplyr::mutate(`Difference in life expectancy in days` = ex_diff * 365, 
+  #                 `Difference in health adjusted life expectancy in days` = ewx_diff* 365) %>% 
+  #   mutate_if(is.numeric, round, digits = 3) %>%
+  #   left_join(population)%>%
+  #   dplyr::select(-c(ex_diff, ewx_diff, cohort)) %>%
+  #   relocate(population, .after = Gender)%>%
+  #   rename('Population cohort'=population)
+  # 
+  # output_life_expectancy_change <- output_life_expectancy_change[order(output_life_expectancy_change$Gender),] 
+  # 
+  # # Table: Life years and health adjusted life years ----
+  # 
+  # output_life_years_change <- output_df %>% 
+  #   group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
+  #   summarise_if(is.numeric, funs(sum)) %>%
+  #   ungroup() %>%
+  #   dplyr::select(`Age group`,cohort, Gender,Lx_diff, Lwx_diff) %>%
+  #   dplyr::rename(`Life years` = Lx_diff, 
+  #                 `Health adjusted life years` = Lwx_diff)  %>% 
+  #   mutate_if(is.numeric, round) %>%
+  #   left_join(population) %>%
+  #   relocate(population, .after = Gender)%>%
+  #   rename('Population cohort'=population) %>%
+  #   dplyr::select(-cohort)
+  # 
+  # # Table: Diseases deaths, incidence and ylds ----
+  # 
+  # output_diseases_change <- output_df %>% 
+  #   group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
+  #   summarise_if(is.numeric, funs(sum)) %>% 
+  #   mutate_if(is.numeric, round) %>%
+  #   left_join(population) %>%
+  #   relocate(population, .after = Gender)%>%
+  #   rename('Population cohort'=population) %>%
+  #   dplyr::select(-cohort) %>%
+  #   dplyr::select(`Age group`, Gender, matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri"))
+  # 
   
-  #### Add population numbers for presentation purposes
-  population <- population %>% 
-    rename(cohort = sex_age_cat) %>%
-    dplyr::filter(cohort %in% unique(output_df$cohort))
+  outputDir <- paste0(output_location,"/output_df/") 
+  mmetsDir <- paste0(output_location,"/mmets/") 
+  # dir.create(outputDir, recursive=TRUE, showWarnings=FALSE)
+  # dir.create(mmetsDir, recursive=TRUE, showWarnings=FALSE)
+  write.csv(output_df, file=paste0(outputDir,seed,".csv"), row.names=FALSE)
+  write.csv(mmets_pp, file=paste0(mmetsDir,seed,".csv"), row.names=FALSE)
   
-  
-  ##################### Below outcomes for presentation ####################################################
-  
-  # Table: Life expectancy and health adjusted life expectancy 
-  
-  output_life_expectancy_change <- output_df[!duplicated(output_df$cohort), c("Age group", "cohort", "Gender", "ex_bl", "ex_sc", "ewx_bl", "ewx_sc", 
-                                                                              "ex_diff", "ewx_diff")] %>%
-    dplyr::rename(`Life expectancy at baseline` = ex_bl, 
-                  `Life expectancy scenario` = ex_sc, 
-                  `Health adjusted life expectancy baseline` = ewx_bl, 
-                  `Health adjusted life expectancy scenario` = ewx_sc) %>%
-    dplyr::mutate(`Difference in life expectancy in days` = ex_diff * 365, 
-                  `Difference in health adjusted life expectancy in days` = ewx_diff* 365) %>% 
-    mutate_if(is.numeric, round, digits = 3) %>%
-    left_join(population)%>%
-    dplyr::select(-c(ex_diff, ewx_diff, cohort)) %>%
-    relocate(population, .after = Gender)%>%
-    rename('Population cohort'=population)
-  
-  output_life_expectancy_change <- output_life_expectancy_change[order(output_life_expectancy_change$Gender),] 
-  
-  # Table: Life years and health adjusted life years ----
-  
-  output_life_years_change <- output_df %>% 
-    group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
-    summarise_if(is.numeric, funs(sum)) %>%
-    ungroup() %>%
-    dplyr::select(`Age group`,cohort, Gender,Lx_diff, Lwx_diff) %>%
-    dplyr::rename(`Life years` = Lx_diff, 
-                  `Health adjusted life years` = Lwx_diff)  %>% 
-    mutate_if(is.numeric, round) %>%
-    left_join(population) %>%
-    relocate(population, .after = Gender)%>%
-    rename('Population cohort'=population) %>%
-    dplyr::select(-cohort)
-  
-  # Table: Diseases deaths, incidence and ylds ----
-  
-  output_diseases_change <- output_df %>% 
-    group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
-    summarise_if(is.numeric, funs(sum)) %>% 
-    mutate_if(is.numeric, round) %>%
-    left_join(population) %>%
-    relocate(population, .after = Gender)%>%
-    rename('Population cohort'=population) %>%
-    dplyr::select(-cohort) %>%
-    dplyr::select(`Age group`, Gender, matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri"))
-  
-  
-  
-  
-  return(list(mmets=mmets_pp, output_df=output_df, output_df_agg_sex=output_df_agg_sex, output_df_agg_all=output_df_agg_all,
-              output_life_expectancy_change=output_life_expectancy_change,output_life_years_change=output_life_years_change,
-              output_diseases_change=output_diseases_change))
-  
+  # return(list(mmets=mmets_pp, output_df=output_df, output_df_agg_sex=output_df_agg_sex, output_df_agg_all=output_df_agg_all,
+  #             output_life_expectancy_change=output_life_expectancy_change,output_life_years_change=output_life_years_change,
+  #             output_diseases_change=output_diseases_change))
+  return(seed)
 }
