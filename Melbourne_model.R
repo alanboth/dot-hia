@@ -152,11 +152,11 @@ source("Scripts/data_prep/population_prep.R")
 
 
 
-number_cores <- max(1,floor(as.integer(detectCores())*0.5))
+number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-1:100
+seeds<-101:1000
 registerDoParallel(cl)
 start_time = Sys.time()
 # persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
@@ -177,6 +177,39 @@ results <- foreach(seed_current=seeds,
 end_time = Sys.time()
 end_time - start_time
 stopCluster(cl)
+
+
+cat(paste0("Combining plans into single file:\n"))
+
+output_df_files<-list.files('modelOutput/output_df',pattern="*.csv",full.names=T)
+output_df<-lapply(output_df_files[1:1000],read.csv,header=T) %>%
+  bind_rows(.id="run")
+
+output_df_mean<-output_df %>%
+  group_by(age_group,Gender,age,Age.group,cohort) %>%
+  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, mean, na.rm=T)) %>%
+  ungroup()
+
+output_df_sd<-output_df %>%
+  group_by(age_group,Gender,age,Age.group,cohort) %>%
+  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, sd, na.rm=T)) %>%
+  ungroup()
+
+output_df_10th_percentile<-output_df %>%
+  group_by(age_group,Gender,age,Age.group,cohort) %>%
+  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.1, na.rm=T)) %>%
+  ungroup()
+
+output_df_90th_percentile<-output_df %>%
+  group_by(age_group,Gender,age,Age.group,cohort) %>%
+  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.9, na.rm=T)) %>%
+  ungroup()
+
+write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
+write.csv(output_df_sd, "Data/processed/output_df_sd.csv")
+write.csv(output_df_10th_percentile, "Data/processed/output_df_10th_percentile.csv")
+write.csv(output_df_90th_percentile, "Data/processed/output_df_90th_percentile.csv")
+write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
 
 CalculationModel(seed=1,
                  output_location="modelOutput",
