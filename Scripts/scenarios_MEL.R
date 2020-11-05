@@ -6,7 +6,10 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 ### Example of replacing car trips of less than 5km with walking
 ### Inputs: Data set, speed walking, speed cycling, distance to replce walking, distance to replace cycling)
 
-
+### BELEN TO DO: 
+## Add 0 km and 1km category 
+### remove 0 to 17 age category
+### modify mode to replace with logic options if value present
 
 calculateScenarioMel <- function(trips_melbourne = in_data, 
                                  speed = in_speed,

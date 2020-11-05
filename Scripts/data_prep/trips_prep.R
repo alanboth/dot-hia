@@ -188,10 +188,11 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                                            age > 65             ~ "66 plus"))) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
     dplyr::mutate(age_group=as.factor(age_group)) %>%
-    dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 2 ~ "< 2km", 
-                                               trip_distance <= 5 & trip_distance >= 2 ~ "2-5km", 
-                                               trip_distance <=10 & trip_distance > 5 ~ "6-10km",
-                                               trip_distance > 10 ~ ">10km"))) %>%
+    dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 1 ~ "< 1km",
+                                               trip_distance >= 1 & trip_distance <= 2 ~ "1-2km", 
+                                                trip_distance <= 5 & trip_distance > 2 ~ "3-5km", 
+                                                trip_distance <=10 & trip_distance > 5 ~ "6-10km",
+                                                trip_distance > 10 ~ ">10km"))) %>%
     dplyr::mutate(trip_purpose=as.factor(case_when(trip_purpose=="social" ~ "Leisure",
                                                    trip_purpose=="recreational" ~ "Leisure",
                                                    trip_purpose=="buy something" ~ "Shopping",
@@ -270,10 +271,11 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
     dplyr::mutate(day_type =as.factor(DayType)) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
     dplyr::mutate(age_group=as.factor(age_group)) %>%
-    dplyr::mutate(dist_cat=as.factor(case_when(CUMDIST < 2 ~ "< 2km", 
-                                               CUMDIST <= 5 & CUMDIST >= 2 ~ "2-5km", 
-                                               CUMDIST <=10 & CUMDIST > 5 ~ "6-10km",
-                                               CUMDIST > 10 ~ ">10km"))) %>%
+    dplyr::mutate(dist_cat=as.factor(case_when(CUMDIST < 1 ~ "< 1km",
+                                                CUMDIST >= 1 & CUMDIST <= 2 ~ "1-2km", 
+                                                CUMDIST <= 5 & CUMDIST > 2 ~ "3-5km", 
+                                                CUMDIST <=10 & CUMDIST > 5 ~ "6-10km",
+                                                CUMDIST > 10 ~ ">10km"))) %>%
     dplyr::mutate(TRIPPURP=as.factor(case_when(TRIPPURP=="Social" ~ "Leisure",
                                                TRIPPURP=="Recreational" ~ "Leisure",
                                                TRIPPURP=="Buy something" ~ "Shopping",

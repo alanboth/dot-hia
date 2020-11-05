@@ -1,15 +1,18 @@
 ---
-title: "Including health impacts in transport modelling and economic appraisal-ITHIM Melbourne"
+title: Including health impacts in transport modelling and economic appraisal-ITHIM
+  Melbourne
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document:
-    df_print: paged
-    toc : true
-    number_sections: true
-  pdf_document: 
+  word_document:
+    toc: yes
+  pdf_document:
     df_print: paged
     keep_tex: yes
+    number_sections: yes
+    toc: yes
+  html_document:
+    df_print: paged
     number_sections: yes
     toc: yes
 biblio-style: apsr
@@ -316,7 +319,6 @@ kable(pa_NHS_variables, booktabs = T, caption = "Table 4: NHS PA variables", lon
 
 
 ```{r, echo=FALSE, include=TRUE}
-
 minutes_NHS_stats_non_work <- readRDS("SuppDocs/Tables/Minutes.Stats.rds") %>%
   dplyr::rename(Sex = SEX, `Age group` = age_group) %>%
   dplyr::select(-c("Proportion_se", "Population_se"))

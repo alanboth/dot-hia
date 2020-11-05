@@ -74,6 +74,7 @@ names(pa_melbourne)[names(pa_melbourne)=="ABSHIDB"] <- "id"
 # pa_melbourne <- pa_melbourne %>% dplyr::select(sex, age, agegr, work_ltpa_marg_met, ltpa_marg_met, work_marg_met, work_ltpa_met, walk_trans, id)
 
 
+
 write_csv(pa_melbourne, (paste0(getwd(), "/Data/Processed/pa_melbourne.csv")))
 
 
