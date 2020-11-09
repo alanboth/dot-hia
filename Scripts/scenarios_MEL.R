@@ -13,15 +13,14 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 calculateScenarioMel <- function(trips_melbourne = in_data, 
                                  speed = in_speed,
-                              age_input = c("0 to 17", "18 to 40", "41 to 65", "66 plus"),
-                              sex_input = c("male", "female"), 
+                              age_input = c( "15 to 19", "20 to 39", "40 to 64", "65 plus"), # Choose age groups: one, a few or all
+                              sex_input = c("male", "female"), #Choose sex group, : one, a few or all
                               original_mode = "car" , # Just car trips can be replaced
-                              replace_mode_walk = T,
-                              replace_mode_cycle = T,
-                              distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
-                              distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
-                              purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
-                                                "Other", "accompany someone", "education","at or go home")) {
+                              # replace_mode_walk = T,
+                              # replace_mode_cycle = T,
+                              distance_replace_walk = ">1km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
+                              distance_replace_cycle = "1-2km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
+                              purpose_input = c("Leisure","Shopping", "Work", "Other", "Education")) { # Choose purpose groups, : one, a few or all
                           
 
      # in_data="Data/processed/trips_melbourne.csv"
@@ -57,21 +56,21 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                                                & age_group %in% age_input 
                                                & sex %in% sex_input 
                                                & trip_purpose %in% purpose_input 
-                                               & replace_mode_walk == T, "walking",
+                                               & distance_replace_walk  != "0 km", "walking",
                                             ifelse(trip_mode_base == original_mode 
                                             & dist_cat == distance_replace_cycle 
                                             & age_group %in% age_input 
                                             & sex %in% sex_input 
                                             & trip_purpose %in% purpose_input
-                                            & replace_mode_cycle == T, "bicycle", trip_mode_base))) %>%
+                                            & distance_replace_cycle  != "0 km", "bicycle", trip_mode_base))) %>%
 
       ## trip distance is the same, but time changes
       dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
       dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
-                                                & trip_mode_scen == "walking" & replace_mode_walk == T,
+                                                & trip_mode_scen == "walking" & distance_replace_walk  != "0 km",
                                                 trip_distance_scen/walk_mean_speed,
                                                 ifelse(trip_mode_base == original_mode
-                                                       &trip_mode_scen=="bicycle" & replace_mode_cycle == T,
+                                                       &trip_mode_scen=="bicycle" & distance_replace_cycle  != "0 km",
                                                       trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
                                                 trip_duration_base)))  %>%
       dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>% ### Alan I modified here after discussing with James.
@@ -79,7 +78,7 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
     mutate_if(is.character,as.factor)
     #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
     #                                               TRUE ~ trip_mode_scen)))
-    return(trips_melbourne_scenarios)
+    return(list(trips=trips_melbourne_scenarios, AGE=age_input, SEX=sex_input)) ### BZ: added age_input and sex_input to feed into mslt codde
 
 }
 

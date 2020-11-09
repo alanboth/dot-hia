@@ -42,18 +42,19 @@ options(scipen=999)
 source("Scripts/scenarios_MEL.R")
 in_data="Data/processed/trips_melbourne.csv"
 in_speed="Data/processed/speed_trips_melbourne.csv"
-scenario_trips <- calculateScenarioMel(trips_melbourne = in_data, 
+scenario <- calculateScenarioMel(trips_melbourne = in_data, 
                                        speed = in_speed,
-                                       age_input = c("0 to 17", "18 to 40", "41 to 65", "66 plus"),
-                                       sex_input = c("male", "female"), 
+                                       age_input = c("15 to 19","20 to 39", "40 to 64", "65 plus"), # Choose age groups
+                                       sex_input = "female", # "female"), #Choose sex group
                                        original_mode = "car" , # Just car trips can be replaced
-                                       replace_mode_walk = T,
-                                       replace_mode_cycle = T,
-                                       distance_replace_walk = "< 2km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
-                                       distance_replace_cycle = "2-5km",  #c(">10km",  "6-10km", "< 2km",  "2-5km"),
-                                       purpose_input = c("Leisure", "Shopping", "Work related", "Pick-up or drop-off someone/something", "personal business",
-                                                         "Other", "accompany someone", "education","at or go home")) 
-scenario_trips <- scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
+                                       # replace_mode_walk = T,
+                                       # replace_mode_cycle = T,
+                                       distance_replace_walk = c("1-2km", "3-5km"), #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
+                                       distance_replace_cycle = "6-10km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
+                                       purpose_input = "Leisure") #, "Shopping", "Work", "Other", "Education")) # Choose purpose groups 
+  
+scenario_trips <- scenario[["trips"]] 
+scenario_trips <-  scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
 # write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
 
 #### Graphs
@@ -150,7 +151,10 @@ source("Scripts/data_prep/mmet_pp.R")
 source("Scripts/ithim-r_wrappers.R")
 source("Scripts/data_prep/population_prep.R")
 
-
+### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
+i_age <- 
+SEX <- scenario[["SEX"]]
+AGE <- scenario[["AGE"]]
 
 number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
@@ -195,6 +199,11 @@ output_df_sd<-output_df %>%
   dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, sd, na.rm=T)) %>%
   ungroup()
 
+output_df_50th_percentile<-output_df %>% ### Alan I added 50% percentile to get the median
+  group_by(age_group,Gender,age,Age.group,cohort) %>%
+  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.5, na.rm=T)) %>%
+  ungroup()
+
 output_df_10th_percentile<-output_df %>%
   group_by(age_group,Gender,age,Age.group,cohort) %>%
   dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.1, na.rm=T)) %>%
@@ -208,6 +217,7 @@ output_df_90th_percentile<-output_df %>%
 write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
 write.csv(output_df_sd, "Data/processed/output_df_sd.csv")
 write.csv(output_df_10th_percentile, "Data/processed/output_df_10th_percentile.csv")
+write.csv(output_df_50th_percentile, "Data/processed/output_df_50th_percentile.csv")
 write.csv(output_df_90th_percentile, "Data/processed/output_df_90th_percentile.csv")
 write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
 
