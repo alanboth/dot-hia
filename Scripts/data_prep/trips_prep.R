@@ -61,6 +61,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                   TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
                   DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
                   WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
+    dplyr::filter(AGE>15) %>%
     rowwise() %>% # want to sum across rows, not down columns %>%
     mutate(participant_wt = sum(as.numeric(WDPERSWGT),as.numeric(WEPERSWGT),na.rm=T)) %>%
     mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T)) %>%
@@ -181,11 +182,11 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   trips_melbourne <- trips_melbourne %>%
   group_by(persid) %>%
     dplyr::mutate(trip_id_2 = 1:dplyr::n()) %>%
-    ungroup() %>% ## Add age groups
-    mutate(age_group = as.factor(case_when(age <   18  ~  "0 to 17",
-                                           age >=  18 & age <=  40 ~  "18 to 40",
-                                           age >= 41 & age <= 65 ~  "41 to 65",
-                                           age > 65             ~ "66 plus"))) %>%
+    ungroup() %>% ## Add age groups c( "15 to 19", "20 to 39", "40 to 64", "65 plus", "all"),
+    mutate(age_group = as.factor(case_when(age >=  15 & age <=  19 ~  "15 to 19",
+                                           age >=  20 & age <=  39 ~  "20 to 39",
+                                           age >= 40 & age <= 64 ~  "40 to 64",
+                                           age >= 65             ~ "65 plus"))) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
     dplyr::mutate(age_group=as.factor(age_group)) %>%
     dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 1 ~ "< 1km",
@@ -196,14 +197,18 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
     dplyr::mutate(trip_purpose=as.factor(case_when(trip_purpose=="social" ~ "Leisure",
                                                    trip_purpose=="recreational" ~ "Leisure",
                                                    trip_purpose=="buy something" ~ "Shopping",
-                                                   trip_purpose=="pick-up or drop-off someone"  ~ "Pick-up or drop-off someone/something",
-                                                   trip_purpose=="pick-up or deliver something"  ~ "Pick-up or drop-off someone/something",
+                                                   trip_purpose=="education" ~ "Education",
+                                                   trip_purpose=="pick-up or drop-off someone"  ~ "Other",
+                                                   trip_purpose=="pick-up or deliver something"  ~ "Other",
                                                    trip_purpose=="unknown purpose (at start of day)" ~ "Other",
                                                    trip_purpose=="other purpose" ~ "Other",
                                                    trip_purpose=="at or go Home"  ~ "Other",
                                                    trip_purpose=="change mode"  ~ "Other",
+                                                   trip_purpose=="accompany someone"   ~ "Other",
+                                                   trip_purpose=="personal business"  ~ "Other",
+                                                   trip_purpose=="at or go home"  ~ "Other",
                                                    trip_purpose=="not stated"   ~ "Other",
-                                                   trip_purpose=="work related"   ~ "Work related",
+                                                   trip_purpose=="work related"   ~ "Work",
                                                    TRUE ~ trip_purpose))) %>%
     
     dplyr::mutate(day_type =as.factor(day_type))
@@ -213,13 +218,13 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
 }
 
 ######################################  2) calculateVistaTripsDescriptives ############################################################
-
+### Uses LINMODE (main mode of trip) instead of stages of the trip.
 calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,trip_VISTA_location) {
    
   # hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv"
   # person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv"
   # trip_VISTA_location="Data/Travelsurvey/VISTA12-18/T_VISTA1218_V1.csv"
-  
+
   hh_VISTA <- read.csv(hh_VISTA_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     dplyr::select(HHID,SurveyPeriod,DayType,WDHHWGT,WEHHWGT,HomeSubRegion,HOMELGA) %>%
     filter(HHID!="") # some rows were completely blank
@@ -250,12 +255,13 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
                   TIME5, TIME6, TIME7, TIME8, TIME9, DIST1, DIST2, DIST3, DIST4,
                   DIST5, DIST6, DIST7, DIST8, DIST9, TRAVTIME, TRIPPURP, 
                   WDPERSWGT, WEPERSWGT, CUMDIST, DESTLGA, ORIGLGA, HOMELGA, WDTRIPWGT,WETRIPWGT) %>% 
+    dplyr::filter(AGE>15) %>%
     rowwise() %>% # want to sum across rows, not down columns %>%
     mutate(trips_wt = sum(as.numeric(WDTRIPWGT),as.numeric(WETRIPWGT),na.rm=T)) %>%  ## Add age groups
-    mutate(age_group = as.factor(case_when(AGE <   18  ~  "0 to 17",
-                                           AGE >=  18 & AGE <=  40 ~  "18 to 40",
-                                           AGE >= 41 & AGE <= 65 ~  "41 to 65",
-                                           AGE >= 65             ~ "65 plus"))) %>%
+    mutate(age_group = as.factor(case_when(AGE >=  15 & AGE <=  19 ~  "15 to 19",
+                                            AGE >=  20 & AGE <=  39 ~  "20 to 39",
+                                            AGE >= 40 & AGE <= 64 ~  "40 to 64",
+                                            AGE >= 65  ~ "65 plus"))) %>%
     rename(sex=SEX) %>%
     mutate(sex=case_when(sex=="M" ~ 'male', sex=="F" ~ 'female')) %>% # group modes as per trips file
     dplyr::mutate(trip_mode=as.factor(case_when(LINKMODE=="Vehicle Driver" ~ 'car', 
@@ -277,19 +283,24 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
                                                 CUMDIST <=10 & CUMDIST > 5 ~ "6-10km",
                                                 CUMDIST > 10 ~ ">10km"))) %>%
     dplyr::mutate(TRIPPURP=as.factor(case_when(TRIPPURP=="Social" ~ "Leisure",
-                                               TRIPPURP=="Recreational" ~ "Leisure",
-                                               TRIPPURP=="Buy something" ~ "Shopping",
-                                               TRIPPURP=="Pick-up or Drop-off Someone"  ~ "Pick-up or drop-off someone/something",
-                                               TRIPPURP=="Pick-up or Deliver Something"  ~ "Pick-up or drop-off someone/something",
-                                               TRIPPURP=="Unknown purpose (at start of day)" ~ "Other",
-                                               TRIPPURP=="Other Purpose" ~ "Other",
-                                               TRIPPURP=="At or Go Home"  ~ "Other",
-                                               TRIPPURP=="Change Mode"  ~ "Other",
-                                               TRIPPURP=="Not Stated"   ~ "Other",
-                                               TRUE ~ TRIPPURP))) %>%
-    rename(trip_distance = CUMDIST, trip_duration = TRAVTIME, trip_purpose = TRIPPURP, persid=PERSID, trip_id_2=TRIPNO)
+                                                   TRIPPURP=="Recreational" ~ "Leisure",
+                                                   TRIPPURP=="Buy Something" ~ "Shopping",
+                                                   TRIPPURP=="Education" ~ "Education",
+                                                   TRIPPURP=="Pick-up or Drop-off Someone"  ~ "Other",
+                                                   TRIPPURP=="Pick-up or Deliver Something"  ~ "Other",
+                                                   TRIPPURP=="Unknown purpose (at start of day)" ~ "Other",
+                                                   TRIPPURP=="Other Purpose" ~ "Other",
+                                                   TRIPPURP=="At or Go Home"  ~ "Other",
+                                                   TRIPPURP=="Change Mode"  ~ "Other",
+                                                   TRIPPURP=="Accompany Someone"   ~ "Other",
+                                                   TRIPPURP=="Personal Business"  ~ "Other",
+                                                   TRIPPURP=="Not Stated"   ~ "Other",
+                                                   TRIPPURP=="Work Related"   ~ "Work",
+                                                   TRUE ~ TRIPPURP))) %>%
+    dplyr::rename(trip_distance = CUMDIST, trip_duration = TRAVTIME, trip_purpose = TRIPPURP, persid=PERSID, trip_id_2=TRIPNO)
   
-  return(trips_melbourne)}
+  return(trips_melbourne)
+  }
 
 ######################################### 3) Calculate speeds walking and cycling ##################################################
 #### To calculate time spent walking and cycling
