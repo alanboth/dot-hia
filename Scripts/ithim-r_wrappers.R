@@ -584,8 +584,22 @@ CalculationModel <- function(seed=1,
                              ){
   
   ### Model parameters
-  i_age_cohort <-  c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
-  i_sex <- c('male', 'female')
+  #### i_age_cohort and i_age are linked to ouputs of calculateScenarioMel
+  i_age_cohort =  if(identical(AGE, c("15 to 19", "20 to 39", "40 to 64", "65 plus"))) {
+    c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+    } else if(AGE =="15 to 19") {
+      17L
+    } else if(AGE =="20 to 39") {
+      c(22,27,32,37)
+    } else if(AGE == "40 to 64") {
+      c(42,47,52,57,62)
+    } else if(AGE == "65 plus") {
+      c(67,72,77,82,87,92,97)
+    } else {
+      0
+    }
+  i_sex <- SEX 
+  
   DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM") ## Alan, not sure whether this should
   
   set.seed(seed)
