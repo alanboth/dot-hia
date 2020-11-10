@@ -152,7 +152,7 @@ source("Scripts/ithim-r_wrappers.R")
 source("Scripts/data_prep/population_prep.R")
 
 ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
-i_age <- 
+
 SEX <- scenario[["SEX"]]
 AGE <- scenario[["AGE"]]
 
@@ -176,7 +176,7 @@ results <- foreach(seed_current=seeds,
                              "RunDisease","RunLifeTable")
 ) %dopar%
   CalculationModel(seed=seed_current,
-                   output_location="modelOutput",
+                   output_location="/modelOutput",
                    persons_matched)
 end_time = Sys.time()
 end_time - start_time
@@ -185,8 +185,8 @@ stopCluster(cl)
 
 cat(paste0("Combining plans into single file:\n"))
 
-output_df_files<-list.files('modelOutput/output_df',pattern="*.csv",full.names=T)
-output_df<-lapply(output_df_files[1:1000],read.csv,header=T) %>%
+output_df_files<-list.files('/modelOutput/output_df',pattern="*.csv",full.names=T)
+output_df<-lapply(output_df_files[1:10],read.csv,header=T) %>%
   bind_rows(.id="run")
 
 output_df_mean<-output_df %>%
