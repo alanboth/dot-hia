@@ -52,13 +52,13 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                     trip_distance_base = trip_distance) %>%
       dplyr::mutate(trip_duration_base = trip_duration_base/60) %>% 
       dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base == original_mode 
-                                               & dist_cat == distance_replace_walk 
+                                               & dist_cat %in% distance_replace_walk 
                                                & age_group %in% age_input 
                                                & sex %in% sex_input 
                                                & trip_purpose %in% purpose_input 
                                                & distance_replace_walk  != "0 km", "walking",
                                             ifelse(trip_mode_base == original_mode 
-                                            & dist_cat == distance_replace_cycle 
+                                            & dist_cat %in% distance_replace_cycle 
                                             & age_group %in% age_input 
                                             & sex %in% sex_input 
                                             & trip_purpose %in% purpose_input
