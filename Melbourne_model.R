@@ -153,8 +153,7 @@ source("Scripts/data_prep/population_prep.R")
 
 ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
 
-SEX <- scenario[["SEX"]]
-AGE <- scenario[["AGE"]]
+
 
 number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
