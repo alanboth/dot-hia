@@ -45,13 +45,13 @@ in_speed="Data/processed/speed_trips_melbourne.csv"
 scenario <- calculateScenarioMel(trips_melbourne = in_data, 
                                        speed = in_speed,
                                        age_input = c("15 to 19","20 to 39", "40 to 64", "65 plus"), # Choose age groups
-                                       sex_input = "female", # "female"), #Choose sex group
+                                       sex_input = c("male", "female"), # "female"), #Choose sex group
                                        original_mode = "car" , # Just car trips can be replaced
                                        # replace_mode_walk = T,
                                        # replace_mode_cycle = T,
-                                       distance_replace_walk = c(">1km", "1-2km"), #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
+                                       distance_replace_walk = c("<1km", "1-2km"), #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
                                        distance_replace_cycle = "3-5km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
-                                       purpose_input = "Leisure") #, "Shopping", "Work", "Other", "Education")) # Choose purpose groups 
+                                       purpose_input = c("Leisure", "Shopping", "Work", "Other", "Education")) #, "Shopping", "Work", "Other", "Education")) # Choose purpose groups 
   
 scenario_trips <- scenario[["trips"]] 
 scenario_trips <-  scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
@@ -124,8 +124,8 @@ persons_matched <- calculatePersonsMatch(
   pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
   persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
 )
-# write.csv(persons_matched, "Data/processed/matched_pop.csv", row.names=F, quote=T)
-persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
+write.csv(persons_matched, "scenarios/scenario_1/matched_pop_1.csv", row.names=F, quote=T)
+persons_matched <- read.csv("scenarios/scenario_1/matched_pop_1.csv", as.is=T, fileEncoding="UTF-8-BOM")
 
 ############################################## Run intervention Melbourne ###############################################################################
 ############################################## Run HIA ###############################################################################

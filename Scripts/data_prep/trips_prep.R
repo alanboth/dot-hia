@@ -189,7 +189,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
                                            age >= 65             ~ "65 plus"))) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
     dplyr::mutate(age_group=as.factor(age_group)) %>%
-    dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 1 ~ "< 1km",
+    dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 1 ~ "<1km",
                                                trip_distance >= 1 & trip_distance <= 2 ~ "1-2km", 
                                                 trip_distance <= 5 & trip_distance > 2 ~ "3-5km", 
                                                 trip_distance <=10 & trip_distance > 5 ~ "6-10km",

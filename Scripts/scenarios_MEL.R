@@ -18,8 +18,8 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
                               original_mode = "car" , # Just car trips can be replaced
                               # replace_mode_walk = T,
                               # replace_mode_cycle = T,
-                              distance_replace_walk = ">1km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
-                              distance_replace_cycle = "1-2km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
+                              distance_replace_walk = "<1km", #("0 km, <1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
+                              distance_replace_cycle = "1-2km", #("0 km, <1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
                               purpose_input = c("Leisure","Shopping", "Work", "Other", "Education")) { # Choose purpose groups, : one, a few or all
                           
 
