@@ -1078,3 +1078,182 @@ CalculationModel <- function(seed=1,
   #             output_diseases_change=output_diseases_change))
   return(seed)
 }
+
+
+summariseOutputs <- function(scenario_location,output_df){
+  # scenario_location="scenarios/scenario_1"
+  
+  # in case the directory hasn't been made yet
+  dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
+  
+  
+  output_df_year <- output_df %>% ### Create a simulation year columns
+    group_by(run, age_group, Gender, .add=TRUE) %>%
+    dplyr::mutate(year = row_number()) %>%
+    ungroup()
+  
+  
+  # 7) Summary data frame by age and sex and total
+  
+  ######## Dataframe with all outputs aggregated by year of simulation by sex
+  output_df_agg_sex <- output_df_year %>%
+    dplyr::select(run, Gender, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+    group_by(run, year, Gender) %>%
+    summarise_if(is.numeric, sum, na.rm=T) %>%
+    ungroup() %>%
+    setNames(gsub("_sc$","_sc_all",names(.))) %>%
+    setNames(gsub("_bl$","_bl_all",names(.))) %>%
+    setNames(gsub("_diff$","_diff_all",names(.))) %>%
+    rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
+    rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
+    pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
+                 names_to = c("measure","scenario","disease"),
+                 names_sep="_") %>%
+    group_by(year,Gender,measure,scenario,disease) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+              percentile05=quantile(value,probs=0.05, na.rm=T),
+              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
+  write.csv(output_df_agg_sex, paste0(scenario_location,"/output_df_agg_sex.csv"),
+            row.names=F, quote=T)
+  
+  ######## Dataframe with all outputs aggregated by year of simulation all
+  output_df_agg_all  <- output_df_year %>%
+    dplyr::select(run, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+    group_by(run, year, .add=TRUE) %>%
+    summarise_if(is.numeric, sum, na.rm=T) %>%
+    ungroup() %>%
+    setNames(gsub("_sc$","_sc_all",names(.))) %>%
+    setNames(gsub("_bl$","_bl_all",names(.))) %>%
+    setNames(gsub("_diff$","_diff_all",names(.))) %>%
+    rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
+    rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
+    pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
+                 names_to = c("measure","scenario", "disease"),
+                 names_sep="_") %>%
+    group_by(year,measure,scenario,disease) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+              percentile05=quantile(value,probs=0.05, na.rm=T),
+              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+    mutate(error=qnorm(0.975)*sd/sqrt(1000))
+  write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
+            row.names=F, quote=T)
+  
+  #### Add population numbers for presentation purposes
+  population <- GetPopulation(
+    population_data="Data/original/abs/population_census.xlsx",
+    location="Greater Melbourne") %>%
+    rename(cohort = sex_age_cat) %>%
+    dplyr::filter(cohort %in% unique(output_df$cohort))
+  
+  
+  ##################### Below outcomes for presentation ####################################################
+  
+  # Table: Life expectancy and health adjusted life expectancy
+  output_life_expectancy_change <- output_df_year %>%
+    filter(year==1) %>%
+    dplyr::select(run, Age.group, cohort, Gender, ex_bl, ex_sc, ewx_bl, ewx_sc,
+                  ex_diff, ewx_diff) %>%
+    pivot_longer(cols=ex_bl:ewx_diff,
+                 names_to = c("measure","scenario"),
+                 names_sep="_") %>%
+    # want the life expectancy in days instead of years, but only for the difference
+    mutate(value=ifelse(scenario=="diff",value*365,value)) %>%
+    group_by(Age.group, cohort, Gender, measure, scenario) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+              percentile05=quantile(value,probs=0.05, na.rm=T),
+              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+    ungroup() %>%
+    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    left_join(population, by="cohort") %>%
+    relocate(population, .after = Gender) %>%
+    mutate(description=case_when(
+      measure=="ex" & scenario=="bl" ~ "Life expectancy at baseline",
+      measure=="ex" & scenario=="sc" ~ "Life expectancy scenario",
+      measure=="ewx" & scenario=="bl" ~ "Health adjusted life expectancy baseline",
+      measure=="ewx" & scenario=="sc" ~ "Health adjusted life expectancy scenario",
+      measure=="ex" & scenario=="diff" ~ "Difference in life expectancy in days",
+      measure=="ewx" & scenario=="diff" ~ "Difference in health adjusted life expectancy in days"
+    )) %>%
+    relocate(description, .after = scenario) %>%
+    arrange(Gender)
+  write.csv(output_life_expectancy_change,
+            paste0(scenario_location,"/output_life_expectancy_change.csv"),
+            row.names=F, quote=T)  
+  
+  # Table: Life years and health adjusted life years ----
+  output_life_years_change <- output_df %>%
+    group_by(run, Gender, `Age.group`, cohort) %>%
+    dplyr::select(`Age.group`,cohort, Gender,Lx_diff, Lwx_diff) %>%
+    summarise_if(is.numeric, funs(sum)) %>%
+    ungroup() %>%
+    pivot_longer(cols=Lx_diff:Lwx_diff,
+                 names_to = "measure") %>%
+    group_by(Age.group, cohort, Gender, measure) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+              percentile05=quantile(value,probs=0.05, na.rm=T),
+              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+    ungroup() %>%
+    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    mutate(measure=case_when(
+      measure=="Lx_diff" ~ "Life years",
+      measure=="Lwx_diff" ~ "Health adjusted life years"
+    )) %>%
+    left_join(population, by="cohort") %>%
+    relocate(population, .after = Gender)
+  write.csv(output_life_years_change,
+            paste0(scenario_location,"/output_life_years_change.csv"),
+            row.names=F, quote=T)
+  
+  # Table: Diseases deaths, incidence and ylds ----
+  output_diseases_change <- output_df %>%
+    # filter(run==1) %>%
+    dplyr::select(run, `Age.group`, Gender, cohort,
+                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri")) %>%
+    group_by(run, Gender, `Age.group`, cohort) %>%
+    summarise_if(is.numeric, funs(sum)) %>%
+    ungroup() %>%
+    rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
+    rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
+    pivot_longer(cols=inc.num_diff_brsc:mx.num_diff_strk,
+                 names_to = c("measure","scenario","disease"),
+                 names_sep="_") %>%
+    group_by(Gender,Age.group,cohort,measure,scenario,disease) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+              percentile05=quantile(value,probs=0.05, na.rm=T),
+              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+    ungroup() %>%
+    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    filter(!is.nan(mean)) %>% # ignore sex-exclusive diseases (e.g., brsc)
+    mutate(measure=case_when(
+      measure=="inc.num" ~ "inc_num",
+      measure=="mx.num" ~ "mx_num"
+    )) %>%
+    # mutate_if(is.numeric, round) %>%
+    left_join(population, by="cohort") %>%
+    relocate(population, .after = Gender)
+  write.csv(output_diseases_change,
+            paste0(scenario_location,"/output_diseases_change.csv"),
+            row.names=F, quote=T)
+}
+
+importSummarisedOutputs <- function(scenario_location) {
+  # scenario_location="scenarios/scenario_1"
+  
+  output_df_agg_sex <<-
+    read.csv(paste0(scenario_location,"/output_df_agg_sex.csv"),
+             as.is=T, fileEncoding="UTF-8-BOM")
+  
+  output_df_agg_all <<- 
+    read.csv(paste0(scenario_location,"/output_df_agg_all.csv"),
+             as.is=T, fileEncoding="UTF-8-BOM")
+  
+  output_life_expectancy_change <<- 
+    read.csv(paste0(scenario_location,"/output_life_expectancy_change.csv"),
+             as.is=T, fileEncoding="UTF-8-BOM")
+  
+  output_diseases_change <<-
+    read.csv(paste0(scenario_location,"/output_diseases_change.csv"),
+             as.is=T, fileEncoding="UTF-8-BOM")
+}

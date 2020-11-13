@@ -185,44 +185,42 @@ stopCluster(cl)
 cat(paste0("Combining plans into single file:\n"))
 
 output_df_files<-list.files('/modelOutput/output_df',pattern="*.csv",full.names=T)
-output_df<-lapply(output_df_files[1:10],read.csv,header=T) %>%
-  bind_rows(.id="run")
+output_df<-lapply(output_df_files,read.csv,header=T) %>%
+  bind_rows(.id="run") %>%
+  mutate(run=as.integer(run))
+saveRDS(output_df, file = "scenarios/scenario_1/output_df.rds")
 
-output_df_mean<-output_df %>%
-  group_by(age_group,Gender,age,Age.group,cohort) %>%
-  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, mean, na.rm=T)) %>%
-  ungroup()
+summariseOutputs(scenario_location="scenarios/scenario_1",
+                 output_df)
 
-output_df_sd<-output_df %>%
-  group_by(age_group,Gender,age,Age.group,cohort) %>%
-  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, sd, na.rm=T)) %>%
-  ungroup()
+# Belen, just run this to load the summarised outputs
+importSummarisedOutputs(scenario_location="scenarios/scenario_1")
 
-output_df_50th_percentile<-output_df %>% ### Alan I added 50% percentile to get the median
-  group_by(age_group,Gender,age,Age.group,cohort) %>%
-  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.5, na.rm=T)) %>%
-  ungroup()
 
-output_df_10th_percentile<-output_df %>%
-  group_by(age_group,Gender,age,Age.group,cohort) %>%
-  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.1, na.rm=T)) %>%
-  ungroup()
 
-output_df_90th_percentile<-output_df %>%
-  group_by(age_group,Gender,age,Age.group,cohort) %>%
-  dplyr::summarise(across(incidence_disease_sc_brsc:ewx_diff, quantile, probs=0.9, na.rm=T)) %>%
-  ungroup()
+tmpPlot <- output_df_agg_sex %>%
+  filter(measure=="mx.num"  & scenario=="diff") %>%
+  arrange(Gender,measure,disease,year)
+#& Gender=="female"
+ggplot(tmpPlot, aes(x=year,y=mean)) +
+  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
+  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  geom_line() +
+  facet_grid(disease~Gender,scales="free") +
+  scale_y_continuous(
+    name = waiver(),
+    breaks = waiver(),
+    minor_breaks = NULL,
+    n.breaks = 3,
+    labels = waiver()) +
+  labs(x="Simulation year", y="Mortality")
+ggsave("scenarios/scenario_1/mortalityError.pdf",width=6,height=4)
 
-write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
-write.csv(output_df_sd, "Data/processed/output_df_sd.csv")
-write.csv(output_df_10th_percentile, "Data/processed/output_df_10th_percentile.csv")
-write.csv(output_df_50th_percentile, "Data/processed/output_df_50th_percentile.csv")
-write.csv(output_df_90th_percentile, "Data/processed/output_df_90th_percentile.csv")
-write.csv(output_df_mean, "Data/processed/output_df_mean.csv")
 
-CalculationModel(seed=1,
-                 output_location="modelOutput",
-                 persons_matched=persons_matched)
+# # Example running just the first run of the model
+# CalculationModel(seed=1,
+#                  output_location="modelOutput",
+#                  persons_matched)
 
 
 
