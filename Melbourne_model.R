@@ -67,13 +67,13 @@ scenario_trips_weighted <-  scenario_trips  %>%
 scenario_trips_mode <- scenario_trips_weighted   %>% 
   group_by(trip_mode_scen,.drop = FALSE) %>%
   dplyr::summarize(prop= srvyr::survey_mean()) %>%
-  rename(mode = trip_mode_scen) %>%
+  dplyr::rename(mode = trip_mode_scen) %>%
   mutate(scen="scenario")
 
 baseline_trips_mode <- scenario_trips_weighted   %>% 
   group_by(trip_mode_base,.drop = FALSE) %>%
   dplyr::summarize(prop= srvyr::survey_mean()) %>%
-  rename(mode = trip_mode_base) %>%
+  dplyr::rename(mode = trip_mode_base) %>%
   mutate(scen="base") 
 
 data_mode_combo <- bind_rows(scenario_trips_mode, baseline_trips_mode) %>% 
@@ -88,13 +88,13 @@ bar_chart_combo_sc <- data_mode_combo %>%
   ) + 
   labs(title="Distribution trips baseline and scenario", x="", y="Proportion of all trips") +
   theme_classic() +
-  geom_text(aes(label=paste0(round(prop*100,1),"%"), y=prop), size=3)  + 
-  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=10)) +
+  geom_text(aes(label=paste0(round(prop*100,1),"%"), y=prop), size=6)  + 
+  theme(plot.title = element_text(hjust = 0.5, size = 20,face="bold"),
+        axis.text=element_text(size=16),
+        axis.title=element_text(size=16)) +
   theme(legend.position = "right",
         legend.title = element_blank(),
-        legend.text = element_text(colour = "black", size = 10),
+        legend.text = element_text(colour = "black", size = 16),
         legend.key = element_blank(),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +
   scale_y_continuous(labels = percent)
@@ -196,8 +196,9 @@ summariseOutputs(scenario_location="scenarios/scenario_1",
 # Belen, just run this to load the summarised outputs
 importSummarisedOutputs(scenario_location="scenarios/scenario_1")
 
+### Plots for presentation
 
-
+### Mortality diseases
 tmpPlot <- output_df_agg_sex %>%
   filter(measure=="mx.num"  & scenario=="diff") %>%
   arrange(Gender,measure,disease,year)
@@ -213,9 +214,49 @@ ggplot(tmpPlot, aes(x=year,y=mean)) +
     minor_breaks = NULL,
     n.breaks = 3,
     labels = waiver()) +
-  labs(x="Simulation year", y="Mortality")
+  labs(x="Simulation year", y="Mortality") +
+theme_bw()
 ggsave("scenarios/scenario_1/mortalityError.pdf",width=6,height=4)
 
+### Incidence diseases
+tmpPlot <- output_df_agg_sex %>%
+  filter(measure=="inc.num"  & scenario=="diff") %>%
+  arrange(Gender,measure,disease,year)
+#& Gender=="female"
+ggplot(tmpPlot, aes(x=year,y=mean)) +
+  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
+  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  geom_line() +
+  facet_grid(disease~Gender,scales="free") +
+  scale_y_continuous(
+    name = waiver(),
+    breaks = waiver(),
+    minor_breaks = NULL,
+    n.breaks = 3,
+    labels = waiver()) +
+  labs(x="Simulation year", y="Incidence") +
+  theme_bw()
+ggsave("scenarios/scenario_1/incidenceError.png",width=6,height=4)
+
+### Heatlh adjusted life years
+tmpPlot <- output_df_agg_sex %>%
+  filter(measure=="Lwx"  & scenario=="diff") %>%
+  arrange(Gender,measure,disease,year)
+#& Gender=="female"
+ggplot(tmpPlot, aes(x=year,y=mean)) +
+  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
+  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  geom_line() +
+  facet_grid(disease~Gender,scales="free") +
+  scale_y_continuous(
+    name = waiver(),
+    breaks = waiver(),
+    minor_breaks = NULL,
+    n.breaks = 3,
+    labels = waiver()) +
+  labs(x="Simulation year", y="Health-adjusted life years") +
+  theme_bw()
+ggsave("scenarios/scenario_1/HALY.png",width=6,height=4)
 
 # # Example running just the first run of the model
 # CalculationModel(seed=1,

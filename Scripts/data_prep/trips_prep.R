@@ -174,7 +174,7 @@ calculateVistaTrips <- function(hh_VISTA_location,person_VISTA_location,trip_VIS
   
   ### Create numeric id
   trips_melbourne <- trips_melbourne %>%
-    rename(persid=PERSID) %>%
+    dplyr::rename(persid=PERSID) %>%
     group_by(persid) %>%
     mutate(participant_id=group_indices()) %>%
     ungroup()
@@ -262,7 +262,7 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
                                             AGE >=  20 & AGE <=  39 ~  "20 to 39",
                                             AGE >= 40 & AGE <= 64 ~  "40 to 64",
                                             AGE >= 65  ~ "65 plus"))) %>%
-    rename(sex=SEX) %>%
+    dplyr::rename(sex=SEX) %>%
     mutate(sex=case_when(sex=="M" ~ 'male', sex=="F" ~ 'female')) %>% # group modes as per trips file
     dplyr::mutate(trip_mode=as.factor(case_when(LINKMODE=="Vehicle Driver" ~ 'car', 
                                                LINKMODE=="Vehicle Passenger" ~ 'car', 
@@ -277,7 +277,7 @@ calculateTripsDescriptives <- function(hh_VISTA_location,person_VISTA_location,t
     dplyr::mutate(day_type =as.factor(DayType)) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
     dplyr::mutate(age_group=as.factor(age_group)) %>%
-    dplyr::mutate(dist_cat=as.factor(case_when(CUMDIST < 1 ~ "< 1km",
+    dplyr::mutate(dist_cat=as.factor(case_when(CUMDIST < 1 ~ "<1km",
                                                 CUMDIST >= 1 & CUMDIST <= 2 ~ "1-2km", 
                                                 CUMDIST <= 5 & CUMDIST > 2 ~ "3-5km", 
                                                 CUMDIST <=10 & CUMDIST > 5 ~ "6-10km",

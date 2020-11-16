@@ -4,13 +4,13 @@
 library(readr)
 library(readxl)
 GetPopulation <- function(population_data, location){
-  # population_data="Data/original/abs/population_census.xlsx"
-  # location= "Greater Melbourne" # (other options)
+   # population_data="Data/original/abs/population_census.xlsx"
+   # location="Greater Melbourne" # (other options)
   
   population <- readxl::read_xlsx(population_data, sheet = "Data Sheet 0", range = "B9:K49") %>%
     dplyr::select(age, sex, location) %>%
   rowwise() %>%
-  rename(population = location) %>%
+  dplyr::rename(population = location) %>%
   mutate(from_age = as.numeric(str_split(age,'-')[[1]][1])) %>%
   mutate(to_age = as.numeric(str_split(age,'-')[[1]][2])) %>%
   # using rowwise() turns the dataframe into a tibble

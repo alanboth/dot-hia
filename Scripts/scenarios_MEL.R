@@ -38,8 +38,8 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
     
     
     #### create column in trips_melbourne with speed data for age and sex (use median)
-    walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
-    cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
+    walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% dplyr::rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
+    cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% dplyr::rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
     
     trips_melbourne <- trips_melbourne %>% inner_join(walk_speed, by=c("age_group", "sex"))
     
