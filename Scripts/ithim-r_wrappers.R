@@ -465,10 +465,10 @@ GetStDevRR <- function(RR, LB, UB){
   # RR=2.82
   # LB=2.35
   # UB=3.38
-  SE=exp(((UB-LB)/3.92))
-  # stDevRR=exp(sqrt(exp((2*log(RR) + 2*((UB-LB)/3.92)*(log(RR))^2)) - exp((2*log(RR) + ((UB-LB)/3.92)*(log(RR))^2))))
+  # SE=(log(UB)-log(LB))/3.92
+  SE=(log(UB)-log(LB))/3.92
   return(SE) ### Belen to check calculation 
-}                   
+}                
 
 GetParamters <- function(NSAMPLES = 1,
                          matched_population=matched_population, # from running step two Melbourne Model
@@ -545,7 +545,7 @@ GetParamters <- function(NSAMPLES = 1,
       } else {
         # Use mean and sd values in log form
         parameters[[name]] <-
-          rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+          rnorm(exp(NSAMPLES, log(val[1]), val[2]))
       }
     }
     ### RR DIABATES
@@ -598,7 +598,10 @@ CalculationModel <- function(seed=1,
     matched_population = persons_matched,
     MMET_CYCLING = c(4.63, 1.2), 
     MMET_WALKING = c(2.53, 1.1),
-    PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
+    PA_DOSE_RESPONSE_QUANTILE = T)
+  
+  ### BZ: saved to try to debug the issue with uncertainty
+  # save(parameters, file="parameters.RData")### True to run uncertainty  (creates quantiles files for RR physical activity)
   
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
