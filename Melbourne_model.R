@@ -190,6 +190,7 @@ output_df<-lapply(output_df_files,read.csv,header=T) %>%
   mutate(run=as.integer(run))
 saveRDS(output_df, file = "scenarios/scenario_1/output_df.rds")
 
+output_df <- readRDS("scenarios/scenario_1/output_df.rds")
 summariseOutputs(scenario_location="scenarios/scenario_1",
                  output_df)
 
@@ -205,7 +206,7 @@ tmpPlot <- output_df_agg_sex %>%
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
   geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
-  geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
   scale_y_continuous(
@@ -224,6 +225,7 @@ tmpPlot <- output_df_agg_sex %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
+  # geom_ribbon(aes(ymin=mean-2*sd,ymax=mean+2*sd),fill="grey75") +
   geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
   # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
@@ -247,12 +249,12 @@ ggplot(tmpPlot, aes(x=year,y=mean)) +
   geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
   # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
-  facet_grid(disease~Gender,scales="free") +
+  facet_grid(cols=vars(Gender),scales="free") +
   scale_y_continuous(
     name = waiver(),
     breaks = waiver(),
     minor_breaks = NULL,
-    n.breaks = 3,
+    # n.breaks = 3,
     labels = waiver()) +
   labs(x="Simulation year", y="Health-adjusted life years") +
   theme_bw()
