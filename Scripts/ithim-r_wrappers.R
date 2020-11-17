@@ -1113,7 +1113,7 @@ summariseOutputs <- function(scenario_location,output_df){
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile05=quantile(value,probs=0.05, na.rm=T),
               percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
-    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    mutate(error=sd/sqrt(1000)) %>%
     filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
   write.csv(output_df_agg_sex, paste0(scenario_location,"/output_df_agg_sex.csv"),
             row.names=F, quote=T)
@@ -1136,7 +1136,7 @@ summariseOutputs <- function(scenario_location,output_df){
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile05=quantile(value,probs=0.05, na.rm=T),
               percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
-    mutate(error=qnorm(0.975)*sd/sqrt(1000))
+    mutate(error=sd/sqrt(1000))
   write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
             row.names=F, quote=T)
   
@@ -1165,7 +1165,7 @@ summariseOutputs <- function(scenario_location,output_df){
               percentile05=quantile(value,probs=0.05, na.rm=T),
               percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
     ungroup() %>%
-    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    mutate(error=sd/sqrt(1000)) %>%
     left_join(population, by="cohort") %>%
     relocate(population, .after = Gender) %>%
     mutate(description=case_when(
@@ -1224,7 +1224,7 @@ summariseOutputs <- function(scenario_location,output_df){
               percentile05=quantile(value,probs=0.05, na.rm=T),
               percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
     ungroup() %>%
-    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
+    mutate(error=sd/sqrt(1000)) %>%
     filter(!is.nan(mean)) %>% # ignore sex-exclusive diseases (e.g., brsc)
     mutate(measure=case_when(
       measure=="inc.num" ~ "inc_num",

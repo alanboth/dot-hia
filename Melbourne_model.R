@@ -204,8 +204,8 @@ tmpPlot <- output_df_agg_sex %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
-  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
-  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
+  geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
   scale_y_continuous(
@@ -216,7 +216,7 @@ ggplot(tmpPlot, aes(x=year,y=mean)) +
     labels = waiver()) +
   labs(x="Simulation year", y="Mortality") +
 theme_bw()
-ggsave("scenarios/scenario_1/mortalityError.pdf",width=6,height=4)
+ggsave("scenarios/scenario_1/mortalityError.png",width=6,height=4)
 
 ### Incidence diseases
 tmpPlot <- output_df_agg_sex %>%
@@ -224,7 +224,7 @@ tmpPlot <- output_df_agg_sex %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
-  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
+  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
   # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
@@ -244,7 +244,7 @@ tmpPlot <- output_df_agg_sex %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
-  geom_ribbon(aes(ymin=mean-error,ymax=mean+error),fill="grey75") +
+  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
   # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
