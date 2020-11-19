@@ -1,6 +1,6 @@
 
                             
-                            
+library(dplyr)                            
 age=c("18 to 40", "41 to 65", "66 plus", "all")
 sex=c('male', 'female', 'all')
 walking=c("0km",">1km", "1-2km", "3-5km", "6-10km", ">10km")
