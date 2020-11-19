@@ -204,9 +204,8 @@ tmpPlot <- output_df_agg_sex %>%
   filter(measure=="mx.num"  & scenario=="diff") %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
-ggplot(tmpPlot, aes(x=year,y=mean)) +
-  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
-  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+ggplot(tmpPlot, aes(x=year,y=median)) +
+  geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
   scale_y_continuous(
@@ -224,10 +223,8 @@ tmpPlot <- output_df_agg_sex %>%
   filter(measure=="inc.num"  & scenario=="diff") %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
-ggplot(tmpPlot, aes(x=year,y=mean)) +
-  # geom_ribbon(aes(ymin=mean-2*sd,ymax=mean+2*sd),fill="grey75") +
-  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
-  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+ggplot(tmpPlot, aes(x=year,y=median)) +
+  geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
   geom_line() +
   facet_grid(disease~Gender,scales="free") +
   scale_y_continuous(
@@ -246,8 +243,7 @@ tmpPlot <- output_df_agg_sex %>%
   arrange(Gender,measure,disease,year)
 #& Gender=="female"
 ggplot(tmpPlot, aes(x=year,y=mean)) +
-  geom_ribbon(aes(ymin=mean-1.96*error,ymax=mean+1.96*error),fill="grey75") +
-  # geom_ribbon(aes(ymin=percentile05,ymax=percentile95),fill="grey75") +
+  geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
   geom_line() +
   facet_grid(cols=vars(Gender),scales="free") +
   scale_y_continuous(

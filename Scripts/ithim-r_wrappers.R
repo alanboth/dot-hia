@@ -267,7 +267,7 @@ RunLifeTable <- function(in_idata, in_sex, in_mid_age, death_rates=NA) {
   # number of survivors year 1 simulation
   
   num_row <- nrow(lf_df)
-  lx <- rep(0,num_row)
+  lx <- rep(0,num_row)### BZ: growth rate here ??
   lx[1] <- as.numeric(in_idata$population[in_idata$age == in_mid_age & in_idata$sex == in_sex]) 
   
   # number died in year 1 simulation
@@ -1114,9 +1114,8 @@ summariseOutputs <- function(scenario_location,output_df){
                  names_sep="_") %>%
     group_by(year,Gender,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile05=quantile(value,probs=0.05, na.rm=T),
-              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
-    mutate(error=sd/sqrt(1000)) %>%
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
     filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
   write.csv(output_df_agg_sex, paste0(scenario_location,"/output_df_agg_sex.csv"),
             row.names=F, quote=T)
@@ -1137,9 +1136,8 @@ summariseOutputs <- function(scenario_location,output_df){
                  names_sep="_") %>%
     group_by(year,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile05=quantile(value,probs=0.05, na.rm=T),
-              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
-    mutate(error=sd/sqrt(1000))
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
   write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
             row.names=F, quote=T)
   
@@ -1165,10 +1163,9 @@ summariseOutputs <- function(scenario_location,output_df){
     mutate(value=ifelse(scenario=="diff",value*365,value)) %>%
     group_by(Age.group, cohort, Gender, measure, scenario) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile05=quantile(value,probs=0.05, na.rm=T),
-              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
     ungroup() %>%
-    mutate(error=sd/sqrt(1000)) %>%
     left_join(population, by="cohort") %>%
     relocate(population, .after = Gender) %>%
     mutate(description=case_when(
@@ -1195,10 +1192,9 @@ summariseOutputs <- function(scenario_location,output_df){
                  names_to = "measure") %>%
     group_by(Age.group, cohort, Gender, measure) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile05=quantile(value,probs=0.05, na.rm=T),
-              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
     ungroup() %>%
-    mutate(error=qnorm(0.975)*sd/sqrt(1000)) %>%
     mutate(measure=case_when(
       measure=="Lx_diff" ~ "Life years",
       measure=="Lwx_diff" ~ "Health adjusted life years"
@@ -1224,10 +1220,9 @@ summariseOutputs <- function(scenario_location,output_df){
                  names_sep="_") %>%
     group_by(Gender,Age.group,cohort,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile05=quantile(value,probs=0.05, na.rm=T),
-              percentile95=quantile(value,probs=0.95, na.rm=T)) %>%
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
     ungroup() %>%
-    mutate(error=sd/sqrt(1000)) %>%
     filter(!is.nan(mean)) %>% # ignore sex-exclusive diseases (e.g., brsc)
     mutate(measure=case_when(
       measure=="inc.num" ~ "inc_num",
