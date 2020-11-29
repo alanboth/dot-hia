@@ -82,3 +82,177 @@ calculateScenarioMel <- function(trips_melbourne = in_data,
 
 }
 
+
+
+calculateScenarioMel2 <- function(trips_melbourne = in_data, 
+                                  speed = in_speed,
+                                  original_mode = "car" , # Just car trips can be replaced
+                                  distance_replace_walk = 0,
+                                  distance_replace_cycle = 0,
+                                  purpose_input = "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home") { # Choose purpose groups, : one, a few or all
+  
+  # distance_replace_walk = 2
+  # distance_replace_cycle = 5
+  # purpose_input = "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home"
+  # in_data="Data/processed/trips_melbourne.csv"
+  # in_speed="Data/processed/speed_trips_melbourne.csv"
+  
+  # it's easier to pass in a single string and then split it here
+  purpose_input <- unlist(strsplit(purpose_input,","))
+  
+  
+  trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%
+    dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
+                                      trip_mode=="bus" ~ 'public.transport', 
+                                      trip_mode=="tram" ~ 'public.transport', 
+                                      trip_mode=="train" ~ 'public.transport',
+                                      trip_mode=="motorcycle" ~ 'other',
+                                      TRUE ~ tolower(trip_mode))) ## Add age groups to facilitate selection above and matching  
+  speed <- read.csv(in_speed,as.is=T,fileEncoding="UTF-8-BOM")
+  
+  
+  #### create column in trips_melbourne with speed data for age and sex (use median)
+  walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% dplyr::rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
+  cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% dplyr::rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
+  
+  trips_melbourne <- trips_melbourne %>% inner_join(walk_speed, by=c("age_group", "sex"))
+  
+  trips_melbourne <- trips_melbourne %>% inner_join(cycle_speed, by=c("age_group", "sex"))
+  
+  
+  trips_melbourne_scenarios <- trips_melbourne %>%
+    dplyr::rename(trip_mode_base = trip_mode,
+                  trip_duration_base = trip_duration,
+                  trip_distance_base = trip_distance) %>%
+    dplyr::mutate(trip_duration_base = trip_duration_base/60) %>% 
+    # replace with walking
+    dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base %in% original_mode 
+                                            & trip_purpose %in% purpose_input 
+                                            & trip_distance_base <= distance_replace_walk,
+                                          "walking",
+                                          trip_mode_base)) %>%
+    # replace with bicycle
+    dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base %in% original_mode 
+                                            & trip_purpose %in% purpose_input 
+                                            & trip_distance_base > distance_replace_walk 
+                                            & trip_distance_base <= distance_replace_cycle,
+                                          "bicycle",
+                                          trip_mode_scen)) %>%
+    # trip distance is the same, but time changes
+    dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
+    dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
+                                                & trip_mode_scen == "walking",
+                                              trip_distance_scen/walk_mean_speed,
+                                              trip_duration_base)) %>%
+    dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
+                                                & trip_mode_scen == "bicycle",
+                                              trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
+                                              trip_duration_scen)) %>%
+    # Alan I modified here after discussing with James.
+    dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>%
+    dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7) %>%
+    mutate_if(is.character,as.factor)
+  #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
+  #                                               TRUE ~ trip_mode_scen)))
+  return(trips_melbourne_scenarios)
+  
+}
+
+generateMatchedPopulationScenario <- function(output_location="./scenarios",
+                                              scenario_name="default",
+                                              in_data="Data/processed/trips_melbourne.csv",
+                                              in_speed="Data/processed/speed_trips_melbourne.csv",
+                                              max_walk,
+                                              max_cycle,
+                                              purpose) {
+  
+  # output_location="./scenarios"
+
+  # in case the directory hasn't been made yet
+  dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
+  
+  #### 1) Generate trip set with baseline and scenario trips ####
+  
+  ### The following code returns persons_mathced, which is an input of CalculateModel
+  ### Graph: depicts change in trips by mode.
+  
+  ### Calculate scenarios of replacing car trips by walking and/or cycling. 
+  ### Outputs: trip set with baseline and scenario trips and associated distance and time in hours per week.
+  ### Inputs: baseline trips melbourne and speed file by age and sex derived from VISTA 2017-18 TRIP file.
+  
+  scenario_trips <- calculateScenarioMel2(
+    trips_melbourne = in_data, 
+    speed = in_speed,
+    original_mode = "car", # c("car","public.transport") , # Just car trips can be replaced
+    distance_replace_walk = max_walk,
+    distance_replace_cycle = max_cycle,
+    purpose_input = "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home"
+  ) 
+  
+  
+  #### Graphs
+  #### Get weighted data
+  
+  scenario_trips_weighted <-  scenario_trips  %>%
+    srvyr::as_survey_design(weights = trips_wt)
+  
+  #### Table with baseline and scenario proportion by mode
+  scenario_trips_mode <- scenario_trips_weighted   %>% 
+    group_by(trip_mode_scen,.drop = FALSE) %>%
+    dplyr::summarize(prop= srvyr::survey_mean()) %>%
+    dplyr::rename(mode = trip_mode_scen) %>%
+    mutate(scen="scenario")
+  
+  baseline_trips_mode <- scenario_trips_weighted   %>% 
+    group_by(trip_mode_base,.drop = FALSE) %>%
+    dplyr::summarize(prop= srvyr::survey_mean()) %>%
+    dplyr::rename(mode = trip_mode_base) %>%
+    mutate(scen="base") 
+  
+  data_mode_combo <- bind_rows(scenario_trips_mode, baseline_trips_mode) %>% 
+    mutate(mode = fct_reorder(mode, desc(prop)))
+  
+  ### Get bar chart modes distribution
+  bar_chart_combo_sc <- data_mode_combo %>%
+    ggplot(aes(x = mode, y = prop)) +
+    geom_bar(
+      aes(color = scen, fill = scen),
+      stat = "identity" , position = "dodge"
+    ) + 
+    labs(title="Distribution trips baseline and scenario", x="", y="Proportion of all trips") +
+    theme_classic() +
+    geom_text(aes(label=paste0(round(prop*100,1),"%"), y=prop), size=6)  + 
+    theme(plot.title = element_text(hjust = 0.5, size = 20,face="bold"),
+          axis.text=element_text(size=16),
+          axis.title=element_text(size=16)) +
+    theme(legend.position = "right",
+          legend.title = element_blank(),
+          legend.text = element_text(colour = "black", size = 16),
+          legend.key = element_blank(),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +
+    scale_y_continuous(labels = percent)
+  
+  
+  bar_chart_combo_sc
+  ggsave(paste0(output_location,"/",scenario_name,"_proportion_modes_sc.png"))
+  
+  
+  #### 2) Generate person_matched ####
+  
+  ### Calculate time spents doing physical activity at baseline and scenario for individuals
+  ### Outputs: persons_matched with baseline and sceanrios time in hours spents walking and cycling for transport and moderate and vigorous PA.
+  ### Inputs: scenario_trips (above step), VISTA persons from VISTA 2017-18 PERSON file and moderate and vigorous excersice from NHS persons file 2017-18.
+
+  ### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
+  persons_travel <- calculatePersonsTravelScenario(
+    travel_data_location="Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+    scenario_location=scenario_trips ### BZ: Generated in step 1
+  )
+  
+  #### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
+  persons_matched <- calculatePersonsMatch(
+    pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+    persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
+  )
+  write.csv(persons_matched, paste0(output_location,"/",scenario_name,".csv"), row.names=F, quote=T)
+}
