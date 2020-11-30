@@ -545,7 +545,7 @@ GetParamters <- function(NSAMPLES = 1,
       } else {
         # Use mean and sd values in log form
         parameters[[name]] <-
-          rnorm(exp(NSAMPLES, log(val[1]), val[2]))
+          exp(rnorm(NSAMPLES, log(val[1]), val[2]))
       }
     }
     ### RR DIABATES
@@ -578,6 +578,8 @@ GetParamters <- function(NSAMPLES = 1,
 
 # ---- CalculateModel ----
 
+
+
 CalculationModel <- function(seed=1,
                              output_location="modelOutput",
                              persons_matched
@@ -596,7 +598,7 @@ CalculationModel <- function(seed=1,
   parameters <- GetParamters(
     NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
     matched_population = persons_matched,
-    MMET_CYCLING = c(4.63, 1.2), 
+    MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
     MMET_WALKING = c(2.53, 1.1),
     PA_DOSE_RESPONSE_QUANTILE = T)
   
