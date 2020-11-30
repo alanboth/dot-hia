@@ -24,134 +24,37 @@ rm (list = ls())
 ### Avoid scientific notation
 options(scipen=999)
 
-### Model order: 1) Run intervention; 2) Run paramters (inputs CalculateModel), 3) Run HIA, and 4) summarise outputs
+### Model order: 1) Get matched population for scenarios, 2) Run HIA, and 3) summarize outputs
 
-############################################## Run intervention Melbourne ###############################################################################
-### Steps: 1) Generate trip set with baseline and scenario trips, 2) Generate persons_matched 
+############################################## Get matched population for scenario #####################################################
 
+#### Scenarios are run once to generate the matched population for each sceanrio. The script to run the scenarios is (Melbourne_sceanarios)
+#### csv files contain the matched populations
 
-#### 1) Generate trip set with baseline and scenario trips ####
-
-### The following code returns persons_mathced, which is an input of CalculateModel
-### Graph: depicts change in trips by mode.
-
-### Calculate scenarios of replacing car trips by walking and/or cycling. 
-### Outputs: trip set with baseline and scenario trips and associated distance and time in hours per week.
-### Inputs: baseline trips melbourne and speed file by age and sex derived from VISTA 2017-18 TRIP file.
-
-source("Scripts/scenarios_MEL.R")
-in_data="Data/processed/trips_melbourne.csv"
-in_speed="Data/processed/speed_trips_melbourne.csv"
-scenario <- calculateScenarioMel(trips_melbourne = in_data, 
-                                       speed = in_speed,
-                                       age_input = c("15 to 19","20 to 39", "40 to 64", "65 plus"), # Choose age groups
-                                       sex_input = c("male", "female"), # "female"), #Choose sex group
-                                       original_mode = "car" , # Just car trips can be replaced
-                                       # replace_mode_walk = T,
-                                       # replace_mode_cycle = T,
-                                       distance_replace_walk = c("<1km", "1-2km"), #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km") #Choose one category only
-                                       distance_replace_cycle = "3-5km", #("0 km, >1km, 1-2km, 3-5km, 6-10km, >10km"), #Choose one category only
-                                       purpose_input = c("Leisure", "Shopping", "Work", "Other", "Education")) #, "Shopping", "Work", "Other", "Education")) # Choose purpose groups 
-  
-scenario_trips <- scenario[["trips"]] 
-scenario_trips <-  scenario_trips %>% mutate_if(sapply(scenario_trips, is.character), as.factor) ## all character to factors for group by analysis
-# write.csv(scenario_trips, "Data/processed/trips_melbourne_scenarios.csv")
-
-#### Graphs
-#### Get weighted data
-
-scenario_trips_weighted <-  scenario_trips  %>%
-  srvyr::as_survey_design(weights = trips_wt)
-
-#### Table with baseline and scenario proportion by mode
-scenario_trips_mode <- scenario_trips_weighted   %>% 
-  group_by(trip_mode_scen,.drop = FALSE) %>%
-  dplyr::summarize(prop= srvyr::survey_mean()) %>%
-  dplyr::rename(mode = trip_mode_scen) %>%
-  mutate(scen="scenario")
-
-baseline_trips_mode <- scenario_trips_weighted   %>% 
-  group_by(trip_mode_base,.drop = FALSE) %>%
-  dplyr::summarize(prop= srvyr::survey_mean()) %>%
-  dplyr::rename(mode = trip_mode_base) %>%
-  mutate(scen="base") 
-
-data_mode_combo <- bind_rows(scenario_trips_mode, baseline_trips_mode) %>% 
-  mutate(mode = fct_reorder(mode, desc(prop)))
-
-### Get bar chart modes distribution
-bar_chart_combo_sc <- data_mode_combo %>%
-  ggplot(aes(x = mode, y = prop)) +
-  geom_bar(
-    aes(color = scen, fill = scen),
-    stat = "identity" , position = "dodge"
-  ) + 
-  labs(title="Distribution trips baseline and scenario", x="", y="Proportion of all trips") +
-  theme_classic() +
-  geom_text(aes(label=paste0(round(prop*100,1),"%"), y=prop), size=6)  + 
-  theme(plot.title = element_text(hjust = 0.5, size = 20,face="bold"),
-        axis.text=element_text(size=16),
-        axis.title=element_text(size=16)) +
-  theme(legend.position = "right",
-        legend.title = element_blank(),
-        legend.text = element_text(colour = "black", size = 16),
-        legend.key = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +
-  scale_y_continuous(labels = percent)
-
-
-bar_chart_combo_sc
-ggsave("output/proportion_modes_sc.png")
-
-
-#### 2) Generate person_matched ####
-
-### Calculate time spents doing physical activity at baseline and scenario for individuals
-### Outputs: persons_matched with baseline and sceanrios time in hours spents walking and cycling for transport and moderate and vigorous PA.
-### Inputs: scenario_trips (above step), VISTA persons from VISTA 2017-18 PERSON file and moderate and vigorous excersice from NHS persons file 2017-18.
-source("Scripts/data_prep/synthetic_pop.R")
-
-### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
-persons_travel <- calculatePersonsTravelScenario(
-  travel_data_location="Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-  scenario_location=scenario_trips#"Data/processed/trips_melbourne_scenarios.csv" ### BZ: Generated in step 1
-)
-# write.csv(persons_travel, "Data/processed/persons_travel.csv", row.names=F, quote=T)
-
-
-#### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
-persons_matched <- calculatePersonsMatch(
-  pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-  persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
-)
-write.csv(persons_matched, "scenarios/scenario_1/matched_pop_1.csv", row.names=F, quote=T)
-persons_matched <- read.csv("scenarios/scenario_1/matched_pop_1.csv", as.is=T, fileEncoding="UTF-8-BOM")
-
-############################################## Run intervention Melbourne ###############################################################################
-############################################## Run HIA ###############################################################################
-
-### 1) Get HIA parameters
-source("Scripts/ithim-r_wrappers.R")
+# ############################################## Run HIA ###############################################################################
 # 
-# ### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
-# parameters <- GetParamters(
-#   NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
-#   matched_population = persons_matched,
-#   MMET_CYCLING = c(4.63, 1.2), 
-#   MMET_WALKING = c(2.53, 1.1),
-#   PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
-
-
-
-### 2) Run model
-
-### Get functions
-persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
+# ### 1) Get HIA parameters
+# source("Scripts/ithim-r_wrappers.R")
+# # 
+# # ### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
+# # parameters <- GetParamters(
+# #   NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+# #   matched_population = persons_matched,
+# #   MMET_CYCLING = c(4.63, 1.2), 
+# #   MMET_WALKING = c(2.53, 1.1),
+# #   PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
+# 
+# 
+# 
+# ### 2) Run model
+# 
+# ### Get functions
+persons_matched <- read.csv("scenarios/recreational_2_15.csv", as.is=T, fileEncoding="UTF-8-BOM")
 source("Scripts/data_prep/mmet_pp.R")
 source("Scripts/ithim-r_wrappers.R")
 source("Scripts/data_prep/population_prep.R")
 
-### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
+# ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
 
 
 
@@ -159,7 +62,7 @@ number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-101:1000
+seeds<-101:102
 registerDoParallel(cl)
 start_time = Sys.time()
 # persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
@@ -175,7 +78,7 @@ results <- foreach(seed_current=seeds,
                              "RunDisease","RunLifeTable")
 ) %dopar%
   CalculationModel(seed=seed_current,
-                   output_location="/modelOutput",
+                   output_location="modelOutput",
                    persons_matched)
 end_time = Sys.time()
 end_time - start_time
