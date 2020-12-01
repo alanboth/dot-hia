@@ -26,30 +26,18 @@ options(scipen=999)
 
 ### Model order: 1) Get matched population for scenarios, 2) Run HIA, and 3) summarize outputs
 
-############################################## Get matched population for scenario #####################################################
 
-#### Scenarios are run once to generate the matched population for each sceanrio. The script to run the scenarios is (Melbourne_sceanarios)
-#### csv files contain the matched populations
+######################################## 1) Matched population ###########################################################################
 
-# ############################################## Run HIA ###############################################################################
-# 
-# ### 1) Get HIA parameters
-# source("Scripts/ithim-r_wrappers.R")
-# # 
-# # ### To get distributions uncertain inputs change NSAMPLES and PA_DOSE_RESPONSE_QUANTILE
-# # parameters <- GetParamters(
-# #   NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
-# #   matched_population = persons_matched,
-# #   MMET_CYCLING = c(4.63, 1.2), 
-# #   MMET_WALKING = c(2.53, 1.1),
-# #   PA_DOSE_RESPONSE_QUANTILE = T) ### True to run uncertainty  (creates quantiles files for RR physical activity)
-# 
-# 
-# 
-# ### 2) Run model
-# 
-# ### Get functions
+
+
 persons_matched <- read.csv("scenarios/recreational_2_15.csv", as.is=T, fileEncoding="UTF-8-BOM")
+
+
+
+######################################## 2) Run HIA  ###########################################################################
+
+
 source("Scripts/data_prep/mmet_pp.R")
 source("Scripts/ithim-r_wrappers.R")
 source("Scripts/data_prep/population_prep.R")
@@ -63,7 +51,7 @@ number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-101:102
+seeds<-101:110
 registerDoParallel(cl)
 start_time = Sys.time()
 # persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
@@ -93,6 +81,10 @@ output_df<-lapply(output_df_files,read.csv,header=T) %>%
   bind_rows(.id="run") %>%
   mutate(run=as.integer(run))
 saveRDS(output_df, file = "scenarios/scenario_1/output_df.rds")
+
+
+
+######################################## 3) Summarise outputs  ###########################################################################
 
 output_df <- readRDS("scenarios/scenario_1/output_df.rds")
 summariseOutputs(scenario_location="scenarios/scenario_1",
