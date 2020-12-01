@@ -11,6 +11,9 @@ suppressPackageStartupMessages(library(ggeasy))
 suppressPackageStartupMessages(library(ggridges))
 suppressPackageStartupMessages(library(stringr))
 
+
+
+
 maxDistanceWalk <- c(0,1,2)
 maxDistanceCycle <- c(2,5,10,15)
 # recreational, essential, all trips

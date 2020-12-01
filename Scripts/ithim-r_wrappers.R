@@ -994,82 +994,7 @@ CalculationModel <- function(seed=1,
       age_group == 97 ~ "95 plus")) %>%
     mutate(cohort=paste(sex, age_group, sep = "_")) %>%
     rename(`Age group` = age_group_2, Gender = sex)
-  
-  # # 7) Summary data frame by age and sex and total 
-  # 
-  # ######## Dataframe with all outputs aggregated by year of simulation by sex
-  # output_df_agg_sex  <- output_df   %>% ### Create a simulation year columns
-  #   group_by(age_group, sex, .add=TRUE) %>%
-  #   dplyr::mutate(year = 1:dplyr::n()) %>%
-  #   dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-  #   ungroup() %>%
-  #   group_by(year, sex, .add=TRUE) %>% 
-  #   summarise_if(is.numeric, funs(sum)) %>%
-  #   ungroup() 
-  # 
-  # ######## Dataframe with all outputs aggregated by year of simulation all
-  # output_df_agg_all  <- output_df   %>% ### Create a simulation year columns
-  #   group_by(age_group, sex, .add=TRUE) %>%
-  #   dplyr::mutate(year = 1:dplyr::n()) %>%
-  #   dplyr::select(sex, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-  #   ungroup() %>%
-  #   group_by(year, .add=TRUE) %>% 
-  #   summarise_if(is.numeric, funs(sum)) %>%
-  #   ungroup()
-  # 
-  # #### Add population numbers for presentation purposes
-  # population <- population %>% 
-  #   rename(cohort = sex_age_cat) %>%
-  #   dplyr::filter(cohort %in% unique(output_df$cohort))
-  # 
-  # 
-  # ##################### Below outcomes for presentation ####################################################
-  # 
-  # # Table: Life expectancy and health adjusted life expectancy 
-  # 
-  # output_life_expectancy_change <- output_df[!duplicated(output_df$cohort), c("Age group", "cohort", "Gender", "ex_bl", "ex_sc", "ewx_bl", "ewx_sc", 
-  #                                                                             "ex_diff", "ewx_diff")] %>%
-  #   dplyr::rename(`Life expectancy at baseline` = ex_bl, 
-  #                 `Life expectancy scenario` = ex_sc, 
-  #                 `Health adjusted life expectancy baseline` = ewx_bl, 
-  #                 `Health adjusted life expectancy scenario` = ewx_sc) %>%
-  #   dplyr::mutate(`Difference in life expectancy in days` = ex_diff * 365, 
-  #                 `Difference in health adjusted life expectancy in days` = ewx_diff* 365) %>% 
-  #   mutate_if(is.numeric, round, digits = 3) %>%
-  #   left_join(population)%>%
-  #   dplyr::select(-c(ex_diff, ewx_diff, cohort)) %>%
-  #   relocate(population, .after = Gender)%>%
-  #   rename('Population cohort'=population)
-  # 
-  # output_life_expectancy_change <- output_life_expectancy_change[order(output_life_expectancy_change$Gender),] 
-  # 
-  # # Table: Life years and health adjusted life years ----
-  # 
-  # output_life_years_change <- output_df %>% 
-  #   group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
-  #   summarise_if(is.numeric, funs(sum)) %>%
-  #   ungroup() %>%
-  #   dplyr::select(`Age group`,cohort, Gender,Lx_diff, Lwx_diff) %>%
-  #   dplyr::rename(`Life years` = Lx_diff, 
-  #                 `Health adjusted life years` = Lwx_diff)  %>% 
-  #   mutate_if(is.numeric, round) %>%
-  #   left_join(population) %>%
-  #   relocate(population, .after = Gender)%>%
-  #   rename('Population cohort'=population) %>%
-  #   dplyr::select(-cohort)
-  # 
-  # # Table: Diseases deaths, incidence and ylds ----
-  # 
-  # output_diseases_change <- output_df %>% 
-  #   group_by(Gender, `Age group`, cohort, .add=TRUE) %>%
-  #   summarise_if(is.numeric, funs(sum)) %>% 
-  #   mutate_if(is.numeric, round) %>%
-  #   left_join(population) %>%
-  #   relocate(population, .after = Gender)%>%
-  #   rename('Population cohort'=population) %>%
-  #   dplyr::select(-cohort) %>%
-  #   dplyr::select(`Age group`, Gender, matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri"))
-  # 
+
   
   outputDir <- paste0(output_location,"/output_df/") 
   mmetsDir <- paste0(output_location,"/mmets/") 
@@ -1140,8 +1065,8 @@ summariseOutputs <- function(scenario_location,output_df){
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
-  write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
-            row.names=F, quote=T)
+    write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
+              row.names=F, quote=T)
   
   #### Add population numbers for presentation purposes
   population <- GetPopulation(

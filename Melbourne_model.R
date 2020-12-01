@@ -90,6 +90,11 @@ output_df <- readRDS("scenarios/scenario_1/output_df.rds")
 summariseOutputs(scenario_location="scenarios/scenario_1",
                  output_df)
 
+
+
+
+#### FOR AUO
+
 # Belen, just run this to load the summarised outputs
 importSummarisedOutputs(scenario_location="scenarios/scenario_1")
 
