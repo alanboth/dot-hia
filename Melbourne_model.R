@@ -76,7 +76,7 @@ stopCluster(cl)
 
 cat(paste0("Combining plans into single file:\n"))
 
-output_df_files<-list.files('/modelOutput/output_df',pattern="*.csv",full.names=T)
+output_df_files<-list.files('./modelOutput/output_df',pattern="*.csv",full.names=T)
 output_df<-lapply(output_df_files,read.csv,header=T) %>%
   bind_rows(.id="run") %>%
   mutate(run=as.integer(run))

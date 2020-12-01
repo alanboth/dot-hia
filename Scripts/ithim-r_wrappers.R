@@ -1064,7 +1064,7 @@ summariseOutputs <- function(scenario_location,output_df){
     group_by(year,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
-              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
+              percentile975=quantile(value,probs=0.975, na.rm=T)) 
     write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
               row.names=F, quote=T)
   
