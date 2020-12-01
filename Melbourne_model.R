@@ -31,7 +31,7 @@ options(scipen=999)
 
 
 
-persons_matched <- read.csv("scenarios/recreational_2_15.csv", as.is=T, fileEncoding="UTF-8-BOM")
+persons_matched <- read.csv("scenarios/all_2_10.csv", as.is=T, fileEncoding="UTF-8-BOM")
 
 
 
@@ -41,7 +41,7 @@ persons_matched <- read.csv("scenarios/recreational_2_15.csv", as.is=T, fileEnco
 source("Scripts/data_prep/mmet_pp.R")
 source("Scripts/ithim-r_wrappers.R")
 source("Scripts/data_prep/population_prep.R")
-# setwd("C:/Users/rstudio/OneDrive - RMIT University/HIA-DoT/dot-hia")
+
 
 # ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
 
@@ -51,7 +51,7 @@ number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-101:110
+seeds<-1:3
 registerDoParallel(cl)
 start_time = Sys.time()
 # persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")

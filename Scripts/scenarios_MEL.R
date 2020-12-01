@@ -178,7 +178,8 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
   ### Calculate scenarios of replacing car trips by walking and/or cycling. 
   ### Outputs: trip set with baseline and scenario trips and associated distance and time in hours per week.
   ### Inputs: baseline trips melbourne and speed file by age and sex derived from VISTA 2017-18 TRIP file.
-  
+  # max_walk=2
+  # max_cycle=0
   scenario_trips <- calculateScenarioMel2(
     trips_melbourne = in_data, 
     speed = in_speed,
