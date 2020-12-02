@@ -161,7 +161,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
 }
 
 
-generateMatchedPopulationScenario <- function(output_location="./scenarios",
+generateMatchedPopulationScenario <- function(output_location=paste0("./scenarios/", scenario_name, "/"),
                                               scenario_name="default",
                                               in_data="Data/processed/trips_melbourne.csv",
                                               in_speed="Data/processed/speed_trips_melbourne.csv",
@@ -243,7 +243,10 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
   
   
   bar_chart_combo_sc
-  ggsave(paste0(output_location,"/",scenario_name,"_proportion_modes_sc.png"))
+
+
+  
+  ggsave(paste0(output_location, "/", scenario_name,"_proportion_modes_sc.png"))
   
   
   #### 2) Generate person_matched ####
@@ -263,5 +266,6 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
     pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
     persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
   )
+
   write.csv(persons_matched, paste0(output_location,"/",scenario_name,".csv"), row.names=F, quote=T)
 }
