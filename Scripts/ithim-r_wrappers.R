@@ -585,6 +585,20 @@ CalculationModel <- function(seed=1,
                              persons_matched
                              ){
   
+  
+  # # if persons_matched is a file location, read the csv. If not, then
+  # # use it as a dataframe.
+  # persons_matched_df <- NULL
+  # if(is.character(persons_matched)) {
+  #   persons_matched_df <- read.csv(persons_matched,as.is=T, fileEncoding="UTF-8-BOM")
+  # }
+  # if(!is.character(persons_matched)) {
+  #   persons_matched_df <- persons_matched
+  # }
+  # persons_matched <- persons_matched_df
+  # cat(paste0("loaded persons_matched, with ", nrow(persons_matched)," rows\n"))
+  
+  
   ### Model parameters
   #### i_age_cohort and i_age are linked to ouputs of calculateScenarioMel
   i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
@@ -604,7 +618,7 @@ CalculationModel <- function(seed=1,
   
   ### BZ: saved to try to debug the issue with uncertainty
   # save(parameters, file="parameters.RData")### True to run uncertainty  (creates quantiles files for RR physical activity)
-  
+  cat('test\n')
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
 
@@ -998,8 +1012,8 @@ CalculationModel <- function(seed=1,
   
   outputDir <- paste0(output_location,"/output_df/") 
   mmetsDir <- paste0(output_location,"/mmets/") 
-  # dir.create(outputDir, recursive=TRUE, showWarnings=FALSE)
-  # dir.create(mmetsDir, recursive=TRUE, showWarnings=FALSE)
+  dir.create(outputDir, recursive=TRUE, showWarnings=FALSE)
+  dir.create(mmetsDir, recursive=TRUE, showWarnings=FALSE)
   write.csv(output_df, file=paste0(outputDir,seed,".csv"), row.names=FALSE)
   write.csv(mmets_pp, file=paste0(mmetsDir,seed,".csv"), row.names=FALSE)
   

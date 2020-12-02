@@ -31,7 +31,7 @@ options(scipen=999)
 
 
 
-persons_matched <- read.csv("scenarios/all_2_10.csv", as.is=T, fileEncoding="UTF-8-BOM")
+# persons_matched <- read.csv("scenarios/all_2_10.csv", as.is=T, fileEncoding="UTF-8-BOM")
 
 
 
@@ -45,50 +45,105 @@ source("Scripts/data_prep/population_prep.R")
 
 # ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
 
+scenarioLocation <- "./scenarios"
+outputLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-raw"
+combinedLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
+summarisedLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
+finalLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs"
+
+scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
+  mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
+  mutate(output_location=paste0(outputLocation,"/",scenario))
+  
 
 
-number_cores <- max(1,floor(as.integer(detectCores())*0.8))
-cl <- makeCluster(number_cores)
-cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-1:2000
-registerDoParallel(cl)
-start_time = Sys.time()
-# persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
-# source("Scripts/ithim-r_wrappers.R")
-results <- foreach::foreach(seed_current=seeds,
-                   # output_location_current="modelOutput",
-                   # persons_matched_current=persons_matched,
-                   .combine=rbind,
-                   .verbose=F,
-                   .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
-                   .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr_wrapper",
-                             "GetParamters","GetPopulation","GetStDevRR","health_burden_2",
-                             "RunDisease","RunLifeTable")
-) %dopar%
-  CalculationModel(seed=seed_current,
-                   output_location="modelOutput",
-                   persons_matched)
-end_time = Sys.time()
-end_time - start_time
-stopCluster(cl)
+# iterate through each entry in scenarios_Melb, running the HAI model
+print(paste0("iterating through ",nrow(scenarios_Melb)," scenarios at ",Sys.time()))
+for (i in 1:nrow(scenarios_Melb)){
 
-
-cat(paste0("Combining plans into single file:\n"))
-
-output_df_files<-list.files('./modelOutput/output_df',pattern="*.csv",full.names=T)
-output_df<-lapply(output_df_files,read.csv,header=T) %>%
-  bind_rows(.id="run") %>%
-  mutate(run=as.integer(run))
-saveRDS(output_df, file = "scenarios/scenario_1/output_df.rds")
+  number_cores <- max(1,floor(as.integer(detectCores())*0.8))
+  cl <- makeCluster(number_cores)
+  cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
+  persons_matched=read.csv(scenarios_Melb[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
+  seeds<-1:20
+  registerDoParallel(cl)
+  start_time = Sys.time()
+  results <- foreach::foreach(seed_current=seeds,
+                              .combine=rbind,
+                              .verbose=F,
+                              .packages=c("dplyr","tidyr","stringr","readr","readxl","data.table","srvyr"),
+                              .export=c("calculateMMETSperPerson","CalculationModel","gen_pa_rr_wrapper",
+                                        "GetParamters","GetPopulation","GetStDevRR","health_burden_2",
+                                        "RunDisease","RunLifeTable")
+  ) %dopar%
+    CalculationModel(seed=seed_current,
+                     output_location=scenarios_Melb[i,]$output_location,
+                     persons_matched)
+  end_time = Sys.time()
+  end_time - start_time
+  stopCluster(cl)
+  cat(paste0("\n scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
 
 
+# in case the directory hasn't been made yet
+dir.create(combinedLocation, recursive=TRUE, showWarnings=FALSE)
+
+print(paste0("combining ",nrow(scenarios_Melb)," scenario outputs into single file at ",Sys.time()))
+for (i in 1:nrow(scenarios_Melb)){
+  output_df_files<-list.files(paste0(scenarios_Melb[i,]$output_location,'/output_df'),
+                              pattern="*.csv",full.names=T)
+  output_df<-lapply(output_df_files,read.csv,header=T) %>%
+    bind_rows(.id="run") %>%
+    mutate(run=as.integer(run))
+  
+  saveRDS(output_df, file=paste0(combinedLocation,"/",scenarios_Melb[i,]$scenario,".rds"))
+  cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+  
+}
 
 ######################################## 3) Summarise outputs  ###########################################################################
 
-output_df <- readRDS("scenarios/scenario_1/output_df.rds")
-summariseOutputs(scenario_location="scenarios/scenario_1",
-                 output_df)
+print(paste0("summarising ",nrow(scenarios_Melb)," scenario outputs at ",Sys.time()))
+for (i in 1:nrow(scenarios_Melb)){
+  output_df <- readRDS(paste0(combinedLocation,"/",scenarios_Melb[i,]$scenario,".rds"))
+  summariseOutputs(scenario_location=
+                     paste0(summarisedLocation,"/",scenarios_Melb[i,]$scenario),
+                   output_df)
+  cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
+
+
+# combine scenarios into single files
+
+combineScenarios <- function(summarisedLocation,name) {
+  scenario_names<-data.frame(scenario=list.files(summarisedLocation)) %>%
+    mutate(id=row_number())
+  file_locations<-list.files(summarisedLocation,
+                             pattern=name,
+                             full.names=T,recursive=T)
+  output_df<-lapply(file_locations,read.csv,header=T) %>%
+    bind_rows(.id="id") %>%
+    mutate(id=as.integer(id))
+  output_df<-inner_join(scenario_names,output_df,by='id')%>%
+    dplyr::select(-id)
+  return(output_df)
+}
+
+output_df_agg_all <- combineScenarios(summarisedLocation,name="output_df_agg_all.csv")
+output_df_agg_sex <- combineScenarios(summarisedLocation,name="output_df_agg_sex.csv")
+output_diseases_change <- combineScenarios(summarisedLocation,name="output_diseases_change.csv")
+output_life_expectancy_change <- combineScenarios(summarisedLocation,name="output_life_expectancy_change.csv")
+output_life_years_change <- combineScenarios(summarisedLocation,name="output_life_years_change.csv")
+
+# in case the directory hasn't been made yet
+dir.create(finalLocation, recursive=TRUE, showWarnings=FALSE)
+write.csv(output_df_agg_all,paste0(finalLocation,"/output_df_agg_all.csv"), row.names=F, quote=T)
+write.csv(output_df_agg_sex,paste0(finalLocation,"/output_df_agg_sex.csv"), row.names=F, quote=T)
+write.csv(output_diseases_change,paste0(finalLocation,"/output_diseases_change.csv"), row.names=F, quote=T)
+write.csv(output_life_expectancy_change,paste0(finalLocation,"/output_life_expectancy_change.csv"), row.names=F, quote=T)
+write.csv(output_life_years_change,paste0(finalLocation,"/output_life_years_change.csv"), row.names=F, quote=T)
 
 
 #################################### 4) AUO output sample ###################################################################################
