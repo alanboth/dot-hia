@@ -89,12 +89,12 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,
                                   purpose_input = "Leisure,Shopping,Work,Education,Other") {
-  # distance_replace_walk = 2
-  # distance_replace_cycle = 5
-  # purpose_input = "Leisure,Shopping,Work,Education,Other"
+  # distance_replace_walk = 0
+  # distance_replace_cycle = 10
+  # purpose_input = "Work,Education"
   # in_data="Data/processed/trips_melbourne.csv"
   # in_speed="Data/processed/speed_trips_melbourne.csv"
-  
+
   # it's easier to pass in a single string and then split it here
   purpose_input <- unlist(strsplit(purpose_input,","))
   
@@ -125,7 +125,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
     dplyr::mutate(trip_duration_base = trip_duration_base/60) %>% 
     # replace with walking
     dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base %in% original_mode 
-                                          & trip_purpose %in% purpose_input 
+                                          & trip_purpose %in% purpose_input
                                           & trip_distance_base !=0
                                           & trip_distance_base <= distance_replace_walk
                                           &  distance_replace_walk !=0,
@@ -133,7 +133,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                           trip_mode_base)) %>%
     # replace with bicycle
     dplyr::mutate(trip_mode_scen = ifelse(trip_mode_base %in% original_mode 
-                                          & trip_purpose %in% purpose_input 
+                                          & trip_purpose %in% purpose_input
                                           & trip_distance_base !=0
                                           & trip_distance_base > distance_replace_walk 
                                           & trip_distance_base <= distance_replace_cycle
@@ -159,6 +159,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
   return(trips_melbourne_scenarios)
   
 }
+
 
 generateMatchedPopulationScenario <- function(output_location="./scenarios",
                                               scenario_name="default",
@@ -189,7 +190,7 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
     original_mode = "car", # c("car","public.transport") , # Just car trips can be replaced
     distance_replace_walk = max_walk,
     distance_replace_cycle = max_cycle,
-    purpose_input = "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home"
+    purpose_input = "Leisure,Shopping,Work,Education,Other"
   ) 
   
   

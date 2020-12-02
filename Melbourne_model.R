@@ -93,6 +93,7 @@ summariseOutputs(scenario_location="scenarios/scenario_1",
 
 #################################### 4) AUO output sample ###################################################################################
 ## Example for scenario: all trips under 2kms replaced walk and 10 replaced bike. 
+## Alan, as discussed, outputs for all scenrios per output type (e.g. )
 
 importSummarisedOutputs(scenario_location="scenarios/scenario_1")
 
