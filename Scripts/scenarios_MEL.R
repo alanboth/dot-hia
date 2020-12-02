@@ -170,13 +170,18 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
                                               purpose) {
   
   # output_location="./scenarios"
+  # scenario_name="default"
+  # in_data="Data/processed/trips_melbourne.csv"
+  # in_speed="Data/processed/speed_trips_melbourne.csv"
+  # max_walk=2
+  # max_cycle=10
   
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
   
   #### 1) Generate trip set with baseline and scenario trips ####
   
-  ### The following code returns persons_mathced, which is an input of CalculateModel
+  ### The following code returns persons_matched, which is an input of CalculateModel
   ### Graph: depicts change in trips by mode.
   
   ### Calculate scenarios of replacing car trips by walking and/or cycling. 
@@ -190,7 +195,7 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios",
     original_mode = "car", # c("car","public.transport") , # Just car trips can be replaced
     distance_replace_walk = max_walk,
     distance_replace_cycle = max_cycle,
-    purpose_input = "Leisure,Shopping,Work,Education,Other"
+    purpose_input = purpose
   ) 
   
   

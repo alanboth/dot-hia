@@ -18,15 +18,17 @@ maxDistanceWalk <- c(0,1,2)
 maxDistanceCycle <- c(2,5,10)
 # recreational, essential, all trips
 tripPurpose <- c("commuting", "all")
-"Leisure,Shopping,Work,Education,Other"
 # Belen, we need to work out what should go in each category here
-tripPurposeFull <- c("Work,Education",
-                     "Leisure,Shopping,Work,Education,Other")
+# tripPurposeFull <- c("Work,Education",
+#                      "Leisure,Shopping,Work,Education,Other")
+tripPurposeFull <- c("Work related,education",
+                     "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home")
 
 tripPurposeDF <- data.frame(purpose=tripPurpose,
-                            purpose_full=tripPurposeFull)
+                            purpose_full=tripPurposeFull,
+                            stringsAsFactors=FALSE)
 
-scenarioPurposes <- c("Leisure","Shopping","Work","Education","Other")
+# scenarioPurposes <- c("Leisure","Shopping","Work","Education","Other")
 
 
 scenarios_Melb <- crossing(data.frame(max_walk=maxDistanceWalk),
