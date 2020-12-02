@@ -19,10 +19,10 @@ maxDistanceCycle <- c(2,5,10)
 # recreational, essential, all trips
 tripPurpose <- c("commuting", "all")
 # Belen, we need to work out what should go in each category here
-# tripPurposeFull <- c("Work,Education",
-#                      "Leisure,Shopping,Work,Education,Other")
-tripPurposeFull <- c("Work related,education",
-                     "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home")
+tripPurposeFull <- c("Work,Education",
+                     "Leisure,Shopping,Work,Education,Other")
+# tripPurposeFull <- c("Work related,education",
+#                      "Leisure,Shopping,Work related,Pick-up or drop-off someone/something,personal business,Other,accompany someone,education,at or go home")
 
 tripPurposeDF <- data.frame(purpose=tripPurpose,
                             purpose_full=tripPurposeFull,
@@ -52,8 +52,8 @@ for (i in 1:nrow(scenarios_Melb)){
   generateMatchedPopulationScenario(
     output_location="./scenarios",
     scenario_name=scenarios_Melb[i,]$scenario,
-    in_data="Data/processed/trips_melbourne.csv",
-    in_speed="Data/processed/speed_trips_melbourne.csv",
+    in_data="./Data/processed/trips_melbourne.csv",
+    in_speed="./Data/processed/speed_trips_melbourne.csv",
     max_walk=scenarios_Melb[i,]$max_walk,
     max_cycle=scenarios_Melb[i,]$max_cycle,
     purpose=scenarios_Melb[i,]$purpose_full

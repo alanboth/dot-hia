@@ -26,14 +26,14 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 #   # in_speed="Data/processed/speed_trips_melbourne.csv"
 #   
 #   
-#   trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%
+#   trips_melbourne <- read.csv(trips_melbourne,as.is=T,fileEncoding="UTF-8-BOM") %>%
 #     dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
 #                                       trip_mode=="bus" ~ 'public.transport', 
 #                                       trip_mode=="tram" ~ 'public.transport', 
 #                                       trip_mode=="train" ~ 'public.transport',
 #                                       trip_mode=="motorcycle" ~ 'other',
 #                                       TRUE ~ tolower(trip_mode))) ## Add age groups to facilitate selection above and matching  
-#   speed <- read.csv(in_speed,as.is=T,fileEncoding="UTF-8-BOM")
+#   speed <- read.csv(speed,as.is=T,fileEncoding="UTF-8-BOM")
 #   
 #   
 #   #### create column in trips_melbourne with speed data for age and sex (use median)
@@ -89,24 +89,28 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,
                                   purpose_input = "Leisure,Shopping,Work,Education,Other") {
+
+  # in_data="Data/processed/trips_melbourne.csv"
+  # in_speed="Data/processed/speed_trips_melbourne.csv"
+  # trips_melbourne = in_data
+  # speed = in_speed
+  # original_mode = "car"
   # distance_replace_walk = 0
   # distance_replace_cycle = 10
   # purpose_input = "Work,Education"
-  # in_data="Data/processed/trips_melbourne.csv"
-  # in_speed="Data/processed/speed_trips_melbourne.csv"
 
   # it's easier to pass in a single string and then split it here
   purpose_input <- unlist(strsplit(purpose_input,","))
   
   
-  trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") %>%
+  trips_melbourne <- read.csv(trips_melbourne,as.is=T,fileEncoding="UTF-8-BOM") %>%
     dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
                                       trip_mode=="bus" ~ 'public.transport', 
                                       trip_mode=="tram" ~ 'public.transport', 
                                       trip_mode=="train" ~ 'public.transport',
                                       trip_mode=="motorcycle" ~ 'other',
                                       TRUE ~ tolower(trip_mode))) ## Add age groups to facilitate selection above and matching  
-  speed <- read.csv(in_speed,as.is=T,fileEncoding="UTF-8-BOM")
+  speed <- read.csv(speed,as.is=T,fileEncoding="UTF-8-BOM")
   
   
   #### create column in trips_melbourne with speed data for age and sex (use median)
@@ -163,18 +167,19 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
 
 generateMatchedPopulationScenario <- function(output_location=paste0("./scenarios/", scenario_name, "/"),
                                               scenario_name="default",
-                                              in_data="Data/processed/trips_melbourne.csv",
-                                              in_speed="Data/processed/speed_trips_melbourne.csv",
+                                              in_data="./Data/processed/trips_melbourne.csv",
+                                              in_speed="./Data/processed/speed_trips_melbourne.csv",
                                               max_walk,
                                               max_cycle,
                                               purpose) {
   
   # output_location="./scenarios"
-  # scenario_name="default"
-  # in_data="Data/processed/trips_melbourne.csv"
-  # in_speed="Data/processed/speed_trips_melbourne.csv"
+  # scenario_name="all_2_10"
+  # in_data="./Data/processed/trips_melbourne.csv"
+  # in_speed="./Data/processed/speed_trips_melbourne.csv"
   # max_walk=2
   # max_cycle=10
+  # purpose="Leisure,Shopping,Work,Education,Other"
   
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
@@ -196,7 +201,7 @@ generateMatchedPopulationScenario <- function(output_location=paste0("./scenario
     distance_replace_walk = max_walk,
     distance_replace_cycle = max_cycle,
     purpose_input = purpose
-  ) 
+  )
   
   
   #### Graphs
