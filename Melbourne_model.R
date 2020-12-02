@@ -24,7 +24,7 @@ rm (list = ls())
 ### Avoid scientific notation
 options(scipen=999)
 
-### Model order: 1) Get matched population for scenarios, 2) Run HIA, and 3) summarize outputs
+### Model order: 1) Get matched population for scenarios, 2) Run HIA, 3) summarize outputs, and 4) AUO output sample
 
 
 ######################################## 1) Matched population ###########################################################################
@@ -51,7 +51,7 @@ number_cores <- max(1,floor(as.integer(detectCores())*0.8))
 cl <- makeCluster(number_cores)
 cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
 
-seeds<-1:3
+seeds<-1:2000
 registerDoParallel(cl)
 start_time = Sys.time()
 # persons_matched <- read.csv("Data/processed/matched_pop.csv", as.is=T, fileEncoding="UTF-8-BOM")
@@ -91,11 +91,9 @@ summariseOutputs(scenario_location="scenarios/scenario_1",
                  output_df)
 
 
+#################################### 4) AUO output sample ###################################################################################
+## Example for scenario: all trips under 2kms replaced walk and 10 replaced bike. 
 
-
-#### FOR AUO
-
-# Belen, just run this to load the summarised outputs
 importSummarisedOutputs(scenario_location="scenarios/scenario_1")
 
 ### Plots for presentation

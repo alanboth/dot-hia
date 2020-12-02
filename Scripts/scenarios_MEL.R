@@ -89,11 +89,11 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,
                                   purpose_input = "Leisure,Shopping,Work,Education,Other") {
-  distance_replace_walk = 2
-  distance_replace_cycle = 5
-  purpose_input = "Leisure,Shopping,Work,Education,Other"
-  in_data="Data/processed/trips_melbourne.csv"
-  in_speed="Data/processed/speed_trips_melbourne.csv"
+  # distance_replace_walk = 2
+  # distance_replace_cycle = 5
+  # purpose_input = "Leisure,Shopping,Work,Education,Other"
+  # in_data="Data/processed/trips_melbourne.csv"
+  # in_speed="Data/processed/speed_trips_melbourne.csv"
   
   # it's easier to pass in a single string and then split it here
   purpose_input <- unlist(strsplit(purpose_input,","))
