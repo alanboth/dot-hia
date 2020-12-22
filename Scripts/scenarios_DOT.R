@@ -381,10 +381,52 @@ scenarioPTfullFinal <- reformatScenarioSRL(
 )
 
 
-# export populations ------------------------------------------------------
+# export trips ------------------------------------------------------------
 # # in case the directory hasn't been made yet
 # dir.create('./', recursive=TRUE, showWarnings=FALSE)
 
 write.csv(scenarioPTtrainFinal, "Data/processed/trips_melbourne_scenarios_pt_train.csv", row.names=F, quote=T)
 write.csv(scenarioPTfullFinal, "Data/processed/trips_melbourne_scenarios_pt_full.csv", row.names=F, quote=T)
 
+
+# reformat trips ----------------------------------------------------------
+
+
+tripsPTtrain <- scenarioPTtrainFinal %>%
+  mutate(trip_mode_base=ifelse(trip_mode_base%in%c('pt.walk','pt.drive'),'walking',trip_mode_base)) %>%
+  mutate(trip_mode_scen=ifelse(trip_mode_scen%in%c('pt.walk','pt.drive'),'walking',trip_mode_scen)) %>%
+  mutate(trip_mode_base=ifelse(trip_mode_base=='public transport','public.transport',trip_mode_base)) %>%
+  mutate(trip_mode_scen=ifelse(trip_mode_scen=='public transport','public.transport',trip_mode_scen))
+  
+tripsPTfull <- scenarioPTfullFinal %>%
+  mutate(trip_mode_base=ifelse(trip_mode_base%in%c('pt.walk','pt.drive'),'walking',trip_mode_base)) %>%
+  mutate(trip_mode_scen=ifelse(trip_mode_scen%in%c('pt.walk','pt.drive'),'walking',trip_mode_scen)) %>%
+  mutate(trip_mode_base=ifelse(trip_mode_base=='public transport','public.transport',trip_mode_base)) %>%
+  mutate(trip_mode_scen=ifelse(trip_mode_scen=='public transport','public.transport',trip_mode_scen))
+
+scenarioPurposes <- c("Leisure","Shopping","Work related",
+                      "Pick-up or drop-off someone/something","personal business",
+                      "Other","accompany someone","education","at or go home")
+
+
+a<-unique(tripsPTtrain$trip_purpose)%>%sort()
+b<-unique(scenario_trips$trip_purpose)%>%as.character()%>%sort()
+
+
+source("Scripts/data_prep/synthetic_pop.R")
+
+### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
+persons_travel <- calculatePersonsTravelScenario(
+  travel_data_location="Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+  scenario_location=tripsPTtrain#"Data/processed/trips_melbourne_scenarios.csv" ### BZ: Generated in step 1
+)
+# write.csv(persons_travel, "Data/processed/persons_travel.csv", row.names=F, quote=T)
+
+
+#### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
+persons_matched <- calculatePersonsMatch(
+  pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+  persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
+)
+write.csv(persons_matched, "scenarios/scenario_1/matched_pop_1.csv", row.names=F, quote=T)
+persons_matched <- read.csv("scenarios/scenario_1/matched_pop_1.csv", as.is=T, fileEncoding="UTF-8-BOM")

@@ -48,8 +48,9 @@ source("Scripts/data_prep/population_prep.R")
 scenarioLocation <- "./scenarios"
 outputLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-raw"
 combinedLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
+combinedLocationMMETS <- "/home/alan/DATA/dot-hia/melbourne-outputs-combined-mmets"
 summarisedLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
-finalLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs"
+finalLocation <- "./melbourne-outputs"
 
 scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
   mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
@@ -66,7 +67,7 @@ for (i in 1:nrow(scenarios_Melb)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_Melb[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<-1:20
+  seeds<-1:1000
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
@@ -89,21 +90,35 @@ for (i in 1:nrow(scenarios_Melb)){
 
 # in case the directory hasn't been made yet
 dir.create(combinedLocation, recursive=TRUE, showWarnings=FALSE)
+dir.create(combinedLocationMMETS, recursive=TRUE, showWarnings=FALSE)
 
-print(paste0("combining ",nrow(scenarios_Melb)," scenario outputs into single file at ",Sys.time()))
-for (i in 1:nrow(scenarios_Melb)){
-  output_df_files<-list.files(paste0(scenarios_Melb[i,]$output_location,'/output_df'),
-                              pattern="*.csv",full.names=T)
+print(paste0("merging ",nrow(scenarios_Melb)," scenario outputs into single file at ",Sys.time()))
+combineOutputs <- function(inputDirectory,outputFile) {
+  output_df_files<-list.files(inputDirectory,pattern="*.csv",full.names=T)
   output_df<-lapply(output_df_files,read.csv,header=T) %>%
     bind_rows(.id="run") %>%
     mutate(run=as.integer(run))
-  
-  saveRDS(output_df, file=paste0(combinedLocation,"/",scenarios_Melb[i,]$scenario,".rds"))
-  cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
-  
+  saveRDS(output_df, file=outputFile)
 }
 
+for (i in 1:nrow(scenarios_Melb)){
+  combineOutputs(paste0(scenarios_Melb[i,]$output_location,'/output_df'),
+                 paste0(combinedLocation,"/",scenarios_Melb[i,]$scenario,".rds"))
+  cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
+
+for (i in 1:nrow(scenarios_Melb)){
+  combineOutputs(paste0(scenarios_Melb[i,]$output_location,'/mmets'),
+                 paste0(combinedLocationMMETS,"/",scenarios_Melb[i,]$scenario,".rds"))
+  cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
+
+
 ######################################## 3) Summarise outputs  ###########################################################################
+
+# output_df <- readRDS(paste0(combinedLocationMMETS,"/",scenarios_Melb[1,]$scenario,".rds"))
+# output_df <- readRDS(paste0(combinedLocation,"/",scenarios_Melb[1,]$scenario,".rds"))
+
 
 print(paste0("summarising ",nrow(scenarios_Melb)," scenario outputs at ",Sys.time()))
 for (i in 1:nrow(scenarios_Melb)){
@@ -114,11 +129,19 @@ for (i in 1:nrow(scenarios_Melb)){
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
 
+print(paste0("summarising mmets ",nrow(scenarios_Melb)," scenario outputs at ",Sys.time()))
+for (i in 1:nrow(scenarios_Melb)){
+  output_df <- readRDS(paste0(combinedLocationMMETS,"/",scenarios_Melb[i,]$scenario,".rds"))
+  summariseMMETS(scenario_location=
+                     paste0(summarisedLocation,"/",scenarios_Melb[i,]$scenario),
+                   output_df)
+  cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
 
 # combine scenarios into single files
 
 combineScenarios <- function(summarisedLocation,name) {
-  scenario_names<-data.frame(scenario=list.files(summarisedLocation)) %>%
+  scenario_names<-data.frame(scen=list.files(summarisedLocation)) %>%
     mutate(id=row_number())
   file_locations<-list.files(summarisedLocation,
                              pattern=name,
@@ -131,19 +154,31 @@ combineScenarios <- function(summarisedLocation,name) {
   return(output_df)
 }
 
-output_df_agg_all <- combineScenarios(summarisedLocation,name="output_df_agg_all.csv")
-output_df_agg_sex <- combineScenarios(summarisedLocation,name="output_df_agg_sex.csv")
-output_diseases_change <- combineScenarios(summarisedLocation,name="output_diseases_change.csv")
-output_life_expectancy_change <- combineScenarios(summarisedLocation,name="output_life_expectancy_change.csv")
-output_life_years_change <- combineScenarios(summarisedLocation,name="output_life_years_change.csv")
+output_df_agg_all <- combineScenarios(summarisedLocation,name="output_df_agg.csv") %>%
+  rename(age=age_group_final,sex=Gender)
+output_diseases_change <- combineScenarios(summarisedLocation,name="output_diseases_change.csv") %>%
+  rename(age=age_group_final,sex=Gender)
+output_life_expectancy_change <- combineScenarios(summarisedLocation,name="output_life_expectancy_change.csv") %>%
+  rename(age=age_group_final,sex=Gender)
+output_life_years_change <- combineScenarios(summarisedLocation,name="output_life_years_change.csv") %>%
+  rename(age=age_group_final,sex=Gender)
+output_mmets <- combineScenarios(summarisedLocation,name="output_mmets.csv")
+output_mmets_graph <- combineScenarios(summarisedLocation,name="output_mmets_graph.csv")
 
 # in case the directory hasn't been made yet
 dir.create(finalLocation, recursive=TRUE, showWarnings=FALSE)
-write.csv(output_df_agg_all,paste0(finalLocation,"/output_df_agg_all.csv"), row.names=F, quote=T)
-write.csv(output_df_agg_sex,paste0(finalLocation,"/output_df_agg_sex.csv"), row.names=F, quote=T)
-write.csv(output_diseases_change,paste0(finalLocation,"/output_diseases_change.csv"), row.names=F, quote=T)
-write.csv(output_life_expectancy_change,paste0(finalLocation,"/output_life_expectancy_change.csv"), row.names=F, quote=T)
-write.csv(output_life_years_change,paste0(finalLocation,"/output_life_years_change.csv"), row.names=F, quote=T)
+saveRDS(output_df_agg_all,paste0(finalLocation,"/output_df_agg.rds"))
+saveRDS(output_diseases_change,paste0(finalLocation,"/output_diseases_change.rds"))
+saveRDS(output_life_expectancy_change,paste0(finalLocation,"/output_life_expectancy_change.rds"))
+saveRDS(output_life_years_change,paste0(finalLocation,"/output_life_years_change.rds"))
+saveRDS(output_mmets,paste0(finalLocation,"/output_mmets.rds"))
+saveRDS(output_mmets_graph,paste0(finalLocation,"/output_mmets_graph.rds"))
+
+# write.csv(output_df_agg_all,paste0(finalLocation,"/output_df_agg.csv"), row.names=F, quote=T)
+# write.csv(output_diseases_change,paste0(finalLocation,"/output_diseases_change.csv"), row.names=F, quote=T)
+# write.csv(output_life_expectancy_change,paste0(finalLocation,"/output_life_expectancy_change.csv"), row.names=F, quote=T)
+# write.csv(output_life_years_change,paste0(finalLocation,"/output_life_years_change.csv"), row.names=F, quote=T)
+# write.csv(output_mmets,paste0(finalLocation,"/output_mmets.csv"), row.names=F, quote=T)
 
 
 #################################### 4) AUO output sample ###################################################################################

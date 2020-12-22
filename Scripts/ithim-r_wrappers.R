@@ -1034,15 +1034,32 @@ summariseOutputs <- function(scenario_location,output_df){
   output_df_year <- output_df %>% ### Create a simulation year columns
     group_by(run, age_group, Gender, .add=TRUE) %>%
     dplyr::mutate(year = row_number()) %>%
-    ungroup()
+    ungroup() %>%
+    mutate(age_group_final=case_when(
+      Age.group=='16-19'                                                        ~'15-19',
+      Age.group%in%c('20-24','25-29','30-34','35-39')                           ~'20-39',
+      Age.group%in%c('40-44','45-49','50-54','55-59','60-64')                   ~'40-64',
+      Age.group%in%c('65-69','70-74','75-79','80-84','85-89','90-94','95 plus') ~'65plus'))
+  rm(output_df)
+  
+  dataAll <- bind_rows(
+    output_df_year,
+    output_df_year%>%mutate(age_group_final='all'),
+    output_df_year%>%mutate(Gender='all'),
+    output_df_year%>%mutate(age_group_final='all',Gender='all')
+  )
+  rm(output_df_year)
+  
+
   
   
   # 7) Summary data frame by age and sex and total
   
-  ######## Dataframe with all outputs aggregated by year of simulation by sex
-  output_df_agg_sex <- output_df_year %>%
-    dplyr::select(run, Gender, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-    group_by(run, year, Gender) %>%
+  ######## Dataframe with all outputs aggregated by year of simulation by sex and age group
+  output_df_agg <- dataAll %>%
+    dplyr::select(run, Gender, age_group_final, year, Lx_bl, Lx_sc, Lx_diff,
+                  Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+    group_by(run, year, Gender, age_group_final) %>%
     summarise_if(is.numeric, sum, na.rm=T) %>%
     ungroup() %>%
     setNames(gsub("_sc$","_sc_all",names(.))) %>%
@@ -1053,34 +1070,35 @@ summariseOutputs <- function(scenario_location,output_df){
     pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
                  names_to = c("measure","scenario","disease"),
                  names_sep="_") %>%
-    group_by(year,Gender,measure,scenario,disease) %>%
+    group_by(year,Gender,age_group_final,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
-              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
-    filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
-  write.csv(output_df_agg_sex, paste0(scenario_location,"/output_df_agg_sex.csv"),
+              percentile975=quantile(value,probs=0.975, na.rm=T))
+    # filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
+  write.csv(output_df_agg, paste0(scenario_location,"/output_df_agg.csv"),
             row.names=F, quote=T)
+  rm(output_df_agg)
   
-  ######## Dataframe with all outputs aggregated by year of simulation all
-  output_df_agg_all  <- output_df_year %>%
-    dplyr::select(run, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-    group_by(run, year, .add=TRUE) %>%
-    summarise_if(is.numeric, sum, na.rm=T) %>%
-    ungroup() %>%
-    setNames(gsub("_sc$","_sc_all",names(.))) %>%
-    setNames(gsub("_bl$","_bl_all",names(.))) %>%
-    setNames(gsub("_diff$","_diff_all",names(.))) %>%
-    rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
-    rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
-    pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
-                 names_to = c("measure","scenario", "disease"),
-                 names_sep="_") %>%
-    group_by(year,measure,scenario,disease) %>%
-    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-              percentile025=quantile(value,probs=0.025, na.rm=T),
-              percentile975=quantile(value,probs=0.975, na.rm=T)) 
-    write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
-              row.names=F, quote=T)
+  # ######## Dataframe with all outputs aggregated by year of simulation all
+  # output_df_agg_all  <- output_df_year %>%
+  #   dplyr::select(run, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
+  #   group_by(run, year, .add=TRUE) %>%
+  #   summarise_if(is.numeric, sum, na.rm=T) %>%
+  #   ungroup() %>%
+  #   setNames(gsub("_sc$","_sc_all",names(.))) %>%
+  #   setNames(gsub("_bl$","_bl_all",names(.))) %>%
+  #   setNames(gsub("_diff$","_diff_all",names(.))) %>%
+  #   rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
+  #   rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
+  #   pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
+  #                names_to = c("measure","scenario", "disease"),
+  #                names_sep="_") %>%
+  #   group_by(year,measure,scenario,disease) %>%
+  #   summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
+  #             percentile025=quantile(value,probs=0.025, na.rm=T),
+  #             percentile975=quantile(value,probs=0.975, na.rm=T)) 
+  #   write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
+  #             row.names=F, quote=T)
   
   #### Add population numbers for presentation purposes
   population <- GetPopulation(
@@ -1089,26 +1107,49 @@ summariseOutputs <- function(scenario_location,output_df){
     rename(cohort = sex_age_cat) %>%
     dplyr::filter(cohort %in% unique(output_df$cohort))
   
+  population2 <- population %>%
+    separate(cohort,into=c('Gender','age'),sep='_') %>%
+    mutate(age_group_final=case_when(
+      age==17                        ~'15-19',
+      age%in%c(22,27,32,37)          ~'20-39',
+      age%in%c(42,47,52,57,62)       ~'40-64',
+      age%in%c(67,72,77,82,87,92,97) ~'65plus'))
+  
+  populationLargeCohort <- bind_rows(
+    population2,
+    population2%>%mutate(age_group_final='all'),
+    population2%>%mutate(Gender='all'),
+    population2%>%mutate(age_group_final='all',Gender='all')
+  ) %>%
+    group_by(Gender,age_group_final) %>%
+    summarise(population=sum(population,na.rm=T)) %>%
+    ungroup()
+  rm(population2)
   
   ##################### Below outcomes for presentation ####################################################
   
   # Table: Life expectancy and health adjusted life expectancy
-  output_life_expectancy_change <- output_df_year %>%
+  output_life_expectancy_change <- dataAll %>%
     filter(year==1) %>%
-    dplyr::select(run, Age.group, cohort, Gender, ex_bl, ex_sc, ewx_bl, ewx_sc,
+    dplyr::select(run, Age.group, age_group_final, cohort, Gender, ex_bl, ex_sc, ewx_bl, ewx_sc,
                   ex_diff, ewx_diff) %>%
+    left_join(population, by="cohort") %>%
     pivot_longer(cols=ex_bl:ewx_diff,
                  names_to = c("measure","scenario"),
                  names_sep="_") %>%
+    # aggregating up to coarser age groups
+    group_by(run,age_group_final,Gender,measure,scenario) %>%
+    mutate(pop_weight=population/sum(population,na.rm=T)) %>%
+    summarise(value=weighted.mean(value,pop_weight),population=sum(population)) %>%
+    ungroup() %>%
+    relocate(population, .after = Gender) %>%
     # want the life expectancy in days instead of years, but only for the difference
     mutate(value=ifelse(scenario=="diff",value*365,value)) %>%
-    group_by(Age.group, cohort, Gender, measure, scenario) %>%
+    group_by(age_group_final, Gender, measure, scenario) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
     ungroup() %>%
-    left_join(population, by="cohort") %>%
-    relocate(population, .after = Gender) %>%
     mutate(description=case_when(
       measure=="ex" & scenario=="bl" ~ "Life expectancy at baseline",
       measure=="ex" & scenario=="sc" ~ "Life expectancy scenario",
@@ -1124,14 +1165,14 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)  
   
   # Table: Life years and health adjusted life years ----
-  output_life_years_change <- output_df %>%
-    group_by(run, Gender, `Age.group`, cohort) %>%
-    dplyr::select(`Age.group`,cohort, Gender,Lx_diff, Lwx_diff) %>%
+  output_life_years_change <- dataAll %>%
+    group_by(run, Gender, age_group_final) %>%
+    dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff) %>%
     summarise_if(is.numeric, funs(sum)) %>%
     ungroup() %>%
     pivot_longer(cols=Lx_diff:Lwx_diff,
                  names_to = "measure") %>%
-    group_by(Age.group, cohort, Gender, measure) %>%
+    group_by(age_group_final, Gender, measure) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
@@ -1140,18 +1181,18 @@ summariseOutputs <- function(scenario_location,output_df){
       measure=="Lx_diff" ~ "Life years",
       measure=="Lwx_diff" ~ "Health adjusted life years"
     )) %>%
-    left_join(population, by="cohort") %>%
+    left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%
     relocate(population, .after = Gender)
   write.csv(output_life_years_change,
             paste0(scenario_location,"/output_life_years_change.csv"),
             row.names=F, quote=T)
   
   # Table: Diseases deaths, incidence and ylds ----
-  output_diseases_change <- output_df %>%
+  output_diseases_change <- dataAll %>%
     # filter(run==1) %>%
-    dplyr::select(run, `Age.group`, Gender, cohort,
+    dplyr::select(run, Gender, age_group_final,
                   matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri")) %>%
-    group_by(run, Gender, `Age.group`, cohort) %>%
+    group_by(run, Gender, age_group_final) %>%
     summarise_if(is.numeric, funs(sum)) %>%
     ungroup() %>%
     rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
@@ -1159,7 +1200,7 @@ summariseOutputs <- function(scenario_location,output_df){
     pivot_longer(cols=inc.num_diff_brsc:mx.num_diff_strk,
                  names_to = c("measure","scenario","disease"),
                  names_sep="_") %>%
-    group_by(Gender,Age.group,cohort,measure,scenario,disease) %>%
+    group_by(Gender,age_group_final,measure,scenario,disease) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
@@ -1170,10 +1211,84 @@ summariseOutputs <- function(scenario_location,output_df){
       measure=="mx.num" ~ "mx_num"
     )) %>%
     # mutate_if(is.numeric, round) %>%
-    left_join(population, by="cohort") %>%
+    left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%
     relocate(population, .after = Gender)
   write.csv(output_diseases_change,
             paste0(scenario_location,"/output_diseases_change.csv"),
+            row.names=F, quote=T)
+  rm(datAll)
+}
+
+summariseMMETS <- function(scenario_location,output_df){
+  # in case the directory hasn't been made yet
+  dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
+  # output_df <- mmets
+  maxMMET=8000
+  binwidth=250
+  maxMMET/binwidth
+  data <- output_df %>%
+    # filter(run==1) %>%
+    dplyr::select(run,participant_id,sex,age,base_mmet,scen1_mmet) %>%
+    mutate(agegroup= case_when(
+      age>=15 & age<=19 ~'15-19',
+      age>=20 & age<=39 ~'20-39',
+      age>=40 & age<=64 ~'40-64',
+      age>=65           ~'65plus')) %>%
+    dplyr::select(run,age=agegroup,sex,base_mmet,scen1_mmet)
+  rm(output_df)
+  
+  dataAll <- bind_rows(
+    data,
+    data%>%mutate(age='all'),
+    data%>%mutate(sex='all'),
+    data%>%mutate(age='all',sex='all')
+  ) %>% pivot_longer(cols = c("base_mmet", "scen1_mmet"),
+               names_to = "scenario",
+               values_to = "value")
+  rm(data)
+  
+  dataGrouped <- dataAll %>%
+    mutate(mmet=findInterval(value,seq(0,maxMMET,binwidth))) %>%
+    mutate(mmet=mmet*binwidth-(binwidth*0.5)) %>%
+    group_by(run,age,sex,scenario,mmet) %>%
+    summarise(value=sum(value,na.rm=T)) %>%
+    ungroup()
+  
+  fillDF <- crossing(
+    data.frame(run=seq(1,1000)),
+    data.frame(age=c('15-19','20-39','40-64','65plus')),
+    data.frame(sex=c('male','female','all')),
+    data.frame(scenario=c('base_mmet','scen1_mmet')),
+    data.frame(mmet=seq(0,maxMMET,binwidth)+(binwidth*0.5))
+  ) 
+
+  dataFilled <- dataGrouped %>%
+    full_join(fillDF,by=c('run','age','sex','scenario','mmet')) %>%
+    mutate(value=ifelse(is.na(value),0,value))
+  rm(dataGrouped)
+  
+  dataGraph <- dataFilled %>%
+    group_by(age,sex,scenario,mmet) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
+              median=median(value,na.rm=T),
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
+    ungroup()
+  rm(dataFilled)
+  
+  write.csv(dataGraph,
+            paste0(scenario_location,"/output_mmets_graph.csv"),
+            row.names=F, quote=T)
+
+  dataSummarised <- dataAll %>%
+    group_by(age,sex,scenario) %>%
+    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
+              median=median(value,na.rm=T),
+              percentile025=quantile(value,probs=0.025, na.rm=T),
+              percentile975=quantile(value,probs=0.975, na.rm=T))
+  
+  write.csv(dataSummarised,
+            paste0(scenario_location,"/output_mmets.csv"),
             row.names=F, quote=T)
 }
 
@@ -1196,3 +1311,4 @@ importSummarisedOutputs <- function(scenario_location) {
     read.csv(paste0(scenario_location,"/output_diseases_change.csv"),
              as.is=T, fileEncoding="UTF-8-BOM")
 }
+
