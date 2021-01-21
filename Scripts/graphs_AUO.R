@@ -49,15 +49,15 @@ GraphsMode <- function(scenarios_trips) {
   bar_chart_combo_sc
 }
 
-########## Change in marginal METS
+########## Change in marginal METS (21/01/21: Belen commented out
 
-mmets_graphs <- outputs[['mmets']] %>%
-  pivot_longer(cols = c("base_mmet", "scen1_mmet"),
-               names_to = "scenario",
-               values_to = "mmets")
-
-scenario.labs <- c("Baseline", "Scenario")
-names(scenario.labs) <- c("base_mmet", "scen1_mmet")
+# mmets_graphs <- outputs[['mmets']] %>%
+#   pivot_longer(cols = c("base_mmet", "scen1_mmet"),
+#                names_to = "scenario",
+#                values_to = "mmets")
+# 
+# scenario.labs <- c("Baseline", "Scenario")
+# names(scenario.labs) <- c("base_mmet", "scen1_mmet")
 
 ##### Graphs for mmets basline and scenario to compare with the dose response curves
 
