@@ -99,14 +99,14 @@ mmetsGraph <- function(age_val,sex_val,scen_val) {
   binwidth=250
   dataFiltered <- output_mmets_graph %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
-    dplyr::select(scenario,mmet,mean,percentile025,percentile975) %>%
+    dplyr::select(scenario,mmet,median,percentile025,percentile975) %>% ### BZ: I changed for median
     filter(mmet<=7000) %>%
     mutate(mmet=ifelse(scenario=='base_mmet',mmet-(binwidth/4),mmet+(binwidth/4))) %>%
     mutate(scenario=factor(scenario,
                            levels=c("base_mmet","scen1_mmet"),
                            labels=c("Baseline","Scenario")))
   
-  ggplot(dataFiltered, aes(x=mmet, y=mean)) +
+  ggplot(dataFiltered, aes(x=mmet, y=median)) + ### BZ: I changed for median
     geom_col(width=(binwidth/2),position=position_nudge(x=0),aes(fill=scenario)) + 
     # geom_crossbar(aes(x=mmet,ymin=percentile025,ymax=percentile975)) +
     geom_errorbar(aes(x=mmet,ymin=percentile975,ymax=percentile975),size=0.2) +
