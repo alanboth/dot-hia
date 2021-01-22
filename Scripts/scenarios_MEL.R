@@ -84,7 +84,8 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
 calculateScenarioMel2 <- function(trips_melbourne = in_data, 
-                                  speed = in_speed,
+                                  walk_speed=4.8,
+                                  cycle_speed=14.3,
                                   original_mode = "car" , # Just car trips can be replaced
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,
@@ -92,7 +93,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
 
   # in_data="Data/processed/trips_melbourne.csv"
   # in_speed="Data/processed/speed_trips_melbourne.csv"
-  # trips_melbourne = in_data
+  trips_melbourne = in_data
   # speed = in_speed
   # original_mode = "car"
   # distance_replace_walk = 0
@@ -110,16 +111,18 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                       trip_mode=="train" ~ 'public.transport',
                                       trip_mode=="motorcycle" ~ 'other',
                                       TRUE ~ tolower(trip_mode))) ## Add age groups to facilitate selection above and matching  
-  speed <- read.csv(speed,as.is=T,fileEncoding="UTF-8-BOM")
   
-  
-  #### create column in trips_melbourne with speed data for age and sex (use median)
-  walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% dplyr::rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
-  cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% dplyr::rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
-  
-  trips_melbourne <- trips_melbourne %>% inner_join(walk_speed, by=c("age_group", "sex"))
-  
-  trips_melbourne <- trips_melbourne %>% inner_join(cycle_speed, by=c("age_group", "sex"))
+  ### BZ: Use default speed
+  # speed <- read.csv(speed,as.is=T,fileEncoding="UTF-8-BOM")
+  # 
+  # 
+  # #### create column in trips_melbourne with speed data for age and sex (use median)
+  # walk_speed <- speed %>% dplyr::filter(activity=="walking") %>% dplyr::rename(walk_mean_speed = mean) %>% dplyr::select(age_group, sex, walk_mean_speed)
+  # cycle_speed <- speed %>% dplyr::filter(activity=="bicycle") %>% dplyr::rename(cycle_mean_speed = mean) %>% dplyr::select(age_group, sex, cycle_mean_speed)
+  # 
+  # trips_melbourne <- trips_melbourne %>% inner_join(walk_speed, by=c("age_group", "sex"))
+  # 
+  # trips_melbourne <- trips_melbourne %>% inner_join(cycle_speed, by=c("age_group", "sex"))
   
   
   trips_melbourne_scenarios <- trips_melbourne %>%
@@ -148,18 +151,15 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
     dplyr::mutate(trip_distance_scen = trip_distance_base) %>% 
     dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
                                               & trip_mode_scen == "walking",
-                                              trip_distance_scen/walk_mean_speed,
+                                              trip_distance_scen/walk_speed,
                                               trip_duration_base)) %>%
     dplyr::mutate(trip_duration_scen = ifelse(trip_mode_base == original_mode
                                               & trip_mode_scen == "bicycle",
-                                              trip_distance_scen/cycle_mean_speed,### REplace with age and sex walking and cycling speed
+                                              trip_distance_scen/cycle_speed,
                                               trip_duration_scen)) %>%
-    # Alan I modified here after discussing with James.
     dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>%
     dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7) %>%
     mutate_if(is.character,as.factor)
-  #   dplyr::mutate(trip_mode=as.factor(case_when(trip_mode_scen=="pedestrian" ~ 'walking', 
-  #                                               TRUE ~ trip_mode_scen)))
   return(trips_melbourne_scenarios)
   
 }
@@ -168,7 +168,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
 generateMatchedPopulationScenario <- function(output_location=paste0("./scenarios/", scenario_name, "/"),
                                               scenario_name="default",
                                               in_data="./Data/processed/trips_melbourne.csv",
-                                              in_speed="./Data/processed/speed_trips_melbourne.csv",
+                                              # in_speed="./Data/processed/speed_trips_melbourne.csv",
                                               max_walk,
                                               max_cycle,
                                               purpose) {
@@ -196,7 +196,7 @@ generateMatchedPopulationScenario <- function(output_location=paste0("./scenario
   # max_cycle=0
   scenario_trips <- calculateScenarioMel2(
     trips_melbourne = in_data, 
-    speed = in_speed,
+    # speed = in_speed,
     original_mode = "car", # c("car","public.transport") , # Just car trips can be replaced
     distance_replace_walk = max_walk,
     distance_replace_cycle = max_cycle,
