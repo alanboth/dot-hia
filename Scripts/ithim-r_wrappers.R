@@ -610,9 +610,9 @@ CalculationModel <- function(seed=1,
   
   cat(paste0("have set seed=", seed,"\n"))
   parameters <- GetParamters(
-    NSAMPLES = 1, ### Alan, when this is more than one, then, those inputs with distributions are samples NSAMPLES times
+    NSAMPLES = 1,
     matched_population = persons_matched,
-    MMET_CYCLING = c(4.63, 1.2), ### Belen: Error here
+    MMET_CYCLING = c(4.63, 1.2), ### 
     MMET_WALKING = c(2.53, 1.1),
     PA_DOSE_RESPONSE_QUANTILE = T)
   
