@@ -1292,6 +1292,39 @@ summariseMMETS <- function(scenario_location,output_df){
             row.names=F, quote=T)
 }
 
+summariseTransport <- function(inputFile,scenario_name="default") {
+  # inputFile=scenarios_Melb[i,]$trips_location
+  data <- read.csv(inputFile,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    dplyr::select(participant_wt,age,sex,trip_mode_base,trip_mode_scen) %>%
+    mutate(agegroup= case_when(
+      age>=15 & age<=19 ~'15-19',
+      age>=20 & age<=39 ~'20-39',
+      age>=40 & age<=64 ~'40-64',
+      age>=65           ~'65plus')) %>%
+    dplyr::select(age=agegroup,sex,participant_wt,bl=trip_mode_base,sc=trip_mode_scen)
+
+  
+  dataAll <- bind_rows(
+    data,
+    data%>%mutate(age='all'),
+    data%>%mutate(sex='all'),
+    data%>%mutate(age='all',sex='all')
+  ) %>% pivot_longer(cols = c("bl", "sc"),
+                     names_to = "scenario",
+                     values_to = "mode")
+  
+  
+  dataSummarised <- dataAll %>%
+    group_by(age,sex,scenario,mode) %>%
+    summarise(participant_wt=sum(participant_wt,na.rm=T)) %>%
+    group_by(age,sex,scenario) %>%
+    mutate(mode_percent=participant_wt/sum(participant_wt,na.rm=T)) %>%
+    mutate(scen=scenario_name) %>%
+    dplyr::select(scen,sex,age,mode,scenario,participant_wt,mode_percent) %>%
+    as.data.frame()
+  return(dataSummarised)
+}
+
 importSummarisedOutputs <- function(scenario_location) {
   # scenario_location="scenarios/scenario_1"
   

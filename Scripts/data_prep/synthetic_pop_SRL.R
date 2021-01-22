@@ -315,7 +315,7 @@ calculatePersonsPA <- function(pa_location,hh_location) {
     
     ## Add age group variable
     mutate(age_group_scen = case_when(age_group == 5 ~ "15 to 19",
-                                      age_group == 6 ~ "20 tp 24",
+                                      age_group == 6 ~ "20 to 24",
                                       age_group == 7 ~ "25 to 29", 
                                       age_group == 8 ~ "30 to 34", 
                                       age_group == 9 ~ "35 to 39",

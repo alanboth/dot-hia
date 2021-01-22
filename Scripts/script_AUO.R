@@ -39,17 +39,16 @@ output_life_expectancy_change<-readRDS(paste0(finalLocation,"/output_life_expect
 output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_change.rds"))
 output_mmets<-readRDS(paste0(finalLocation,"/output_mmets.rds"))
 output_mmets_graph<-readRDS(paste0(finalLocation,"/output_mmets_graph.rds"))
+output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
 
 
 
-# 1) Transport graph-example age group 20 to 39 and males -----------------
-# Couldn't get this to work
-example_1_trips <- read.csv("./scenarios/trips/trips_all_0_2.csv")
-example_1__trips_data <- example_1_trips %>% dplyr::filter(age_group=="20 to 39", sex == "female")
-
-mode_example <- GraphsMode(example_1_trips_data)
-
-mode_example 
+# 1) Transport graph-example ----------------------------------------------
+transportModeGraph(
+  age_val='all',
+  sex_val='all',
+  scen_val='all_2_10'
+)
 
 
 

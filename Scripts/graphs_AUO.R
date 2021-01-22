@@ -5,6 +5,31 @@ library(ggplot2)
 
 
 ########## Change in mode of transport
+transportModeGraph <- function(age_val,sex_val,scen_val) {
+  # age_val='all'
+  # sex_val='all'
+  # scen_val='all_2_10'
+  
+  dataFiltered <- output_transport_modes %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(scenario,mode,mode_percent) %>%
+    mutate(scenario=factor(scenario,
+                           levels=c("bl","sc"),
+                           labels=c("Baseline","Scenario"))) %>%
+    mutate(mode=factor(mode,
+                       levels=c("walking","bicycle","public.transport","car","other"),
+                       labels=c("Walking","Cycling","Public transport","Driving","Other")))
+  
+  ggplot(dataFiltered, aes(x=mode, y=mode_percent)) +
+    geom_col(position=position_dodge(), aes(fill=scenario)) + 
+    scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
+    labs(title="Distribution trips baseline and scenario", x="", y="Proportion of all trips") + 
+    theme(legend.title=element_blank(),
+          legend.position="bottom",
+          legend.margin=margin(0,0,0,0),
+          legend.box.margin=margin(-5,0,5,0))
+}
+
 GraphsMode <- function(scenarios_trips) {
   scenario_trips_weighted <-  scenario_trips  %>%
     srvyr::as_survey_design(weights = trips_wt)

@@ -165,7 +165,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
 }
 
 
-generateMatchedPopulationScenario <- function(output_location=paste0("./scenarios/", scenario_name, "/"),
+generateMatchedPopulationScenario <- function(output_location="./scenarios/",
                                               scenario_name="default",
                                               in_data="./Data/processed/trips_melbourne.csv",
                                               # in_speed="./Data/processed/speed_trips_melbourne.csv",
@@ -173,16 +173,17 @@ generateMatchedPopulationScenario <- function(output_location=paste0("./scenario
                                               max_cycle,
                                               purpose) {
   
+  # in_speed="./Data/processed/speed_trips_melbourne.csv"
   # output_location="./scenarios"
   # scenario_name="all_2_10"
   # in_data="./Data/processed/trips_melbourne.csv"
-  # in_speed="./Data/processed/speed_trips_melbourne.csv"
   # max_walk=2
   # max_cycle=10
   # purpose="Leisure,Shopping,Work,Education,Other"
   
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
+  dir.create(paste0(output_location,"/scenarioTrips"), recursive=TRUE, showWarnings=FALSE)
   
   #### 1) Generate trip set with baseline and scenario trips ####
   
@@ -202,6 +203,8 @@ generateMatchedPopulationScenario <- function(output_location=paste0("./scenario
     distance_replace_cycle = max_cycle,
     purpose_input = purpose
   )
+  
+  write.csv(scenario_trips, paste0(output_location,"/scenarioTrips/",scenario_name,".csv"), row.names=F, quote=T)
   
   
   #### Graphs

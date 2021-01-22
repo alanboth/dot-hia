@@ -14,7 +14,7 @@ calculateMMETSperPerson_AUS <- function(pa_location="Data/Physical activity/NHS2
                                         MMET_VIG=7,
                                         SCEN_WALK = 0, # user defined
                                         SCEN_CYCLE = 0,
-                                        age_input = c("15 to 19","20 tp 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 to 49", "50 to 54", "55 to 59", "60 to 64", 
+                                        age_input = c("15 to 19","20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 to 49", "50 to 54", "55 to 59", "60 to 64", 
                                                       "65 to 69", "70 to 74", "75 to 79", "80 to 84", "85 +" ),
                                         sex_input = c("male", "female")) # user defined 
   { 

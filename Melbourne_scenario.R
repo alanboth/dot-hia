@@ -51,7 +51,7 @@ for (i in 1:nrow(scenarios_Melb)){
     output_location="./scenarios",
     scenario_name=scenarios_Melb[i,]$scenario,
     in_data="./Data/processed/trips_melbourne.csv",
-    in_speed="./Data/processed/speed_trips_melbourne.csv",
+    # in_speed="./Data/processed/speed_trips_melbourne.csv",
     max_walk=scenarios_Melb[i,]$max_walk,
     max_cycle=scenarios_Melb[i,]$max_cycle,
     purpose=scenarios_Melb[i,]$purpose_full

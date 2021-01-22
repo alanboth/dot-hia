@@ -46,6 +46,7 @@ source("Scripts/data_prep/population_prep.R")
 # ### Get age and sex  ## BZ: added based on scenarios_MEL age adn sex
 
 scenarioLocation <- "./scenarios"
+scenarioTripsLocation <- "./scenarios/scenarioTrips"
 outputLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-raw"
 combinedLocation <- "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
 combinedLocationMMETS <- "/home/alan/DATA/dot-hia/melbourne-outputs-combined-mmets"
@@ -54,6 +55,7 @@ finalLocation <- "./melbourne-outputs"
 
 scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
   mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
+  mutate(trips_location=paste0(scenarioTripsLocation,"/",scenario,".csv")) %>%
   mutate(output_location=paste0(outputLocation,"/",scenario))
   
 
@@ -113,7 +115,11 @@ for (i in 1:nrow(scenarios_Melb)){
   cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
 
-
+for (i in 1:nrow(scenarios_Melb)){
+  combineOutputs(paste0(scenarios_Melb[i,]$output_location,'/mmets'),
+                 paste0(combinedLocationMMETS,"/",scenarios_Melb[i,]$scenario,".rds"))
+  cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
 ######################################## 3) Summarise outputs  ###########################################################################
 
 # output_df <- readRDS(paste0(combinedLocationMMETS,"/",scenarios_Melb[1,]$scenario,".rds"))
@@ -137,6 +143,17 @@ for (i in 1:nrow(scenarios_Melb)){
                    output_df)
   cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
+
+print(paste0("summarising transport modes ",nrow(scenarios_Melb)," scenario outputs at ",Sys.time()))
+scenarioTrips<-NULL
+for (i in 1:nrow(scenarios_Melb)){
+  scenarioTripsCurrent<-summariseTransport(scenarios_Melb[i,]$trips_location,
+                                           scenarios_Melb[i,]$scenario)
+  scenarioTrips<-bind_rows(scenarioTrips,scenarioTripsCurrent)
+  cat(paste0("\n combined mmets scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
+}
+saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes.rds"))
+
 
 # combine scenarios into single files
 
