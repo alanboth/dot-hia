@@ -65,11 +65,7 @@ mmetsGraph(
 
 # 3) diseases -------------------------------------------------------------
 
-### Table. Alan: 1) not sure why we have a variable scenario.x and sceanrio.y; and 2) We should consider adding up 
-### the generation of results to match trip and mets age groups, too many age groups otherwise.
-# Diseases names (for reference as tables use abbreviations)
-# inc= Incidence
-# mx =Deaths
+### Table.
 ## GUS: from here we want to present a table with age groups, sex, disease name (disease_names variable disease), median, 
 ## 2.5% and 97.5 % percentiles for diseases incidence (incident cases) and mx (deaths)
 
