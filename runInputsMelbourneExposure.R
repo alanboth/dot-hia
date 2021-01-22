@@ -15,14 +15,13 @@ trips_melbourne <- calculateVistaTrips(
 )
 write.csv(trips_melbourne, "Data/processed/trips_melbourne.csv", row.names=F, quote=F)
 
-
-### Speed walking and cycling Melbourne
-source("Scripts/data_prep/trips_prep.R")
-speed_trips_melbourne <- CalculateAgeSexSpeed(
-  in_data="Data/processed/trips_melbourne.csv"
-)
-write.csv(speed_trips_melbourne, "Data/processed/speed_trips_melbourne.csv", row.names=F, quote=F)
-
+### BZ: not used, default speeds used of 4.8 for walking and 14.5 for cycling. 
+### Speed walking and cycling Melbourne 
+# source("Scripts/data_prep/trips_prep.R")
+# speed_trips_melbourne <- CalculateAgeSexSpeed(
+#   in_data="Data/processed/trips_melbourne.csv"
+# )
+# write.csv(speed_trips_melbourne, "Data/processed/speed_trips_melbourne.csv", row.names=F, quote=F)
 
 
 ### Travel data people used in mslt_code to generate matched population
