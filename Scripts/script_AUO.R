@@ -6,6 +6,7 @@ suppressPackageStartupMessages(library(tidyr))
 
 source("./Scripts/scenarios_MEL.R")
 source("./Scripts/graphs_AUO.R")
+source("./Scripts/data_prep/mslt_gbd_prep.R")
 
 #### Results to be presented for: 
 #1) Change mode share: see./scenarios/trips for all ages and sex. Code example below to generate for age and sex group
@@ -41,26 +42,27 @@ output_mmets<-readRDS(paste0(finalLocation,"/output_mmets.rds"))
 output_mmets_graph<-readRDS(paste0(finalLocation,"/output_mmets_graph.rds"))
 output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
 
-
+# Inputs options ----------------------------------------------------------
+# age_val: "15-19"  "20-39"  "40-64"  "65plus" "all" 
+# sex_val: "all"    "female" "male" 
+# scen_cal: "all_0_2", "commuting_0_2", all_0_5", "commuting_0_5", "all_0_10", "commuting_0_10", "all_1_2", 
+# "commuting_1_2", "all_1_5", "commuting_1_5", "all_1_10", "commuting_1_10", "all_2_5", "commuting_2_5", "all_2_10"       "commuting_2_10"
 
 # 1) Transport graph-example ----------------------------------------------
 transportModeGraph(
-  age_val='all',
-  sex_val='all',
+  age_val= "15-19",
+  sex_val='female',
   scen_val='all_2_10'
 )
-
 
 
 # 2) mmets graph-example --------------------------------------------------
 # Note: black lines are error bars
 mmetsGraph(
-  age_val='all',
+  age_val= "all",
   sex_val='all',
   scen_val='all_2_10'
 )
-
-
 
 # 3) diseases -------------------------------------------------------------
 
@@ -68,6 +70,8 @@ mmetsGraph(
 ## GUS: from here we want to present a table with age groups, sex, disease name (disease_names variable disease), median, 
 ## 2.5% and 97.5 % percentiles for diseases incidence (incident cases) and mx (deaths)
 
+## Disease names: brsc: breast cancer, carc: colon and rectum cancers, dmt2: Type 2 diabetes, ishd: ischemic heart disease, strk: ischemic stroke, tbalc:Tracheal, bronchus, and lung cancer, utrc: Uterine cancer
+## note males to not have utrc and brsc
 diseasesExample <- diseasesTable(
   age_val='all',
   sex_val='all',
@@ -75,7 +79,6 @@ diseasesExample <- diseasesTable(
 )
 
 #### Graphs for incidence, deaths and life years
-
 
 ### Incidence diseases (WE MAY WANT TO SMOOTH THE GRAPHS A BIT)
 incidenceDiseasesGraph(
