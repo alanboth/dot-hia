@@ -681,9 +681,7 @@ PMSLT_graph <- grViz("digraph{
                      
                      }")
 
-PMSLT_graph  %>% export_svg %>%
-charToRaw %>%
-rsvg_png("presentation/pmslt.png")
+
 ```
 
 *Data inputs*
