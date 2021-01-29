@@ -3,11 +3,15 @@ title: Including health impacts in transport modelling and economic appraisal-IT
   Melbourne
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-bibliography: DoT.bib
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
 classoption: landscape
 biblio-style: apsr
 subtitle: '*Technical appendix*'
 always_allow_html: yes
+bibliography: DoT.bib
 ---
 <style type="text/css">
 .main-container {
@@ -33,6 +37,9 @@ knitr::opts_chunk$set(warning = FALSE)
 
 ```
 
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
 ```{r Libraries, echo = FALSE, message = FALSE, warning = FALSE}
 library(knitr)
 library(kableExtra)
