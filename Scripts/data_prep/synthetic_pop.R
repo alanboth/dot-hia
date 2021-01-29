@@ -200,32 +200,6 @@ calculatePersonsPA <- function(pa_location,hh_location) {
   # pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv"
   # hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
 
-  
-#### PA variables
-  
-  # EXLWTIME, #Total minutes undertaken exercise for fitness, recreation, sport or transport in last week
-  # EXLWTIM2,	#Total minutes did exercise or walked for transport in last week (vig x 2)
-  # EXFSRMIN,	#Total minutes walked for fitness, recreation or sport in last week
-  # EXTRAMIN,	#Total minutes spent walking for transport in last week
-  # EXWLKTME,	#Total minutes spent walking for exercise and transport last week
-  # EXLWMMIN,	#Total minutes undertaken moderate exercise last week
-  # EXLWVMIN,	#Total minutes undertaken vigorous exercise last week
-  # WPAMMIN,	#Total minutes undertaken moderate workplace physical activity last week
-  # WPAVMIN,	#Total minutes undertaken vigorous workplace physical activity last week
-  # WPAV2MIN,	#Total minutes undertaken vigorous workplace physical activity last week (x 2)
-  # WPATMIN,	#Total minutes undertaken all workplace physical activity last week
-  # WPATMIN2,	#Total minutes undertaken all workplace physical activity last week (vig x 2)
-  # MODMINS,	#Total minutes undertaken all moderate physical activity last week
-  # VIGMINS,	#Total minutes undertaken all vigorous physical activity last week
-  # PAMINS,	  #Total minutes undertaken all physical activity last week
-  # PAMINS2,	#Total minutes undertaken all physical activity last week (vig x 2)
-  # EXLWKTNO, #Number of times walked for 10 minutes or more for transport in the last week
-  # EXNUDAYW, #Number of days exercised for fitness, recreation, sport and to get to and from places in last week
-  # EXNUDST,  #Number of days did strength or toning activities in the last week
-  # EXWLKTME, #Total minutes spent walking for exercise and transport last week
-  # EXNUDTH, #Number of days exercised for at least 30 minutes in the last week
-  
-  
   pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM") %>%
     
     dplyr::select(ABSHIDB, SEX, LFSBC, OCCUP13B, ANZSICBC, USHRWKB, STDYFTPT, AGEB,
@@ -399,9 +373,7 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
   # pa_location="Data/processed/persons_pa.csv"
   # persons_travel_location="Data/processed/persons_travel.csv"
-  # persons_travel_location=persons_travel
-
-
+  persons_travel_location=persons_travel
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
 
   # if persons_travel_location is a file location, read the csv. If not, then
@@ -510,7 +482,13 @@ calculatePersonsMatch <- function(pa_location,persons_travel_location) {
                   time_scen_public.transport, distance_scen_public.transport,
                   time_scen_other, distance_scen_other,
                   time_scen_bicycle, distance_scen_bicycle,
-                  walk_base, walk_scen)
+                  walk_base, walk_scen) %>% 
+                  mutate(mod_leis_hr = ifelse(mod_leis_hr > 30, 30, mod_leis_hr), #### Limit PA values to 30 hours
+                              vig_leis_hr = ifelse(vig_leis_hr > 30, 30, vig_leis_hr), 
+                              walk_rc= ifelse(walk_rc > 30, 30, walk_rc), 
+                              walk_trans= ifelse(walk_trans > 30, 30, walk_trans), 
+                              time_base_walking = ifelse(time_base_walking > 30, 30, time_base_walking), 
+                              time_base_bicycle = ifelse(time_base_bicycle > 30, 30, time_base_bicycle))
   
   return(persons_matched_final)
 }
