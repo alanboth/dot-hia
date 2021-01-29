@@ -545,7 +545,7 @@ GetParamters <- function(NSAMPLES = 1,
       } else {
         # Use mean and sd values in log form
         parameters[[name]] <-
-          exp(rnorm(NSAMPLES, log(val[1]), val[2]))
+          exp(rnorm(NSAMPLES, log(val[1]), val[2])) ### in ithimr rlnorm(NSAMPLES, log(val[1]), log(val[2]))
       }
     }
     ### RR DIABATES
