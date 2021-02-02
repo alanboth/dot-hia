@@ -462,13 +462,26 @@ RunDisease <- function(in_idata, in_sex, in_mid_age, in_disease, incidence_trend
 
 ### Get stDev to calculated corrected RR
 GetStDevRR <- function(RR, LB, UB){
-  # RR=2.82
-  # LB=2.35
-  # UB=3.38
-  # SE=(log(UB)-log(LB))/3.92
+
   SE=(log(UB)-log(LB))/3.92
-  return(SE) ### Belen to check calculation 
-}                
+  return(SE)
+}
+
+### Get modified parameters for lognormal distribution for RRs
+
+GetShape <- function(mean, sd) {
+  Shape=sqrt(log(sd ^ 2 + 
+                   exp(2 * log(mean))) - 
+               2 * log(mean))
+  return(Shape)
+  
+}
+
+GetLocation <- function(mean, shape) {
+  Location = log(mean) - .5 * shape^2
+  return(Location)
+}
+
 
 GetParamters <- function(NSAMPLES = 1,
                          matched_population=matched_population, # from running step two Melbourne Model
@@ -530,29 +543,38 @@ GetParamters <- function(NSAMPLES = 1,
     DIABETES_IHD_RR_M <- c(2.16, GetStDevRR(2.16, 1.82, 2.56)) 
     DIABETES_STROKE_RR_M <- c(1.83, GetStDevRR(1.83, 1.60, 2.08))
     
-    normVariables <- c("MMET_CYCLING",
-                       "MMET_WALKING", 
-                       "DIABETES_IHD_RR_F",
+    normVariablesRR <- c("DIABETES_IHD_RR_F",
                        "DIABETES_STROKE_RR_F",
                        "DIABETES_IHD_RR_M",
                        "DIABETES_STROKE_RR_M"
     )
-    for (i in 1:length(normVariables)) {
-      name <- normVariables[i]
-      val <- get(normVariables[i])
+    for (i in 1:length(normVariablesRR)) {
+      name <- normVariablesRR[i]
+      val <- get(normVariablesRR[i])
       if (length(val) == 1) {
         assign(name, val, envir = .GlobalEnv)
       } else {
-        # Use mean and sd values in log form
         parameters[[name]] <-
-          exp(rnorm(NSAMPLES, log(val[1]), val[2])) ### in ithimr rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+        rlnorm(NSAMPLES, GetLocation(val[1], val[2]), GetShape(val[1], val[2]))
       }
     }
-    ### RR DIABATES
+
+    normVariablesMMETs <- c("MMET_CYCLING",
+                         "MMET_WALKING"
+                       
+    )
+    for (i in 1:length(normVariablesMMETs)) {
+      name <- normVariablesMMETs[i]
+      val <- get(normVariablesMMETs[i])
+      if (length(val) == 1) {
+        assign(name, val, envir = .GlobalEnv)
+      } else {
+        parameters[[name]] <-
+          rlnorm(NSAMPLES, log(val[1]), log(val[2]))
+      }
+    }
     
-    ### To do
     
-    ### Variables with quantiles distributions
     ## PA DOSE RESPONSE 
     # parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
     if(PA_DOSE_RESPONSE_QUANTILE == T ) {
@@ -564,12 +586,12 @@ GetParamters <- function(NSAMPLES = 1,
   }
   
   else {
-    parameters$MMET_CYCLING <- 4.63 #c(4.63, (1.2) #lognormal  
-    parameters$MMET_WALKING <- 2.53 #c(2.53, 1.1)  #lognormal 
-    parameters$DIABETES_IHD_RR_F <- 2.82 ## c(2.82, CI (2.35, 3.38) get SD from CI
-    parameters$DIABETES_STROKE_RR_F <- 2.28 ## c(2.28) CI (1.93, 2.69) get SD from CI
-    parameters$DIABETES_IHD_RR_M <- 2.16 ## c(2.16, CI (1.82, 2.56) get SD from CI
-    parameters$DIABETES_STROKE_RR_M <- 1.83 ## c(1.83) CI (1.60, 2.08) get SD from CI
+    parameters$MMET_CYCLING <- 4.63 
+    parameters$MMET_WALKING <- 2.53 
+    parameters$DIABETES_IHD_RR_F <- 2.82 
+    parameters$DIABETES_STROKE_RR_F <- 2.28 
+    parameters$DIABETES_IHD_RR_M <- 2.16 
+    parameters$DIABETES_STROKE_RR_M <- 1.83 
   }
   
   
