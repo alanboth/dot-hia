@@ -1100,27 +1100,7 @@ summariseOutputs <- function(scenario_location,output_df){
   write.csv(output_df_agg, paste0(scenario_location,"/output_df_agg.csv"),
             row.names=F, quote=T)
   rm(output_df_agg)
-  
-  # ######## Dataframe with all outputs aggregated by year of simulation all
-  # output_df_agg_all  <- output_df_year %>%
-  #   dplyr::select(run, year, Lx_bl, Lx_sc, Lx_diff, Lwx_bl, Lwx_sc, Lwx_diff, contains("num")) %>%
-  #   group_by(run, year, .add=TRUE) %>%
-  #   summarise_if(is.numeric, sum, na.rm=T) %>%
-  #   ungroup() %>%
-  #   setNames(gsub("_sc$","_sc_all",names(.))) %>%
-  #   setNames(gsub("_bl$","_bl_all",names(.))) %>%
-  #   setNames(gsub("_diff$","_diff_all",names(.))) %>%
-  #   rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
-  #   rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
-  #   pivot_longer(cols=Lx_bl_all:mx.num_diff_strk,
-  #                names_to = c("measure","scenario", "disease"),
-  #                names_sep="_") %>%
-  #   group_by(year,measure,scenario,disease) %>%
-  #   summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-  #             percentile025=quantile(value,probs=0.025, na.rm=T),
-  #             percentile975=quantile(value,probs=0.975, na.rm=T)) 
-  #   write.csv(output_df_agg_all, paste0(scenario_location,"/output_df_agg_all.csv"),
-  #             row.names=F, quote=T)
+
   
   #### Add population numbers for presentation purposes
   population <- GetPopulation(
@@ -1269,33 +1249,34 @@ summariseMMETS <- function(scenario_location,output_df){
                values_to = "value")
   rm(data)
   
-  dataGrouped <- dataAll %>%
-    mutate(mmet=findInterval(value,seq(0,maxMMET,binwidth))) %>%
-    mutate(mmet=mmet*binwidth-(binwidth*0.5)) %>%
-    group_by(run,age,sex,scenario,mmet) %>%
-    summarise(value=sum(value,na.rm=T)) %>%
-    ungroup()
-  
-  fillDF <- crossing(
-    data.frame(run=seq(1,1000)),
-    data.frame(age=c('15-19','20-39','40-64','65plus')),
-    data.frame(sex=c('male','female','all')),
-    data.frame(scenario=c('base_mmet','scen1_mmet')),
-    data.frame(mmet=seq(0,maxMMET,binwidth)+(binwidth*0.5))
-  ) 
+  # dataGrouped <- dataAll %>%
+  #   mutate(mmet=findInterval(value,seq(0,maxMMET,binwidth))) %>%
+  #   mutate(mmet=mmet*binwidth-(binwidth*0.5)) %>%
+  #   group_by(run,age,sex,scenario,mmet) %>%
+  #   summarise(value=sum(value,na.rm=T)) %>% ### should be summing mmets
+  #   ungroup()
+  # 
+  # fillDF <- crossing(
+  #   data.frame(run=seq(1,1000)),
+  #   data.frame(age=c('15-19','20-39','40-64','65plus')),
+  #   data.frame(sex=c('male','female','all')),
+  #   data.frame(scenario=c('base_mmet','scen1_mmet')),
+  #   data.frame(mmet=seq(0,maxMMET,binwidth)+(binwidth*0.5))
+  # ) 
 
-  dataFilled <- dataGrouped %>%
-    full_join(fillDF,by=c('run','age','sex','scenario','mmet')) %>%
+  dataFilled <- dataAll %>%
+    # full_join(fillDF,by=c('run','age','sex','scenario','mmet')) %>%
     mutate(value=ifelse(is.na(value),0,value))
   rm(dataGrouped)
   
-  dataGraph <- dataFilled %>%
-    group_by(age,sex,scenario,mmet) %>%
-    summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
-              median=median(value,na.rm=T),
-              percentile025=quantile(value,probs=0.025, na.rm=T),
-              percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
-    ungroup()
+  dataGraph <- dataFilled 
+  # %>%
+  #   group_by(age,sex,scenario,mmet) %>%
+  #   summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
+  #             median=median(value,na.rm=T),
+  #             percentile025=quantile(value,probs=0.025, na.rm=T),
+  #             percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
+  #   ungroup()
   rm(dataFilled)
   
   write.csv(dataGraph,
