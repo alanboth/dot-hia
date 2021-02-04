@@ -1,7 +1,7 @@
 ##### Script with graphs, tables and text for presentation in the urban observatory
 
 
-suppressPackageStartupMessages(library(dplyr)) # for manipulating data
+suppressPackageStartupMessages(library(dplyr)) 
 suppressPackageStartupMessages(library(tidyr))
 
 
@@ -54,6 +54,8 @@ transportModeGraph(
   sex_val='female',
   scen_val='all_2_10'
 )
+
+
 
 
 # 2) mmets graph-example --------------------------------------------------
