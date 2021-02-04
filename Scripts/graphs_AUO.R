@@ -30,9 +30,30 @@ transportModeGraph <- function(age_val,sex_val,scen_val) {
           legend.box.margin=margin(-5,0,5,0))
 }
 
+transportModeText <- function(age_val,sex_val,scen_val) {
+  # age_val='all'
+  # sex_val='all'
+  # scen_val='all_2_10'
+  
+  dataFiltered <- output_transport_modes %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(scenario,mode,mode_percent, sex, age, scen)
+   
+  print(paste0("This is a What-If Scenario in which you can assess the health impacts from improvements in 
+               physical activity of shifting", " ",
+        paste0(unique(dataFiltered$scen))))
+        
+  }
+
 GraphsMode <- function(scenarios_trips) {
-  scenario_trips_weighted <-  scenario_trips  %>%
-    srvyr::as_survey_design(weights = trips_wt)
+  
+  
+  dataFiltered <- output_transport_modes %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(scenario,mode,mode_percent, participant_wt) 
+    
+  scenario_trips_weighted <-   dataFiltered  %>%
+    srvyr::as_survey_design(weights = participant_wt)
   
   #### Table with baseline and scenario proportion by mode
   scenario_trips_mode <- scenario_trips_weighted   %>% 
@@ -74,75 +95,33 @@ GraphsMode <- function(scenarios_trips) {
   bar_chart_combo_sc
 }
 
-########## Change in marginal METS (21/01/21: Belen commented out
-
-# mmets_graphs <- outputs[['mmets']] %>%
-#   pivot_longer(cols = c("base_mmet", "scen1_mmet"),
-#                names_to = "scenario",
-#                values_to = "mmets")
-# 
-# scenario.labs <- c("Baseline", "Scenario")
-# names(scenario.labs) <- c("base_mmet", "scen1_mmet")
-
-##### Graphs for mmets basline and scenario to compare with the dose response curves
-
-
-GraphsmMETs <- function(data) {
-mmets_graphs <- data %>%
-  pivot_longer(cols = c("base_mmet", "scen1_mmet"),
-               names_to = "scenario",
-               values_to = "mmets")
-
-scenario.labs <- c("Baseline", "Scenario")
-names(scenario.labs) <- c("base_mmet", "scen1_mmet")
-
-
-mmets <- ggplot(mmets_graphs, aes(x = mmets)) +
-  geom_histogram(bins = 50)  +
-  labs(title="mMET-hours per week baseline and scenario", x="mMETs-hours", y="Frequency") +
-  theme_classic() +
-  theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=10)) +
-  facet_grid(. ~scenario,
-             labeller = labeller(scenario = scenario.labs))+
-  scale_colour_brewer(type = "seq", palette = "Spectral") +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        strip.background = element_blank(),
-        panel.border = element_rect(colour = "black"))+
-  theme_classic()
-
-mmets
-
-}
-
 mmetsGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
   # scen_val='all_2_10'
   binwidth=250
   dataFiltered <- output_mmets_graph %>%
-    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
-    dplyr::select(scenario,mmet,median,percentile025,percentile975) %>% ### BZ: I changed for median
-    filter(mmet<=7000) %>%
-    mutate(mmet=ifelse(scenario=='base_mmet',mmet-(binwidth/4),mmet+(binwidth/4))) %>%
-    mutate(scenario=factor(scenario,
-                           levels=c("base_mmet","scen1_mmet"),
-                           labels=c("Baseline","Scenario")))
-  
-  ggplot(dataFiltered, aes(x=mmet, y=median)) + ### BZ: I changed for median
-    geom_col(width=(binwidth/2),position=position_nudge(x=0),aes(fill=scenario)) + 
-    # geom_crossbar(aes(x=mmet,ymin=percentile025,ymax=percentile975)) +
-    geom_errorbar(aes(x=mmet,ymin=percentile975,ymax=percentile975),size=0.2) +
-    geom_errorbar(aes(x=mmet,ymin=percentile025,ymax=percentile025),size=0.2) +
-    scale_fill_manual(values=c("green", "blue")) +
-    scale_colour_manual(values=c("green", "blue")) +
-    labs(title="mMET-hours per week baseline and scenario", y="Frequency", x="mMETs-hours") + 
-    theme(legend.title=element_blank(),
-          legend.position="bottom",
-          legend.margin=margin(0,0,0,0),
-          legend.box.margin=margin(-5,0,5,0))
+    filter(age==age_val,sex==sex_val,scen==scen_val)  
+  scenario.labs <- c("Baseline", "Scenario")
+  names(scenario.labs) <- c("base_mmet", "scen1_mmet")
+
+
+  mmets_graph <- ggplot(dataFiltered , aes(x = value)) +
+    geom_histogram(bins = 50)  +
+    labs(title="mMET-hours per week baseline and scenario", x="mMETs-hours", y="Frequency") +
+    theme_classic() +
+    theme(plot.title = element_text(hjust = 0.5, size = 12,face="bold"),
+          axis.text=element_text(size=10),
+          axis.title=element_text(size=10)) +
+    facet_grid(. ~scenario,
+               labeller = labeller(scenario = scenario.labs))+
+    scale_colour_brewer(type = "seq", palette = "Spectral") +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          strip.background = element_blank(),
+          panel.border = element_rect(colour = "black"))+
+    theme_classic()
+mmets_graph
 }
 
 diseasesTable <- function(age_val,sex_val,scen_val) {
@@ -156,6 +135,8 @@ diseasesTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,disease,mean,median,percentile025,percentile975)
 }
 
+
+#### USE moving average
 incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
@@ -167,8 +148,10 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
     arrange(disease,year)
   #& Gender=="female"
   ggplot(tmpPlot, aes(x=year,y=median)) +
-    geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_line() +
+    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
+    geom_smooth(method = "loess") +
+    geom_smooth(aes(y=percentile025, method = "loess")) +
+    geom_smooth(aes(y=percentile975, method = "loess")) +
     facet_grid(disease~.,scales="free") +
     scale_y_continuous(
       name = waiver(),
@@ -176,7 +159,8 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
       minor_breaks = NULL,
       n.breaks = 3,
       labels = waiver()) +
-    labs(x="Simulation year", y="Incidence") +
+    labs(x="Simulation year", y="Incidence",
+         title = paste("Changes in cases of disease prevented over time")) +
     theme_bw()
 }
 
@@ -191,8 +175,10 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
     arrange(disease,year)
   #& Gender=="female"
   ggplot(tmpPlot, aes(x=year,y=median)) +
-    geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_line() +
+    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
+    geom_smooth(method = "loess") +
+    geom_smooth(aes(y=percentile025, method = "loess")) +
+    geom_smooth(aes(y=percentile975, method = "loess")) +
     facet_grid(disease~.,scales="free") +
     scale_y_continuous(
       name = waiver(),
@@ -200,7 +186,8 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
       minor_breaks = NULL,
       n.breaks = 3,
       labels = waiver()) +
-    labs(x="Simulation year", y="Mortality") +
+    labs(x="Simulation year", y="Mortality",
+         title = paste("Changes in cases of disease prevented over time")) +
     theme_bw()
 }
 
@@ -215,14 +202,17 @@ halyGraph <- function(age_val,sex_val,scen_val) {
     arrange(year)
   #& Gender=="female"
   ggplot(tmpPlot, aes(x=year,y=median)) +
-    geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_line() +
+    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
+    geom_smooth(method = "loess") +
+    geom_smooth(aes(y=percentile025, method = "loess")) +
+    geom_smooth(aes(y=percentile975, method = "loess")) +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
       minor_breaks = NULL,
       n.breaks = 3,
       labels = waiver()) +
-    labs(x="Simulation year", y="Health-adjusted life years") +
+    labs(x="Simulation year", y="Health-adjusted life years", 
+         title = paste("Difference life years and health-adjusted life years")) +
     theme_bw()
 }
