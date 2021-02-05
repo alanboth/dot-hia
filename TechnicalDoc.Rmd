@@ -311,8 +311,10 @@ include_graphics(RR)
 
 Type 2 diabetes is a risk factor for ischemic heart disease and stroke, hence, we included the PIFs for stroke and ischemic heart disease of changes in diabetes using the relative risks from. [@RN29;@RN30]
 
-$$PIF_{disease} = { \frac{ -({ Prevalence_{scenario} - Prevalence_{baseline}}) * (RR - 1)} {Prevalence_{baseline} * (RR -1) +1}  }$$ 
+$$PIF = { \frac{ -({ Prevalence_{scenario} - Prevalence_{baseline}}) * (RR - 1)} {Prevalence_{baseline} * (RR -1) +1}  }$$ 
 Where prevalence scenario is prevalence of type 2 diabetes after the intervention and baseline before the intervention and the RR is the relative risk for stroke or ischemic heart disease.
+
+$$PIF_{combined} = \prod_{r} 1- (1 - PIF_{risk})$$
 
         
 For ischemic heart disease and stroke, we calculated the combined PIF given that these diseases have two risk factors in the model: physical inactivity and type 2 diabetes. 
