@@ -315,7 +315,9 @@ $$PIF_{disease} = { \frac{ -({ Prevalence_{scenario} - Prevalence_{baseline}}) *
 Where prevalence scenario is prevalence of type 2 diabetes after the intervention and baseline before the intervention and the RR is the relative risk for stroke or ischemic heart disease.
 
         
-### PIF Combined
+For ischemic heart disease and stroke, we calculated the combined PIF given that these diseases have two risk factors in the model: physical inactivity and type 2 diabetes. 
+
+
 
 ```{r, echo=FALSE, include=TRUE}
 RR_diabetes <- tribble(
