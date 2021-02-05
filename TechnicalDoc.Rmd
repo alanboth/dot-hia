@@ -4,10 +4,15 @@ title: Including health impacts in transport modelling and economic appraisal-IT
 author: "Belen Zapata-Diomedi, belen.zapata-diomedi@rmit.edu.au, Alan Both, alan.both@rmit.edu.au"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  word_document:
   html_document:
     df_print: paged
   pdf_document: default
-classoption: landscape
+header-includes:
+- \usepackage{caption}
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 biblio-style: apsr
 subtitle: '*Technical appendix*'
 always_allow_html: yes
@@ -20,8 +25,8 @@ bibliography: DoT.bib
   margin-right: auto;
 }
 body{
-  font-family: Helvetica;
-  font-size: 16pt;
+  font-family: Calibri;
+  font-size: 12pt;
 }
 h1,h2,h3,h4,h5,h6{
   font-size: 24pt;
@@ -34,40 +39,36 @@ h1,h2,h3,h4,h5,h6{
 knitr::opts_chunk$set(echo = TRUE, width = 100)
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
-
 ```
 
 ```{r, include=FALSE}
 options(tinytex.verbose = TRUE)
 ```
+
 ```{r Libraries, echo = FALSE, message = FALSE, warning = FALSE}
 library(knitr)
 library(kableExtra)
-library(plyr)
-library(lubridate)
-library(ggplot2)
-library(ggjoy)
-library(ggpubr)
-library(plm)
-library(PerformanceAnalytics)
-library(pander)
 library(dplyr)
 library(tidyr)
 library(tibble) 
 library(knitr)
-library(readxl)
-library(stringr)
-library(Hmisc)
 library(DiagrammeR)
-library(tinytex)
-library(tibble)
+library(svglite)
 library(png)
-library(cowplot)
-library(rsvg)
+library(tinytex)
+library(png)
 library(DiagrammeRsvg)
-library(magrittr)
 library(rsvg)
+library(pander)
 options(scipen = 999)
+
+
+## Pander options tables
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
 ```
 
 ## Contents
@@ -88,7 +89,7 @@ In Melbourne, a small proportion of trips are made by active modes (walking and 
 This documents outlines the methods and data sources for the development of the quantitative health impact assessment model for the impacts of transport  scenarios on population health. The model was developed for metropolitan Melbourne and quantifies physical activity related health impacts of changes in transport from a range of scenarios where short trips made by car are replaced by walking and cycling. 
 
 
-```{r, echo=FALSE, out.width="50%", fig.cap="Figure 1: Baseline mode of transport"}
+```{r, echo=FALSE, out.width="100%", fig.cap="Figure 1: Baseline mode of transport"}
 
 img1=paste0(getwd(),"/SuppDocs/StagesGraphs/TripsModeBaseline.png")
 
@@ -96,14 +97,13 @@ include_graphics(img1)
 
 ```
 
-```{r, echo=FALSE, out.width="50%", fig.cap="Figure 2: Baseline distance by mode of transport"}
+```{r, echo=FALSE, out.width="100%", fig.cap="Figure 2: Baseline distance by mode of transport"}
 
 img2=paste0(getwd(),"/SuppDocs/StagesGraphs/TripsModeDistCat.png")
 include_graphics(img2)
 
 ```
 
-<!-- ![Figure 1: Transport mode share Melbourne](SuppDocs/StagesGraphs/TripsModeBaseline.png) ![Figure 2: Transport mode share Melbourne](SuppDocs/StagesGraphs/TripsModeDistCat.png) -->
 
 # 2. Methods
 
@@ -112,10 +112,9 @@ The model analytic framework is depicted in Figure 1. The model consists of thre
 The  mathematical model used here was originally developed for the Assessing the Cost-Effectiveness in Prevention project (ACE-prevention) [@RN16] and later developments by the author [@RN26]. This version used here also borrows on developments for the Integrated Transport Health Impact Model (ITHIM) originally developed for the United Kingdom and later adoptions in other locations [@RN27]. 
 
 
-\blandscape
+```{r, echo = FALSE, fig.cap = 'Figure 3: Analytical Framework', out.height= "100%", out.width="100%"} 
 
-```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
-### This graph needs some work! basics are here
+### Size of output above and font in graph has to be adapted to output stylee (e.g. work, pdf, html)
 
 analytical_framework <- grViz("digraph{
          
@@ -123,7 +122,8 @@ analytical_framework <- grViz("digraph{
                      
                       # graph, node, and edge definitions
                       graph [compound = true, nodesep = .25, ranksep = 2.25,
-                      color = black, overlap = true, height = 200]
+                      color = black, overlap = true, fontsize = 10, fontname = Calibri]
+                      
                       
                       node [fontname = Calibri, fontcolor = black,
                       shape = rectangle, fixedsize = false, width = 3.5,
@@ -135,14 +135,14 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 40
+                          fontsize = 400
                           face = bold
                           fontname = Calibri
                           color = Gray
                          
                           label = 'Scenarios'
   
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 400, style = dotted]
                             # 0[label = 'Physical activity']
                             1[label = 'Private car use']
                             2[label = 'Cycling']
@@ -157,7 +157,7 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 40
+                          fontsize = 400
                           fontname = Calibri
                           color = Gray
                           label = 'Potential impact fraction and risk'
@@ -166,12 +166,12 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 30
+                          fontsize = 400
                           fontname = Calibri
                           color = Gray
                           label = ''
                             
-                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
+                             node[shape = rectangle, color = Black, margin = 0.25, fontsize = 400, style = dotted]
                             # 5[label = 'Ambient PM2.5']
                             # 6[label = 'On road PM2.5']
                             7[label = 'Physical activity']
@@ -183,12 +183,12 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 40
+                          fontsize = 400
                           fontname = Calibri
                           color = Gray
                           label = 'Relative risks'
                             
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 400, style = dotted]
                             9[label = 'Ischemic heart disease']
                             10[label = 'Stroke']
                             # 11[label = 'COPD']
@@ -204,12 +204,12 @@ analytical_framework <- grViz("digraph{
                           graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 40
+                          fontsize = 400
                           fontname = Calibri
                           color = Gray
                           label = 'Proportional multi-state life table'
                              
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 400, style = dotted]
                             17[label = 'Disease processes']
                             # 18[label = 'Injuries process']
                             19[label = 'Life table']
@@ -219,12 +219,12 @@ analytical_framework <- grViz("digraph{
                            graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
-                          fontsize = 40
+                          fontsize = 400
                           fontname = Calibri
                           color = Gray
                           label = 'Outcomes'
                             
-                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 32, style = dotted]
+                            node[shape = rectangle, color = Black, margin = 0.25, fontsize = 400, style = dotted]
                             20[label = 'Cause-specific cases of diseases prevented']
                             21[label = 'Cause-specific deaths prevented']
                             # 22[label = 'Road trauma pYLDs']
@@ -257,9 +257,10 @@ analytical_framework <- grViz("digraph{
                      }")
 
 analytical_framework
+tmp<-capture.output(rsvg_png(charToRaw(export_svg(analytical_framework)),'analytical_framework.png'))
 
 ```
-\elandscape
+
 
 ## 2.2 Scenarios
 
@@ -275,10 +276,12 @@ scenarios <- tribble(
 "Replace distance walking", "0 km, >=1km, >=2km", 
 "Replace distance cycling", "0 km, 1-2km, >=2km, 3-5km, 6-10km, >=10km",
 "Trip purpose", "All, Commuting")
-kable(scenarios, booktabs = T, caption = "Table 1: Scenarios options", longtable = TRUE) %>%
-# column_spec(1:3, width = "15em") %>%
-  row_spec(0, bold = T) %>%
-  kable_styling()
+
+pander(scenarios)
+# kable(scenarios, booktabs = T, caption = "Table 1: Scenarios options", longtable = TRUE) %>%
+# # column_spec(1:3, width = "15em") %>%
+#   row_spec(0, bold = T) %>%
+#   kable_styling()
 ```
 
 
@@ -287,14 +290,13 @@ kable(scenarios, booktabs = T, caption = "Table 1: Scenarios options", longtable
 
 The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. PIFs in this model calculate the average change in incidence of diseases (Figure 3) in the scenarios' diseases' processes. PIFs were derived for: ischemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R [@RN27] project were used here to calculate individual level RRs for baseline (do nothing) and scenario which where then used to calculate individual level PIFs (\ref{eq1}).
 From individual level PIFs, age group and sex average PIFs were calculated to modify incidence in the age and sex cohort disease processes' (Figure 3). Inputs for the PIFs' calculations are individual marginal metabolic of task per hour (mMET-hours) per week and disease relative risks. METs are metabolic equivalent of tasks and measure the energy expenditure required to carry out the physical activity, expressed as a multiple of the resting metabolic rate. Marginal METs only consider energy expended above resting metabolic rate.[@RN21]  All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mMET-hours for: colon, breast and uterine cancers, ischemic heart disease and stroke; 10 for lung cancer and 32 for stroke)(https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). Figure 4 depicts relatives risks for each of the modeled diseases. Each individual has a baseline and scenario mMET-hours, where the scenario is modified by the additional walking or/and cycling attributable to the scenario. The derivation of mMET-hours is explained below. 
+Type 2 diabetes is a risk factor for ischemic heart disease and stroke, hence, we included the impact of changes in diabetes on these diseases using the relative risks from
 
 
 
-$$
-\begin{align}
- PIF_d= \frac {RR_{d-baseline} - RR_{d-scenario}} {RR_{d-baseline}}
-\end{align}
-$$
+
+$$PIF_{disease} = { \frac{ { RR_{baseline} - RR_{scenario}}} {RR_{baseline}} }$$ 
+
 **Relative risks**
 
 Relative risks sources: https://shiny.mrc-epid.cam.ac.uk/meta-analyses-physical-activity/
@@ -317,94 +319,76 @@ A matched population was created to derive individual mMET-hours per week based 
 ```{r, echo = FALSE, fig.cap = 'Figure 5: Analytical Framework mMET-hours', out.width = "100%", out.height="100%" } 
 ### This graph needs some work! basics are here
 
-analytical_framework <- grViz("digraph{
+analytical_framework_METs <- grViz("digraph{
          
                       graph[rankdir = LR, compound = true, nodesep = 5, ranksep = 10,
-                      color = black, overlap = true, height = 400, width = 400]
+                      color = black, overlap = true, height = 400, width = 400, fontsize = 400]
                       
                       node[fontname = Calibri, fontcolor = black,
                       shape = rectangle, width = 5,
-                      color = Black, fontsize=400, align=centered]
+                      color = Black, fontsize = 400, align=centered]
 
                       edge[color = Black, arrowhead = normal, arrowtail = none, tailport= 'e', headport= 'w']
                       
-                      
-                      
                          subgraph cluster_0 {
-                          graph[shape = rectangle, fontsize = 400]
                           style = rounded
                           bgcolor = WhiteSmoke
                           face = bold
-                          fontname = Calibri
                           color = Black
                           label = 'Data sources'
-  
+                          
+                            1[label = 'VISTA 2017-2018', fontsize = 400]
+                            2[label = 'NHS 2017-18, Basic CURF', fontsize = 400]
+                            3[label = 'SEIFA INDEX', fontsize = 400]
                             
-                            1[label = 'VISTA 2017-2018']
-                            2[label = 'NHS 2017-18, Basic CURF']
-                            3[label = 'SEIFA INDEX']
-                            
-                      
-     
-                         }    
-                         
-                         
+                         }  
                          subgraph cluster_1 {
-                          graph[shape = rectangle, fontsize = 400]
+                          graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
                           face = bold
-                          fontname = Calibri
                           color = Black
                           label = 'Data used'
   
-                            
-                            4[label = 'Households']
-                            5[label = 'Persons']
-                            6[label = 'Trips']
-                            7[label = 'Households']
-                            8[label = 'Person']
-                            9[label = 'SES']
+                            4[label = 'Households', fontsize = 400]
+                            5[label = 'Persons', fontsize = 400]
+                            6[label = 'Trips', fontsize = 400]
+                            7[label = 'Households', fontsize = 400]
+                            8[label = 'Person', fontsize = 400]
+                            9[label = 'SES', fontsize = 400]
                             
                    {rank = same; 4;5;6;7;8;9}
                 
-     
                          }   
                        
                        subgraph cluster_2 {
-                          graph[shape = rectangle, fontsize = 400]
+                          graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
                           face = bold
-                          fontname = Calibri
                           color = Black
                           label = 'Generated data sets to match'
   
                             
-                            10[label = 'Persons transport (n=7,117)']
-                            11[label = 'Persons Leisure and work (n=16,370)']
+                            10[label = 'Persons transport (n=7,117)', fontsize = 400]
+                            11[label = 'Persons Leisure and work (n=16,370)', fontsize = 400]
             
-                            
                             
                            {rank = same; 10;11}
      
                        }
                        
-                       
                           subgraph cluster_3 {
-                          graph[shape = rectangle, fontsize = 400]
+                          graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
                           face = bold
-                          fontname = Calibri
                           color = Black
                           label = 'Matching variables'
-                          
-  
                             
-                            12[label = 'Age group']
-                            13[label = 'Sex']
-                            14[label = 'SES']
+                            12[label = 'Age group', fontsize = 400]
+                            13[label = 'Sex', fontsize = 400]
+                            14[label = 'SES', fontsize = 400]
                             15[label = 'Walk for transport (yes/no)']
                             16[label = 'Walk min for transport']
                             17[label = 'Work status']
@@ -415,19 +399,15 @@ analytical_framework <- grViz("digraph{
                           }
                           
                           subgraph cluster_4 {
-                          graph[shape = rectangle, fontsize = 400]
+                          graph[shape = rectangle]
                           style = rounded
                           bgcolor = WhiteSmoke
                           face = bold
-                          fontname = Calibri
                           color = Black
                           label = ''
-                          
-  
                             
-                            18[label = 'mMET-hours per person']
+                            18[label = 'mMET-hours per person', fontsize = 400]
 
-                            
                            {rank = same; 12;13;14;15;16;17}
      
                           }
@@ -444,15 +424,15 @@ analytical_framework <- grViz("digraph{
                           11 -> 14 [ltail= cluster_2,lhead= cluster_3];
                           14 -> 18 [ltail= cluster_3,lhead= cluster_4];
                           
-                         
-                            
                    }")
        
 
-analytical_framework
+analytical_framework_METs
 
+tmp<-capture.output(rsvg_png(charToRaw(export_svg(analytical_framework_METs)),'analytical_framework_METs.png'))
 
 ```
+
 
 
 **MET scores**
@@ -468,10 +448,12 @@ mets <- tribble(
 "Moderate PA", "NHS 2017-18", "3.5",
 "Vigorous PA", "NHS 2017-18", "7",
  )
-kable(mets, booktabs = T, caption = "Table 2: mMETS-hr", longtable = TRUE) %>%
-column_spec(1:1, width = "15em") %>%
-  row_spec(0, bold = T) %>%
-  kable_styling()
+# kable(mets, booktabs = T, caption = "Table 2: mMETS-hr", longtable = TRUE) %>%
+# column_spec(1:1, width = "15em") %>%
+#   row_spec(0, bold = T) %>%
+#   kable_styling()
+
+pander(mets)
 ```
 
 **Victorian Integrated Travel and Activity Survey**
@@ -501,10 +483,12 @@ heart rate or breathing (e.g. jogging, cycling, aerobics, competitive tennis). 2
 weights, resistance training, pull-ups, push-ups, or sit ups. 2) Includes any Strengthening and toning exercises activities already mentioned",
 "Workplace physical activity", "1) Usual physical activity while at work on a typical work day. 2) Must have carried out for at least 10 minutes continuously. 3) Moderate activity in the workplace was defined as activity that caused a moderate increase in the heart rate or breathing of the respondent (e.g. brisk walking or carrying light lights). 4) Vigorous activity in the workplace was defined as activity that caused a large increase in heart rate or breathing (e.g. carrying or lifting heavy loads, digging or construction work)")
 
-kable(pa_NHS_collected_data, booktabs = T, caption = "Table 3: NHS PA variables", longtable = TRUE) %>%
-column_spec(1:1, width = "15em") %>%
-  row_spec(0, bold = T) %>%
-  kable_styling()
+# kable(pa_NHS_collected_data, booktabs = T, caption = "Table 3: NHS PA variables", longtable = TRUE) %>%
+# column_spec(1:1, width = "15em") %>%
+#   row_spec(0, bold = T) %>%
+#   kable_styling()
+
+pander(pa_NHS_collected_data)
 ```
 
 
@@ -515,7 +499,8 @@ The seven included diseases are modeled applying a set of differential equations
 
 
 \blandscape
-```{r, echo = FALSE, fig.cap = 'Figure 1: Analytical Framework', out.height= "200%", out.width="100%"} 
+
+```{r, echo = FALSE, fig.cap = 'Figure 6: Analytical Framework', out.height= "200%", out.width="100%"} 
 ### This graph needs some work! basics are here
 
 PMSLT_graph <- grViz("digraph{
@@ -688,11 +673,14 @@ PMSLT_graph <- grViz("digraph{
                      
                      }")
 
+PMSLT_graph
 
+tmp<-capture.output(rsvg_png(charToRaw(export_svg(PMSLT_graph)),'PMSLT_graph.png'))
 ```
 
+\elandscape
+
 *Data inputs*
-Type two diabetes [@RN25]
 
 Data inputs for the proportional multi-state life table model (PMSLT) include inputs for: general life table (population, mortality rates and prevalent years lived with disability rates for all causes (YLD)), diseases processes (incidence and case fatality) and injuries process (mortality rates and years lived with disability rates). Here we prepared inputs for the Melbourne population, when local inputs were available, these were used, otherwise, we used state or nationally representative inputs. Table 1 describes all data inputs for the MSLT. Each of the MSLT components and related code are explained below Table 1.
 
@@ -705,12 +693,13 @@ pmslt_inputs <- tribble(
 "Disease process", "Disability weights, incidence and case fatality", "Disability weights were derived from disease specific YLDs [@RN8] and prevalence [@RN8]. Incidence and case fatality were derived using DISMOD II  and ", "Table 2 outlines DISMOD II data processing and data inputs. Disability weights were calculated by dividing disease specific YLDs by prevalence and adjusted by all cause YLDs",
 "Diseases trends", "Future trends to apply to incidence and case fatality", "Trends cancers: incidence [@RN3], mortality [@RN4]. Trends for cardiovascular diseases, diabetes and chronic obstructive pulmonary disease were not available. These were derived from past data [@RN5; @RN6; @RN7]", "Explained in sections Trends"
 )
-kable(pmslt_inputs, booktabs = T, caption = " Table 4: PMSLT inputs", longtable = TRUE) %>%
-
-  column_spec(1:2, width = "7em") %>%
-  column_spec(3:4, width = "15em") %>%
-  row_spec(0, bold = T)  %>%
-  kable_styling()
+# kable(pmslt_inputs, booktabs = T, caption = " Table 4: PMSLT inputs", longtable = TRUE) %>%
+# 
+#   column_spec(1:2, width = "7em") %>%
+#   column_spec(3:4, width = "15em") %>%
+#   row_spec(0, bold = T)  %>%
+#   kable_styling()
+pander(pmslt_inputs)
 ```
 
 
@@ -718,11 +707,10 @@ kable(pmslt_inputs, booktabs = T, caption = " Table 4: PMSLT inputs", longtable 
 
 Disability weights (DW) are derived from disease specific prevalent years lived with disability (YLD) and disease specific prevalence by age group (5 years) and sex. Data for YLDs prevalence from GBD data for 2017. An age and sex specific-correction was introduced to counteract the effects of accumulating comorbid illnesses in the older age groups (Equation 1). Interpolation was used to derive rates per single year of age from 5-year age intervals rates.
 
-\begin{equation}
-\label{DW adjusted for total YLDs-YLDdPd1YLDt}
-(YLDd/Pd)/(1-YLDt) = DW adjusted for total YLDs
-\end{equation}
 
+$$DW_{adjusted} = { { \frac{ { \frac{ { {YLD_{disease}}}} {P_{disease}} } } {1 - YLD_{total}}}} $$ 
+
+\frac{4z^3}{16}
 
 Where YLDd is the YLD mean number per age and sex for a given disease, Pd is the prevalence (as reported in GBD )  for a given disease by age and sex and YLDt is total YLD rate per age and sex. 
 
@@ -748,12 +736,14 @@ dismod_process <- tribble(
 "Lung cancer",  "Population and deaths data for Australia (@RN1)", "Incidence and mortality (@RN3)", "C33–C34", "Remission set to zero"
 )
 
-kable(dismod_process , booktabs = T, caption = "Table 5: Dismod II input data and procedures") %>%
- kable_styling(latex_options = c("hold position", "repeat_header"),
-               full_width = F)%>%
-  column_spec(1, width = "5em") %>%
-  column_spec(2:5, width = "8em") %>%
-  row_spec(0, bold = T)
+# kable(dismod_process , booktabs = T, caption = "Table 5: Dismod II input data and procedures") %>%
+#  kable_styling(latex_options = c("hold position", "repeat_header"),
+#                full_width = F)%>%
+#   column_spec(1, width = "5em") %>%
+#   column_spec(2:5, width = "8em") %>%
+#   row_spec(0, bold = T)
+
+pander(dismod_process)
 
 ```
 
@@ -774,12 +764,13 @@ for mortality", "Same above", "Same above",
 "Disease life table: Chronic obstructive pulmonary disease incidence", "@RN7 mortality past trends from year 2005 to 2018", "Same as above", "Same as above"
 )
 
-kable(trends_diseases, booktabs = T, caption = "Table 6: Forecast trends for diseases") %>%
- kable_styling(latex_options = c("repeat_header", "hold position"),
-               full_width = F)%>%
-  column_spec(1:3, width = "8em") %>%
-  column_spec(4, width = "14em") %>%
-  row_spec(0, bold = T)
+# kable(trends_diseases, booktabs = T, caption = "Table 6: Forecast trends for diseases") %>%
+#  kable_styling(latex_options = c("repeat_header", "hold position"),
+#                full_width = F)%>%
+#   column_spec(1:3, width = "8em") %>%
+#   column_spec(4, width = "14em") %>%
+#   row_spec(0, bold = T)
+pander(trends_diseases)
 ```
 
 # 3. References
