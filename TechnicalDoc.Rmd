@@ -290,7 +290,7 @@ pander(scenarios)
 
 The potential impact fraction (PIF) measures the proportional change in the burden of disease attributable to a change in a related risk factor [@RN19]. PIFs in this model calculate the average change in incidence of diseases (Figure 3) in the scenarios' diseases' processes. PIFs were derived for: ischemic heart disease, stroke, type 2 diabetes, lung cancer, colon cancer, breast cancer and uterine cancer. The methods developed in the ITHIM-R [@RN27] project were used here to calculate individual level RRs for baseline (do nothing) and scenario which where then used to calculate individual level PIFs (\ref{eq1}).
 From individual level PIFs, age group and sex average PIFs were calculated to modify incidence in the age and sex cohort disease processes' (Figure 3). Inputs for the PIFs' calculations are individual marginal metabolic of task per hour (mMET-hours) per week and disease relative risks. METs are metabolic equivalent of tasks and measure the energy expenditure required to carry out the physical activity, expressed as a multiple of the resting metabolic rate. Marginal METs only consider energy expended above resting metabolic rate.[@RN21]  All diseases have a threshold beyond which there are no benefits from increases in mMETs-hours, except for diabetes (35 mMET-hours for: colon, breast and uterine cancers, ischemic heart disease and stroke; 10 for lung cancer and 32 for stroke)(https://www.overleaf.com/project/5bc08a8caba5c52e6060b614). Figure 4 depicts relatives risks for each of the modeled diseases. Each individual has a baseline and scenario mMET-hours, where the scenario is modified by the additional walking or/and cycling attributable to the scenario. The derivation of mMET-hours is explained below. 
-Type 2 diabetes is a risk factor for ischemic heart disease and stroke, hence, we included the impact of changes in diabetes on these diseases using the relative risks from
+
 
 
 
@@ -301,13 +301,33 @@ $$PIF_{disease} = { \frac{ { RR_{baseline} - RR_{scenario}}} {RR_{baseline}} }$$
 
 Relative risks sources: https://shiny.mrc-epid.cam.ac.uk/meta-analyses-physical-activity/
 
-```{r image_grobs, fig.show = "hold", echo=FALSE, out.width="40%", fig.cap="Figure 4: Relative risks for modelled diseases", fig.align = "default"}
+```{r image_grobs, fig.show = "hold", echo=FALSE, out.width="20%", fig.cap="Figure 4: Relative risks for modelled diseases"}
 
 file_name=paste0(getwd(),"/SuppDocs/RelativeRisks/")
 RR<-list.files(file_name, pattern = ".png", full.names = TRUE)
 include_graphics(RR)
 
 ```
+
+Type 2 diabetes is a risk factor for ischemic heart disease and stroke, hence, we included the PIFs for stroke and ischemic heart disease of changes in diabetes using the relative risks from. [@RN29;@RN30]
+
+$$PIF_{disease} = { \frac{ -({ Prevalence_{scenario} - Prevalence_{baseline}}) * (RR - 1)} {Prevalence_{baseline} * (RR -1) +1}  }$$ 
+Where prevalence scenario is prevalence of type 2 diabetes after the intervention and baseline before the intervention and the RR is the relative risk for stroke or ischemic heart disease.
+
+        
+### PIF Combined
+
+```{r, echo=FALSE, include=TRUE}
+RR_diabetes <- tribble(
+~"Disease", ~"Relative Risk (95% confidence interval)", ~"Sex",
+"Ischemic heart disease", "2.82 (2.35, 3.38)", "Female", 
+"Stroke", "2.28 (1.93, 2.69)", "Female",
+"Ischemic heart disease", "2.16 (1.82, 2.56)", "Male", 
+"Stroke", "1.83 (1.60, 2.08)", "Male",
+ )
+pander(RR_diabetes)
+```
+
 
 **mMET-hours**
 
