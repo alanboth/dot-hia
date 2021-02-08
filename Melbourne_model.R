@@ -28,12 +28,12 @@ source("Scripts/data_prep/population_prep.R")
 ### Outputs location (select your local drive)
 scenarioLocation <- "./scenarios"
 scenarioTripsLocation <- "./scenarios/scenarioTrips"
-outputLocation <- "C:/Users/e95517/OneDrive - RMIT University/HIA-DoT/dot-hia/output/melbourne-outputs-raw" #"/home/alan/DATA/dot-hia/melbourne-outputs-raw"
-combinedLocation <- "C:/Users/e95517/OneDrive - RMIT University/HIA-DoT/dot-hia/output/melbourne-outputs-combined" # "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
-combinedLocationMMETS <- "C:/Users/e95517/OneDrive - RMIT University/HIA-DoT/dot-hia/output/melbourne-outputs-combined-mmets" #"/home/alan/DATA/dot-hia/melbourne-outputs-combined-mmets"
-summarisedLocation <- "C:/Users/e95517/OneDrive - RMIT University/HIA-DoT/dot-hia/output/melbourne-outputs-summarised" #"/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
+outputLocation <- "C:/dot-hia/output/melbourne-outputs-raw" #"/home/alan/DATA/dot-hia/melbourne-outputs-raw"
+combinedLocation <-  "C:/dot-hia/output/dot-hia/output/melbourne-outputs-combined" # "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
+combinedLocationMMETS <-  "C:/dot-hia/output/melbourne-outputs-combined-mmets" #"/home/alan/DATA/dot-hia/melbourne-outputs-combined-mmets"
+summarisedLocation <-  "C:/dot-hia/output/output/melbourne-outputs-summarised" #"/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
 finalLocation <- "./melbourne-outputs"
-
+"C:\dot-hia"
 ### Scenarios 
 scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
   mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
@@ -49,7 +49,7 @@ for (i in 1:nrow(scenarios_Melb)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_Melb[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<-1:1000
+  seeds<-1:100
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
@@ -69,7 +69,7 @@ for (i in 1:nrow(scenarios_Melb)){
   cat(paste0("\n scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
 
-
+####### TO HERE (5/02, CHECK ISSUES WITH SAVING RESULTS)
 #### Save combined outputs (for all scenarios and iterations)
 ##### Create directories if not created
 dir.create(combinedLocation, recursive=TRUE, showWarnings=FALSE)
