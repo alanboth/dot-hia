@@ -606,8 +606,23 @@ CalculationModel <- function(seed=1,
                              output_location="modelOutput",
                              persons_matched
                              ){
-
+  
+  
+  # # if persons_matched is a file location, read the csv. If not, then
+  # # use it as a dataframe.
+  # persons_matched_df <- NULL
+  # if(is.character(persons_matched)) {
+  #   persons_matched_df <- read.csv(persons_matched,as.is=T, fileEncoding="UTF-8-BOM")
+  # }
+  # if(!is.character(persons_matched)) {
+  #   persons_matched_df <- persons_matched
+  # }
+  # persons_matched <- persons_matched_df
+  # cat(paste0("loaded persons_matched, with ", nrow(persons_matched)," rows\n"))
+  
+  
   ### Model parameters
+  #### i_age_cohort and i_age are linked to ouputs of calculateScenarioMel
   i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
   i_sex <- c("male", "female")
   
@@ -621,8 +636,10 @@ CalculationModel <- function(seed=1,
     matched_population = persons_matched,
     MMET_CYCLING = c(4.63, 1.2), ### 
     MMET_WALKING = c(2.53, 1.1),
-    PA_DOSE_RESPONSE_QUANTILE = F)
+    PA_DOSE_RESPONSE_QUANTILE = T)
   
+  ### BZ: saved to try to debug the issue with uncertainty
+  # save(parameters, file="parameters.RData")### True to run uncertainty  (creates quantiles files for RR physical activity)
   cat('test\n')
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
@@ -630,7 +647,7 @@ CalculationModel <- function(seed=1,
   #################################################### Calculate PIFs by age and sex groups #####################################################
   # 3 calculations: mmets_pp, RR_PA_calculations and pif
   
-  ### Generate marginal mets for matched population, then used to derive RRs per person. Total defaults is FALSE, do not include work mmets.
+  ### 1) Generate marginal mets for matched population, then used to derive RRs per person. Total defaults is FALSE, do not include work mmets.
   mmets_pp <- calculateMMETSperPerson(
     matched_pop_location = persons_matched,
     MMET_CYCLING = MMET_CYCLING, 
@@ -648,7 +665,7 @@ CalculationModel <- function(seed=1,
       age >= 65             ~ "65 plus"))) %>%
     mutate(sex=as.factor(sex)) 
   
-  ###  Create RRs per person to calculate PIFs
+  ### 2) Create RRs per person to calculate PIFs
   
   #### Relative risks of physical activity
   
@@ -663,7 +680,7 @@ CalculationModel <- function(seed=1,
   )
   cat(paste0("have run gen_pa_rr_wrapper\n"))
   
-  ### Calculate PIFs by age and sex groups
+  ### 3) Calculate PIFs by age and sex groups
   
   pif <- health_burden_2(
     ind_ap_pa_location=RR_PA_calculations,
@@ -731,10 +748,10 @@ CalculationModel <- function(seed=1,
   
   # 2) Run disease life tables baseline
   
-  ### Disease short_namesstarts with diabetes. This is important when calculating the scenario disease life tables as diabetes is calculated first to then 
+  ### Change order in disease short_names to start with diabetes. This is important when calculating the scenario disease life tables as diabetes is calculated first to then 
   ### impact on cardiovascular disease calculations. 
   
-  ### Diseases trends applied to incidence and case fatality (from here: Data\processed\mslt\incidence_trends_f.csv")
+  ### ALAN, diseases trends should be applied to incidence and case fatality (from here: Data\processed\mslt\incidence_trends_f.csv")
   ### In the disease trends "Year" means simulation year, not age. 
   
   incidence_trends <- bind_rows(
@@ -1022,6 +1039,9 @@ CalculationModel <- function(seed=1,
   write.csv(output_df, file=paste0(outputDir,seed,".csv"), row.names=FALSE)
   write.csv(mmets_pp, file=paste0(mmetsDir,seed,".csv"), row.names=FALSE)
   
+  # return(list(mmets=mmets_pp, output_df=output_df, output_df_agg_sex=output_df_agg_sex, output_df_agg_all=output_df_agg_all,
+  #             output_life_expectancy_change=output_life_expectancy_change,output_life_years_change=output_life_years_change,
+  #             output_diseases_change=output_diseases_change))
   return(seed)
 }
 
@@ -1152,8 +1172,6 @@ summariseOutputs <- function(scenario_location,output_df){
     dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff) %>%
     summarise_if(is.numeric, funs(sum)) %>%
     ungroup() %>%
-    mutate(Lwx_change = Lwx_diff/Lwx_bl,
-           Lx_change = Lx_diff/Lx_bl) %>%
     pivot_longer(cols=Lx_diff:Lwx_diff,
                  names_to = "measure") %>%
     group_by(age_group_final, Gender, measure) %>%
@@ -1202,55 +1220,6 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)
   rm(datAll)
 }
-
-# Table: Diseases deaths, incidence and ylds change ---- Added belen, shows change in % (08/02/2021)
-output_diseases_change_percentage <- dataAll %>%
-  # filter(run==1) %>%
-  dplyr::select(run, Gender, age_group_final,
-                matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl_dmt2|inc_num_bl_ishd|inc_num_bl_strk|inc_num_bl_carc|inc_num_bl_copd|inc_num_bl_tbalc|inc_num_bl_brsc|inc_num_bl_utrc|inc_num_bl_lri|mx_num_bl_dmt2|mx_num_bl_ishd|mx_num_bl_st|inc_num_bl_tbalc|inc_num_bl_brsc|inc_num_bl_utrc|inc_num_bl_lri|mx_num_bl_dmt2|mx_num_bl_ishd|mx_num_bl_strk|mx_num_bl_carc|mx_num_bl_copd|mx_num_bl_tbalc|mx_num_bl_brsc|mx_num_bl_utrc|mx_num_bl_lri")) %>%
-  group_by(run, Gender, age_group_final) %>%
-  summarise_if(is.numeric, funs(sum)) %>%
-  ungroup() %>%
-  
-  dplyr::mutate(inc_change_dmt2=inc_num_diff_dmt2/inc_num_bl_dmt2, 
-                inc_change_ishd=inc_num_diff_ishd/inc_num_bl_ishd,
-                inc_change_strk=inc_num_diff_strk/inc_num_bl_strk,
-                inc_change_carc=inc_num_diff_carc/inc_num_bl_carc,
-                inc_change_tbalc=inc_num_diff_tbalc/inc_num_bl_tbalc,
-                inc_change_brsc=inc_num_diff_brsc/inc_num_bl_brsc,
-                inc_change_utrc=inc_num_diff_utrc/inc_num_bl_utrc,
-                mx_change_dmt2=mx_num_diff_dmt2/mx_num_bl_dmt2, 
-                mx_change_ishd=mx_num_diff_ishd/mx_num_bl_ishd,
-                mx_change_strk=mx_num_diff_strk/mx_num_bl_strk,
-                mx_change_carc=mx_num_diff_carc/mx_num_bl_carc,
-                mx_change_tbalc=mx_num_diff_tbalc/mx_num_bl_tbalc,
-                mx_change_brsc=mx_num_diff_brsc/mx_num_bl_brsc,
-                mx_change_utrc=mx_num_diff_utrc/mx_num_bl_utrc
-                
-                ) %>%
-
-rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
-  rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
-  pivot_longer(cols=inc.num_diff_brsc:mx.num_diff_strk,
-               names_to = c("measure","scenario","disease"),
-               names_sep="_") %>%
-  group_by(Gender,age_group_final,measure,scenario,disease) %>%
-  summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
-            percentile025=quantile(value,probs=0.025, na.rm=T),
-            percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
-  ungroup() %>%
-  filter(!is.nan(mean)) %>% # ignore sex-exclusive diseases (e.g., brsc)
-  mutate(measure=case_when(
-    measure=="inc.num" ~ "inc_num",
-    measure=="mx.num" ~ "mx_num"
-  )) %>%
-  # mutate_if(is.numeric, round) %>%
-  left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%
-  relocate(population, .after = Gender)
-write.csv(output_diseases_change,
-          paste0(scenario_location,"/output_diseases_change_percentage.csv"),
-          row.names=F, quote=T)
-rm(datAll)
 
 summariseMMETS <- function(scenario_location,output_df){
   # in case the directory hasn't been made yet
