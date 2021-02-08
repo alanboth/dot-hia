@@ -6,11 +6,14 @@ library(scales) # for reordering factor for graphs
 library(forcats)
 library(ggeasy)
 library(ggridges)
+library(zoo) # for calculating rolling mean
 
 ############################## Graphs function (to do age and sex graphs) ################################################
 
 
 ########## Change in mode of transport
+
+
 transportModeGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
@@ -142,7 +145,7 @@ diseasesTable <- function(age_val,sex_val,scen_val) {
 }
 
 
-#### USE moving average
+#### Data smooth using median moving average
 incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
@@ -153,11 +156,10 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
     dplyr::select(year,disease,mean,median,percentile025,percentile975) %>%
     arrange(disease,year)
   #& Gender=="female"
-  ggplot(tmpPlot, aes(x=year,y=median)) +
-    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_smooth(method = "loess") +
-    geom_smooth(aes(y=percentile025, method = "loess")) +
-    geom_smooth(aes(y=percentile975, method = "loess")) +
+  ggplot(tmpPlot, aes(x=year,y=median)) + 
+    geom_line(aes(y=rollmedian(median, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile025, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile975, 3, na.pad=TRUE))) +
     facet_grid(disease~.,scales="free") +
     scale_y_continuous(
       name = waiver(),
@@ -170,6 +172,8 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
     theme_bw()
 }
 
+
+#### Data smooth using median moving average
 mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
@@ -181,10 +185,9 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
     arrange(disease,year)
   #& Gender=="female"
   ggplot(tmpPlot, aes(x=year,y=median)) +
-    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_smooth(method = "loess") +
-    geom_smooth(aes(y=percentile025, method = "loess")) +
-    geom_smooth(aes(y=percentile975, method = "loess")) +
+    geom_line(aes(y=rollmedian(median, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile025, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile975, 3, na.pad=TRUE))) +
     facet_grid(disease~.,scales="free") +
     scale_y_continuous(
       name = waiver(),
@@ -193,7 +196,7 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     labs(x="Simulation year", y="Mortality",
-         title = paste("Changes in cases of disease prevented over time")) +
+         title = paste("Changes in cases of deaths prevented over time")) +
     theme_bw()
 }
 
@@ -208,10 +211,9 @@ halyGraph <- function(age_val,sex_val,scen_val) {
     arrange(year)
   #& Gender=="female"
   ggplot(tmpPlot, aes(x=year,y=median)) +
-    # geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="grey75") +
-    geom_smooth(method = "loess") +
-    geom_smooth(aes(y=percentile025, method = "loess")) +
-    geom_smooth(aes(y=percentile975, method = "loess")) +
+    geom_line(aes(y=rollmedian(median, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile025, 3, na.pad=TRUE))) +
+    geom_line(aes(y=rollmedian(percentile975, 3, na.pad=TRUE))) +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -219,7 +221,7 @@ halyGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     labs(x="Simulation year", y="Health-adjusted life years", 
-         title = paste("Difference life years and health-adjusted life years")) +
+         title = paste("Difference in health-adjusted life years")) +
     theme_bw()
 }
 
@@ -333,8 +335,8 @@ ggsave("SuppDocs/StagesGraphs/TripsModeDistCat.png")
 
 
 ## Install package if not installed, note, you need devtools
-library(devtools)
-install_github("ITHIM/ITHIM-R")
+# library(devtools)
+# install_github("ITHIM/ITHIM-R")
 library(ithimr)
 dose_response_folder=paste0(file.path(find.package('ithimr',lib.loc=.libPaths()), 'extdata/global'), "/dose_response/drpa/extdata")
 list_of_files <- list.files(path=dose_response_folder, recursive=TRUE,
