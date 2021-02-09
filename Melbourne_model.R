@@ -29,11 +29,11 @@ source("Scripts/data_prep/population_prep.R")
 scenarioLocation <- "./scenarios"
 scenarioTripsLocation <- "./scenarios/scenarioTrips"
 outputLocation <- "C:/dot-hia/output/melbourne-outputs-raw" #"/home/alan/DATA/dot-hia/melbourne-outputs-raw"
-combinedLocation <-  "C:/dot-hia/output/dot-hia/output/melbourne-outputs-combined" # "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
+combinedLocation <-  "C:/dot-hia/output//melbourne-outputs-combined" # "/home/alan/DATA/dot-hia/melbourne-outputs-combined"
 combinedLocationMMETS <-  "C:/dot-hia/output/melbourne-outputs-combined-mmets" #"/home/alan/DATA/dot-hia/melbourne-outputs-combined-mmets"
-summarisedLocation <-  "C:/dot-hia/output/output/melbourne-outputs-summarised" #"/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
+summarisedLocation <-  "C:/dot-hia/output/melbourne-outputs-summarised" #"/home/alan/DATA/dot-hia/melbourne-outputs-summarised"
 finalLocation <- "./melbourne-outputs"
-"C:\dot-hia"
+
 ### Scenarios 
 scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
   mutate(scenario_location=paste0(scenarioLocation,"/",scenario,".csv")) %>%
