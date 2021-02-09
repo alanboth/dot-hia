@@ -124,7 +124,7 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios/",
   persons_matched <- calculatePersonsMatch(
     pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
     persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
-  )
-
+  ) %>% dplyr::mutate(scen=scenario_name)
+##### ADD scenario names
   write.csv(persons_matched, paste0(output_location,"/",scenario_name,".csv"), row.names=F, quote=T)
 }
