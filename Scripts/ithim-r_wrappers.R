@@ -122,7 +122,7 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
   # demographic_location="Data/processed/DEMO.csv"
   # combined_AP_PA=F
   # calculate_AP=F
-
+  
   
   # if ind_ap_pa_location is a file location, read the csv. If not, then
   # use it as a dataframe.
@@ -203,17 +203,17 @@ health_burden_2 <- function(ind_ap_pa_location,disease_inventory_location,demogr
           setorder(pif_temp,dem_index)
           pif_scen[[pif_name]] <- (pif_ref[,V1] - pif_temp[,V1]) / pif_ref[,V1] 
           pif_scen_2[[pif_name]] <- (pif_ref_2[,outcome]  - pif_temp_2[,outcome]) / pif_ref_2[,outcome]  
-        
           
-        ## BZ: added code to calculate pifs by subgroups (DEMO) using participant weights. 
-        ### Declare survey as weighted
-        pif_wt <- pif_scen_2 %>%
-        srvyr::as_survey_design(weights = participant_wt)
-        ### Calculate mean pifs by age and sex
-        pif_weighted <-  pif_wt  %>%
-        group_by(sex, age_group_2) %>%
-        dplyr::summarise_at(vars(starts_with("pif")), survey_mean)
-
+          
+          ## BZ: added code to calculate pifs by subgroups (DEMO) using participant weights. 
+          ### Declare survey as weighted
+          pif_wt <- pif_scen_2 %>%
+            srvyr::as_survey_design(weights = participant_wt)
+          ### Calculate mean pifs by age and sex
+          pif_weighted <-  pif_wt  %>%
+            group_by(sex, age_group_2) %>%
+            dplyr::summarise_at(vars(starts_with("pif")), survey_mean)
+          
         }
       }
     }
@@ -462,7 +462,7 @@ RunDisease <- function(in_idata, in_sex, in_mid_age, in_disease, incidence_trend
 
 ### Get stDev to calculated corrected RR
 GetStDevRR <- function(RR, LB, UB){
-
+  
   SE=(log(UB)-log(LB))/3.92
   return(SE)
 }
@@ -544,9 +544,9 @@ GetParamters <- function(NSAMPLES = 1,
     DIABETES_STROKE_RR_M <- c(1.83, GetStDevRR(1.83, 1.60, 2.08))
     
     normVariablesRR <- c("DIABETES_IHD_RR_F",
-                       "DIABETES_STROKE_RR_F",
-                       "DIABETES_IHD_RR_M",
-                       "DIABETES_STROKE_RR_M"
+                         "DIABETES_STROKE_RR_F",
+                         "DIABETES_IHD_RR_M",
+                         "DIABETES_STROKE_RR_M"
     )
     for (i in 1:length(normVariablesRR)) {
       name <- normVariablesRR[i]
@@ -555,13 +555,13 @@ GetParamters <- function(NSAMPLES = 1,
         assign(name, val, envir = .GlobalEnv)
       } else {
         parameters[[name]] <-
-        rlnorm(NSAMPLES, GetLocation(val[1], val[2]), GetShape(val[1], val[2]))
+          rlnorm(NSAMPLES, GetLocation(val[1], val[2]), GetShape(val[1], val[2]))
       }
     }
-
+    
     normVariablesMMETs <- c("MMET_CYCLING",
-                         "MMET_WALKING"
-                       
+                            "MMET_WALKING"
+                            
     )
     for (i in 1:length(normVariablesMMETs)) {
       name <- normVariablesMMETs[i]
@@ -605,7 +605,7 @@ GetParamters <- function(NSAMPLES = 1,
 CalculationModel <- function(seed=1,
                              output_location="modelOutput",
                              persons_matched
-                             ){
+){
   
   
   # # if persons_matched is a file location, read the csv. If not, then
@@ -643,7 +643,7 @@ CalculationModel <- function(seed=1,
   cat('test\n')
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
-
+  
   #################################################### Calculate PIFs by age and sex groups #####################################################
   # 3 calculations: mmets_pp, RR_PA_calculations and pif
   
@@ -1005,7 +1005,7 @@ CalculationModel <- function(seed=1,
                           general_lf,
                           by=c("age","sex","age_group"))
   
- 
+  
   
   ### Create age groups variable, easier to read
   
@@ -1030,7 +1030,7 @@ CalculationModel <- function(seed=1,
       age_group == 97 ~ "95 plus")) %>%
     mutate(cohort=paste(sex, age_group, sep = "_")) %>%
     rename(`Age group` = age_group_2, Gender = sex)
-
+  
   
   outputDir <- paste0(output_location,"/output_df/") 
   mmetsDir <- paste0(output_location,"/mmets/") 
@@ -1072,7 +1072,7 @@ summariseOutputs <- function(scenario_location,output_df){
   )
   rm(output_df_year)
   
-
+  
   
   
   # 7) Summary data frame by age and sex and total
@@ -1096,11 +1096,11 @@ summariseOutputs <- function(scenario_location,output_df){
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
               percentile025=quantile(value,probs=0.025, na.rm=T),
               percentile975=quantile(value,probs=0.975, na.rm=T))
-    # filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
+  # filter(!is.nan(mean))# ignore sex-exclusive diseases (e.g., brsc)
   write.csv(output_df_agg, paste0(scenario_location,"/output_df_agg.csv"),
             row.names=F, quote=T)
   rm(output_df_agg)
-
+  
   
   #### Add population numbers for presentation purposes
   population <- GetPopulation(
@@ -1193,7 +1193,7 @@ summariseOutputs <- function(scenario_location,output_df){
   output_diseases_change <- dataAll %>%
     # filter(run==1) %>%
     dplyr::select(run, Gender, age_group_final,
-                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri")) %>%
+                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl")) %>%
     group_by(run, Gender, age_group_final) %>%
     summarise_if(is.numeric, funs(sum)) %>%
     ungroup() %>%
@@ -1218,6 +1218,7 @@ summariseOutputs <- function(scenario_location,output_df){
   write.csv(output_diseases_change,
             paste0(scenario_location,"/output_diseases_change.csv"),
             row.names=F, quote=T)
+  
   rm(datAll)
 }
 
@@ -1225,9 +1226,6 @@ summariseMMETS <- function(scenario_location,output_df){
   # in case the directory hasn't been made yet
   dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
   # output_df <- mmets
-  maxMMET=8000
-  binwidth=250
-  maxMMET/binwidth
   data <- output_df %>%
     # filter(run==1) %>%
     dplyr::select(run,participant_id,sex,age,base_mmet,scen1_mmet) %>%
@@ -1245,44 +1243,22 @@ summariseMMETS <- function(scenario_location,output_df){
     data%>%mutate(sex='all'),
     data%>%mutate(age='all',sex='all')
   ) %>% pivot_longer(cols = c("base_mmet", "scen1_mmet"),
-               names_to = "scenario",
-               values_to = "value")
+                     names_to = "scenario",
+                     values_to = "value")
   rm(data)
   
-  # dataGrouped <- dataAll %>%
-  #   mutate(mmet=findInterval(value,seq(0,maxMMET,binwidth))) %>%
-  #   mutate(mmet=mmet*binwidth-(binwidth*0.5)) %>%
-  #   group_by(run,age,sex,scenario,mmet) %>%
-  #   summarise(value=sum(value,na.rm=T)) %>% ### should be summing mmets
-  #   ungroup()
-  # 
-  # fillDF <- crossing(
-  #   data.frame(run=seq(1,1000)),
-  #   data.frame(age=c('15-19','20-39','40-64','65plus')),
-  #   data.frame(sex=c('male','female','all')),
-  #   data.frame(scenario=c('base_mmet','scen1_mmet')),
-  #   data.frame(mmet=seq(0,maxMMET,binwidth)+(binwidth*0.5))
-  # ) 
-
   dataFilled <- dataAll %>%
     # full_join(fillDF,by=c('run','age','sex','scenario','mmet')) %>%
     mutate(value=ifelse(is.na(value),0,value))
   rm(dataGrouped)
   
   dataGraph <- dataFilled 
-  # %>%
-  #   group_by(age,sex,scenario,mmet) %>%
-  #   summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
-  #             median=median(value,na.rm=T),
-  #             percentile025=quantile(value,probs=0.025, na.rm=T),
-  #             percentile975=quantile(value,probs=0.975, na.rm=T)) %>%
-  #   ungroup()
   rm(dataFilled)
   
   write.csv(dataGraph,
             paste0(scenario_location,"/output_mmets_graph.csv"),
             row.names=F, quote=T)
-
+  
   dataSummarised <- dataAll %>%
     group_by(age,sex,scenario) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),
@@ -1295,6 +1271,7 @@ summariseMMETS <- function(scenario_location,output_df){
             row.names=F, quote=T)
 }
 
+  
 summariseTransport <- function(inputFile,scenario_name="default") {
   # inputFile=scenarios_Melb[i,]$trips_location
   data <- read.csv(inputFile,as.is=T, fileEncoding="UTF-8-BOM") %>%
@@ -1305,7 +1282,7 @@ summariseTransport <- function(inputFile,scenario_name="default") {
       age>=40 & age<=64 ~'40-64',
       age>=65           ~'65plus')) %>%
     dplyr::select(age=agegroup,sex,participant_wt,bl=trip_mode_base,sc=trip_mode_scen)
-
+  
   
   dataAll <- bind_rows(
     data,
@@ -1314,18 +1291,11 @@ summariseTransport <- function(inputFile,scenario_name="default") {
     data%>%mutate(age='all',sex='all')
   ) %>% pivot_longer(cols = c("bl", "sc"),
                      names_to = "scenario",
-                     values_to = "mode")
-  
-  
-  dataSummarised <- dataAll %>%
-    group_by(age,sex,scenario,mode) %>%
-    summarise(participant_wt=sum(participant_wt,na.rm=T)) %>%
-    group_by(age,sex,scenario) %>%
-    mutate(mode_percent=participant_wt/sum(participant_wt,na.rm=T)) %>%
+                     values_to = "mode")%>%
     mutate(scen=scenario_name) %>%
-    dplyr::select(scen,sex,age,mode,scenario,participant_wt,mode_percent) %>%
     as.data.frame()
-  return(dataSummarised)
+  
+  return(dataAll)
 }
 
 importSummarisedOutputs <- function(scenario_location) {
