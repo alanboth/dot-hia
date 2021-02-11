@@ -33,36 +33,34 @@ age_sex_cohorts <- crossing(data.frame(age=c("15-19", "20-39", "40-64", "65plus"
 
 
 # Load data ---------------------------------------------------------------
-finalLocation <- "./melbourne-outputs"
+finalLocation <- "C:/dot-hia/output/melbourne-outputs"
 output_df_agg_all<-readRDS(paste0(finalLocation,"/output_df_agg.rds"))
 output_diseases_change<-readRDS(paste0(finalLocation,"/output_diseases_change.rds"))
 output_life_expectancy_change<-readRDS(paste0(finalLocation,"/output_life_expectancy_change.rds"))
 output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_change.rds"))
-output_mmets<-readRDS(paste0(finalLocation,"/output_mmets.rds"))
-output_mmets_graph<-readRDS(paste0(finalLocation,"/output_mmets_graph.rds"))
+PAall<-readRDS(paste0(finalLocation,"/PAall.rds"))
+PAallGuide<-readRDS(paste0(finalLocation,"/PAallGuide.rds"))
 output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
-
+# output_transport_modes_2<-readRDS(paste0(finalLocation,"/output_transport_modes_2.rds"))
 # Inputs options ----------------------------------------------------------
 # age_val: "15-19"  "20-39"  "40-64"  "65plus" "all" 
 # sex_val: "all"    "female" "male" 
 # scen_cal: "all_0_2", "commuting_0_2", all_0_5", "commuting_0_5", "all_0_10", "commuting_0_10", "all_1_2", 
-# "commuting_1_2", "all_1_5", "commuting_1_5", "all_1_10", "commuting_1_10", "all_2_5", "commuting_2_5", "all_2_10"       "commuting_2_10"
+# "commuting_1_2", "all_1_5", "commuting_1_5", "all_1_10", "commuting_1_10", "all_2_5", "commuting_2_5", "all_2_10", "commuting_2_10"
 
-# 1) Transport graph-example ----------------------------------------------
-transportModeGraph(
-  age_val= "15-19",
+# 1) Transport graph-example ----------------------------------------------(Alan, not sure why it changes walking when walking is not changing)
+GraphsMode(
+  age_val= "all",
   sex_val='female',
-  scen_val='all_2_10'
+  scen_val='all_0_10'
 )
 
+# 2) Minutes-text-example --------------------------------------------------(Alan, this is meant to pick up values, GUS can do this)
 
-
-# 2) mmets graph-example --------------------------------------------------
-# Note: black lines are error bars
-mmetsGraph(
-  age_val= "all",
+GetMinutesText(
+  age_val= "female",
   sex_val='all',
-  scen_val='all_2_10'
+  scen_val='all_0_10'
 )
 
 # 3) diseases -------------------------------------------------------------
@@ -72,7 +70,10 @@ mmetsGraph(
 ## 2.5% and 97.5 % percentiles for diseases incidence (incident cases) and mx (deaths)
 
 ## Disease names: brsc: breast cancer, carc: colon and rectum cancers, dmt2: Type 2 diabetes, ishd: ischemic heart disease, strk: ischemic stroke, tbalc:Tracheal, bronchus, and lung cancer, utrc: Uterine cancer
-## note males to not have utrc and brsc
+## note males to not have utrc and brsc 
+#### GUS: text to go along to explain: Over the life course of the modeled population of adults aged (age_val)
+# and sex (sex_val) of xx people (diseaseExmple$population), the model predicts diseaseExample$median (diseaseExample$percentile025, diseaseExample$percentile975)
+# cases prevented.
 diseasesExample <- diseasesTable(
   age_val='all',
   sex_val='all',
@@ -81,7 +82,7 @@ diseasesExample <- diseasesTable(
 
 #### Graphs for incidence, deaths and life years
 
-### Incidence diseases (WE MAY WANT TO SMOOTH THE GRAPHS A BIT)
+### Incidence diseases 
 incidenceDiseasesGraph(
   age_val='all',
   sex_val='all',
@@ -95,7 +96,7 @@ mortalityDiseasesGraph(
   scen_val='all_2_10'
 )
 
-### Health adjusted life years
+### Health adjusted life years (BELEN do table for )
 halyGraph(
   age_val='all',
   sex_val='all',

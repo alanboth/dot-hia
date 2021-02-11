@@ -487,7 +487,7 @@ GetParamters <- function(NSAMPLES = 1,
                          matched_population=matched_population, # from running step two Melbourne Model
                          MMET_CYCLING = MMET_CYCLING,
                          MMET_WALKING = MMET_WALKING,
-                         PA_DOSE_RESPONSE_QUANTILE = F,
+                         PA_DOSE_RESPONSE_QUANTILE = T,
                          location_deaths_periodic="Victoria",
                          location_deaths_projections="Victoria",
                          location_population="Greater Melbourne"){
@@ -1166,13 +1166,16 @@ summariseOutputs <- function(scenario_location,output_df){
             paste0(scenario_location,"/output_life_expectancy_change.csv"),
             row.names=F, quote=T)  
   
-  # Table: Life years and health adjusted life years ----
-  output_life_years_change <- dataAll %>%
+ 
+   # Table: Life years and health adjusted life years ----
+  output_life_years_change <- data %>%
     group_by(run, Gender, age_group_final) %>%
-    dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff) %>%
+    dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff, Lx_bl, Lwx_bl) %>%
     summarise_if(is.numeric, funs(sum)) %>%
+    dplyr::mutate(percent_diff_Lx=Lx_diff/Lx_bl,
+                  percent_diff_Lwx=Lwx_diff/Lwx_bl) %>%
     ungroup() %>%
-    pivot_longer(cols=Lx_diff:Lwx_diff,
+    pivot_longer(cols=Lx_diff:percent_diff_Lwx,
                  names_to = "measure") %>%
     group_by(age_group_final, Gender, measure) %>%
     summarise(mean=mean(value,na.rm=T),sd=sd(value,na.rm=T),median=median(value,na.rm=T),
@@ -1181,7 +1184,11 @@ summariseOutputs <- function(scenario_location,output_df){
     ungroup() %>%
     mutate(measure=case_when(
       measure=="Lx_diff" ~ "Life years",
-      measure=="Lwx_diff" ~ "Health adjusted life years"
+      measure=="Lwx_diff" ~ "Health adjusted life years",
+      measure=="percent_diff_Lx" ~ "Life years % difference", 
+      measure=="percent_diff_Lwx" ~ "Health adjusted life years % difference", 
+      measure=="Lx_bl" ~ "Life years baseline",
+      measure=="Lwx_bl" ~ "Health adjusted life years baseline"
     )) %>%
     left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%
     relocate(population, .after = Gender)
@@ -1193,13 +1200,30 @@ summariseOutputs <- function(scenario_location,output_df){
   output_diseases_change <- dataAll %>%
     # filter(run==1) %>%
     dplyr::select(run, Gender, age_group_final,
-                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl")) %>%
-    group_by(run, Gender, age_group_final) %>%
+                  matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl|inc_num_bl|inc_num_bl")) %>%
+ group_by(run, Gender, age_group_final) %>%
     summarise_if(is.numeric, funs(sum)) %>%
+    dplyr::mutate(inc_percent_diff_dmt2=inc_num_diff_dmt2/inc_num_bl_dmt2,
+                  inc_percent_diff_ishd=inc_num_diff_ishd/inc_num_bl_ishd,
+                  inc_percent_diff_strk=inc_num_diff_strk/inc_num_bl_strk,
+                  inc_percent_diff_carc=inc_num_diff_carc/inc_num_bl_carc,
+                  inc_percent_diff_tbalc=inc_num_diff_tbalc/inc_num_bl_tbalc,
+                  inc_percent_diff_brsc=inc_num_diff_brsc/inc_num_bl_brsc,
+                  inc_percent_diff_utrc=inc_num_diff_utrc/inc_num_bl_utrc,
+                  mx_percent_diff_dmt2=mx_num_diff_dmt2/mx_num_bl_dmt2,
+                  mx_percent_diff_ishd=mx_num_diff_ishd/mx_num_bl_ishd,
+                  mx_percent_diff_strk=mx_num_diff_strk/mx_num_bl_strk,
+                  mx_percent_diff_carc=mx_num_diff_carc/mx_num_bl_carc,
+                  mx_percent_diff_tbalct=mx_num_diff_tbalc/mx_num_bl_tbalc,
+                  mx_percent_diff_brsc=mx_num_diff_brsc/mx_num_bl_brsc,
+                  mx_percent_diff_utrc=mx_num_diff_utrc/mx_num_bl_utrc) %>%
     ungroup() %>%
     rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
     rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
-    pivot_longer(cols=inc.num_diff_brsc:mx.num_diff_strk,
+    rename_with(~ gsub("inc_percent", "inc.percent", .x, fixed = TRUE)) %>%
+    rename_with(~ gsub("mx_percent", "mx.percent", .x, fixed = TRUE)) %>%
+    dplyr::select(-contains("bl")) %>%
+    pivot_longer(cols=inc.num_diff_brsc:mx.percent_diff_utrc,
                  names_to = c("measure","scenario","disease"),
                  names_sep="_") %>%
     group_by(Gender,age_group_final,measure,scenario,disease) %>%
@@ -1210,7 +1234,9 @@ summariseOutputs <- function(scenario_location,output_df){
     filter(!is.nan(mean)) %>% # ignore sex-exclusive diseases (e.g., brsc)
     mutate(measure=case_when(
       measure=="inc.num" ~ "inc_num",
-      measure=="mx.num" ~ "mx_num"
+      measure=="mx.num" ~ "mx_num",
+      measure=="inc.percent" ~ "inc_percent_diff", 
+      measure=="mx.percent" ~ "mx_percent_diff"
     )) %>%
     # mutate_if(is.numeric, round) %>%
     left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%

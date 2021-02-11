@@ -1,16 +1,6 @@
 #### Model for Melbourne population AUO
 
-# suppressPackageStartupMessages(library(dplyr))
-# # suppressPackageStartupMessages(library(readr))
-# # suppressPackageStartupMessages(library(data.table))
-# suppressPackageStartupMessages(library(tidyr))
-# suppressPackageStartupMessages(library(srvyr)) 
-# suppressPackageStartupMessages(library(forcats))
-# suppressPackageStartupMessages(library(ggplot2))
-# suppressPackageStartupMessages(library(scales))
-# suppressPackageStartupMessages(library(ggeasy))
-# suppressPackageStartupMessages(library(ggridges))
-# suppressPackageStartupMessages(library(stringr))
+
 suppressPackageStartupMessages(library(doParallel))
 
 ### Clean Global Environment
@@ -113,9 +103,34 @@ scenarioTrips<-NULL
 for (i in 1:nrow(scenarios_Melb)){
   scenarioTripsCurrent<-summariseTransport(scenarios_Melb[i,]$trips_location,
                                            scenarios_Melb[i,]$scenario)
-  scenarioTrips<-bind_rows(scenarioTrips,scenarioTripsCurrent)
+  scenarioTrips<-bind_rows(scenarioTrips,scenarioTripsCurrent) %>%
+    dplyr::filter(participant_wt!=0) ## Some weights had 0 value
   cat(paste0("\n combined transport scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
+
+
+
+### Two options for transport trips, weighted and unweigthed, trying to find out issue with walking changing when scenarios does not change
+# scenario_trips_unweighted <- list()
+# index <- 1
+# for (a in unique(scenarioTrips$age)){
+#   for (s in unique(scenarioTrips$sex)){
+#     for (sc in unique(scenarioTrips$scenario)){
+#       for (scen in unique(scenarioTrips$scen)) {
+#         scenario_trips_unweighted[[index]] <- scenarioTrips %>%
+#           dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
+#           group_by(mode) %>%
+#           summarise(n = n()) %>%
+#           mutate(prop = n / sum(n)) %>%
+#           dplyr::mutate(age=a, 
+#                         sex=s,
+#                         scenario=sc,
+#                         scen=scen) %>%
+#           dplyr::select(age, sex, scenario, scen, prop, mode)
+#         index <- index +1}}}}
+# 
+# scenarioTrips<- bind_rows(scenario_trips_unweighted) 
+# saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes_2.rds"))
 
 ## Create weighted modes (modes of transport are from survey data, to represent population we need to weight)
 scenario_trips_weighted <- list()
@@ -124,11 +139,11 @@ for (a in unique(scenarioTrips$age)){
   for (s in unique(scenarioTrips$sex)){
     for (sc in unique(scenarioTrips$scenario)){
       for (scen in unique(scenarioTrips$scen)) {
-        scenario_trips_weighted[[index]] <-   scenarioTrips  %>%
+        scenario_trips_weighted[[index]] <- scenarioTrips %>%
           dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
           srvyr::as_survey_design(weights = participant_wt) %>% 
           group_by(mode) %>%
-          dplyr::summarize(prop= srvyr::survey_mean(), 
+          dplyr::summarize(prop= srvyr::survey_mean(proportion = TRUE), 
                            trips = srvyr::survey_total(),
                            surveyed = srvyr::unweighted(dplyr::n())) %>%
           dplyr::mutate(age=a, 
