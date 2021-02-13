@@ -39,7 +39,7 @@ for (i in 1:nrow(scenarios_Melb)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_Melb[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<-1:100
+  seeds<-1:1
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
@@ -111,26 +111,26 @@ for (i in 1:nrow(scenarios_Melb)){
 
 
 ### Two options for transport trips, weighted and unweigthed, trying to find out issue with walking changing when scenarios does not change
-# scenario_trips_unweighted <- list()
-# index <- 1
-# for (a in unique(scenarioTrips$age)){
-#   for (s in unique(scenarioTrips$sex)){
-#     for (sc in unique(scenarioTrips$scenario)){
-#       for (scen in unique(scenarioTrips$scen)) {
-#         scenario_trips_unweighted[[index]] <- scenarioTrips %>%
-#           dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
-#           group_by(mode) %>%
-#           summarise(n = n()) %>%
-#           mutate(prop = n / sum(n)) %>%
-#           dplyr::mutate(age=a, 
-#                         sex=s,
-#                         scenario=sc,
-#                         scen=scen) %>%
-#           dplyr::select(age, sex, scenario, scen, prop, mode)
-#         index <- index +1}}}}
-# 
-# scenarioTrips<- bind_rows(scenario_trips_unweighted) 
-# saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes_2.rds"))
+scenario_trips_unweighted <- list()
+index <- 1
+for (a in unique(scenarioTrips$age)){
+  for (s in unique(scenarioTrips$sex)){
+    for (sc in unique(scenarioTrips$scenario)){
+      for (scen in unique(scenarioTrips$scen)) {
+        scenario_trips_unweighted[[index]] <- scenarioTrips %>%
+          dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
+          group_by(mode) %>%
+          summarise(n = n()) %>%
+          mutate(prop = n / sum(n)) %>%
+          dplyr::mutate(age=a,
+                        sex=s,
+                        scenario=sc,
+                        scen=scen) %>%
+          dplyr::select(age, sex, scenario, scen, prop, mode)
+        index <- index +1}}}}
+
+scenarioTrips<- bind_rows(scenario_trips_unweighted)
+saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes_2.rds"))
 
 ## Create weighted modes (modes of transport are from survey data, to represent population we need to weight)
 scenario_trips_weighted <- list()
@@ -141,24 +141,24 @@ for (a in unique(scenarioTrips$age)){
       for (scen in unique(scenarioTrips$scen)) {
         scenario_trips_weighted[[index]] <- scenarioTrips %>%
           dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
-          srvyr::as_survey_design(weights = participant_wt) %>% 
+          srvyr::as_survey_design(weights = participant_wt) %>%
           group_by(mode) %>%
-          dplyr::summarize(prop= srvyr::survey_mean(proportion = TRUE), 
-                           trips = srvyr::survey_total(),
-                           surveyed = srvyr::unweighted(dplyr::n())) %>%
-          dplyr::mutate(age=a, 
+          dplyr::summarize(prop= srvyr::survey_mean(na.rm = T),
+                           trips = srvyr::survey_total(na.rm = T),
+                           surveyed = srvyr::unweighted(dplyr::n(na.rm = T))) %>%
+          dplyr::mutate(age=a,
                         sex=s,
                         scenario=sc,
                         scen=scen) %>%
           dplyr::select(age, sex, scenario, scen, prop, trips, surveyed, mode)
         index <- index +1}}}}
 
-scenarioTrips<- bind_rows(scenario_trips_weighted) 
+scenarioTrips<- bind_rows(scenario_trips_weighted)
 saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes.rds"))
-
-## Create PA file and weighed stats
-### Combine PA (from ./scenarios file)
-
+# 
+# ## Create PA file and weighed stats
+# ### Combine PA (from ./scenarios file)
+# 
 #### Minutes per week walking and cycling
 #### Create combined file (and add all age groups and sex)
 PA_files<-list.files(scenarioLocation,pattern="*.csv",full.names=T)
@@ -178,12 +178,12 @@ dataAll <- bind_rows(
   data%>%mutate(age='all',sex='all'))
 
 ### Create weighted stats
-PA_weighted  <- dataAll %>% 
+PA_weighted  <- dataAll %>%
   srvyr::as_survey_design(weights = participant_wt)%>%
   group_by(age, sex, scen) %>%
-  dplyr::summarize(walk_base= srvyr::survey_mean(time_base_walking*60), 
+  dplyr::summarize(walk_base= srvyr::survey_mean(time_base_walking*60),
                    walk_scen = srvyr::survey_mean(time_scen_walking*60),
-                   cycle_base= srvyr::survey_mean(time_base_bicycle*60), 
+                   cycle_base= srvyr::survey_mean(time_base_bicycle*60),
                    cycle_scen = srvyr::survey_mean(time_scen_bicycle*60))
 
 saveRDS(PA_weighted, file=paste0(finalLocation, "/PAall.rds"))
