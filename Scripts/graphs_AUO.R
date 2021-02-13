@@ -80,18 +80,45 @@ diseasesTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,disease,scen,mean,median,percentile025,percentile975)
 }
 
-diseasesChange <- function(age_val,sex_val,scen_val) {
+diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
   # scen_val='all_2_10'
-  dataFiltered <- output_diseases_change %>%
+  
+
+  tmpPlot <- output_diseases_change %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
-    mutate(measure=case_when(measure=='inc_num' ~ 'Incidence',
-                             measure=='mx_num'  ~ 'Deaths')) %>%
-    filter(measure%in% c("Incidence", "Deaths")) %>%
-    dplyr::select(population,measure,disease,scen,mean,median,percentile025,percentile975)
+    filter(measure=="inc_percent" & scenario== "diff") %>%
+    dplyr::select(disease,median,percentile025,percentile975)
+  plot <- ggplot(tmpPlot, aes(x=disease, y=median*100)) + 
+    geom_bar(stat="identity", color="black", 
+             position=position_dodge()) +
+    geom_errorbar(aes(ymin=percentile025*100, ymax=percentile975*100), width=.2,
+                  position=position_dodge(.9))  +
+    labs(x="Disease", y="Percentage change diseases") +
+    theme_bw()
+  plot
 }
 
+diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
+  # age_val='all'
+  # sex_val='all'
+  # scen_val='all_2_10'
+  
+  
+  tmpPlot <- output_diseases_change %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    filter(measure=="mx_percent" & scenario== "diff") %>%
+    dplyr::select(disease,median,percentile025,percentile975)
+  plot <- ggplot(tmpPlot, aes(x=disease, y=median*100)) + 
+    geom_bar(stat="identity", color="black", 
+             position=position_dodge()) +
+    geom_errorbar(aes(ymin=percentile025*100, ymax=percentile975*100), width=.2,
+                  position=position_dodge(.9))  +
+    labs(x="Disease", y="Percentage change deaths") +
+    theme_bw()
+  plot
+}
 
 incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
   # age_val='all'
