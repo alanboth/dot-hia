@@ -41,7 +41,7 @@ output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_chang
 PAall<-readRDS(paste0(finalLocation,"/PAall.rds"))
 PAallGuide<-readRDS(paste0(finalLocation,"/PAallGuide.rds"))
 output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
-# output_transport_modes_2<-readRDS(paste0(finalLocation,"/output_transport_modes_2.rds"))
+output_transport_modes_2<-readRDS(paste0(finalLocation,"/output_transport_modes_2.rds"))
 # Inputs options ----------------------------------------------------------
 # age_val: "15-19"  "20-39"  "40-64"  "65plus" "all" 
 # sex_val: "all"    "female" "male" 
@@ -81,6 +81,19 @@ diseasesExample <- diseasesTable(
 )
 
 #### Graphs for incidence, deaths and life years
+###### Percentage change disease incidence over the life course of cohort
+diseasesChangeIncidence(
+  age_val='all',
+  sex_val='all',
+  scen_val='all_2_10'
+)
+
+###### Percentage change disease mortality over the life course of cohort
+diseasesChangeDeaths(
+  age_val='all',
+  sex_val='all',
+  scen_val='all_2_10'
+)
 
 ### Incidence diseases 
 incidenceDiseasesGraph(
