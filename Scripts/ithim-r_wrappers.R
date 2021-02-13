@@ -1168,7 +1168,7 @@ summariseOutputs <- function(scenario_location,output_df){
   
  
    # Table: Life years and health adjusted life years ----
-  output_life_years_change <- data %>%
+  output_life_years_change <- dataAll %>%
     group_by(run, Gender, age_group_final) %>%
     dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff, Lx_bl, Lwx_bl) %>%
     summarise_if(is.numeric, funs(sum)) %>%
@@ -1220,7 +1220,7 @@ summariseOutputs <- function(scenario_location,output_df){
     ungroup() %>%
     rename_with(~ gsub("inc_num", "inc.num", .x, fixed = TRUE)) %>%
     rename_with(~ gsub("mx_num", "mx.num", .x, fixed = TRUE)) %>%
-    rename_with(~ gsub("inc_percent", "inc.percent", .x, fixed = TRUE)) %>%
+    rename_with(~ gsub("inc_percent", "inc.percent", .x, fixed = TRUE)) %>% 
     rename_with(~ gsub("mx_percent", "mx.percent", .x, fixed = TRUE)) %>%
     dplyr::select(-contains("bl")) %>%
     pivot_longer(cols=inc.num_diff_brsc:mx.percent_diff_utrc,
@@ -1235,8 +1235,8 @@ summariseOutputs <- function(scenario_location,output_df){
     mutate(measure=case_when(
       measure=="inc.num" ~ "inc_num",
       measure=="mx.num" ~ "mx_num",
-      measure=="inc.percent" ~ "inc_percent_diff", 
-      measure=="mx.percent" ~ "mx_percent_diff"
+      measure=="inc.percent" ~ "inc_percent", 
+      measure=="mx.percent" ~ "mx_percent"
     )) %>%
     # mutate_if(is.numeric, round) %>%
     left_join(populationLargeCohort, by=c('age_group_final', 'Gender')) %>%
