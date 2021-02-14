@@ -13,10 +13,10 @@ library(ggridges)
 
 ########## Change in mode of transport
 GraphsMode <- function(age_val,sex_val,scen_val) {
-# 
+# # 
 # age_val='all'
 # sex_val='all'
-# scen_val='all_0_10'
+# scen_val='all_1_5'
   
   dataFiltered <- output_transport_modes %>% 
     dplyr::filter(age==age_val,sex==sex_val,scen==scen_val) 

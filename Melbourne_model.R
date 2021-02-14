@@ -112,49 +112,57 @@ for (i in 1:nrow(scenarios_Melb)){
 
 ### Two options for transport trips, weighted and unweigthed, trying to find out issue with walking changing when scenarios does not change
 scenario_trips_unweighted <- list()
+iage <- c(unique(scenarioTrips$age))
+isex <- c(unique(scenarioTrips$sex))
+iscenario <- c(unique(scenarioTrips$scenario))
+iscen <- c(unique(scenarioTrips$scen))
 index <- 1
-for (a in unique(scenarioTrips$age)){
-  for (s in unique(scenarioTrips$sex)){
-    for (sc in unique(scenarioTrips$scenario)){
-      for (scen in unique(scenarioTrips$scen)) {
-        scenario_trips_unweighted[[index]] <- scenarioTrips %>%
-          dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
+for (a in iage){
+  for (s in isex){
+    for (sc in iscenario){
+      for (scena in iscen) {
+        data <- scenarioTrips %>%
+        dplyr::filter(age==a, sex==s, scenario==sc, scen==scena)
+        mode_share <- data %>%
           group_by(mode) %>%
           summarise(n = n()) %>%
           mutate(prop = n / sum(n)) %>%
+          ungroup() %>%
           dplyr::mutate(age=a,
                         sex=s,
                         scenario=sc,
-                        scen=scen) %>%
+                        scen=scena) %>%
           dplyr::select(age, sex, scenario, scen, prop, mode)
+        scenario_trips_unweighted[[index]] <- mode_share
         index <- index +1}}}}
 
 scenarioTrips<- bind_rows(scenario_trips_unweighted)
-saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes_2.rds"))
-
-## Create weighted modes (modes of transport are from survey data, to represent population we need to weight)
-scenario_trips_weighted <- list()
-index <- 1
-for (a in unique(scenarioTrips$age)){
-  for (s in unique(scenarioTrips$sex)){
-    for (sc in unique(scenarioTrips$scenario)){
-      for (scen in unique(scenarioTrips$scen)) {
-        scenario_trips_weighted[[index]] <- scenarioTrips %>%
-          dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
-          srvyr::as_survey_design(weights = participant_wt) %>%
-          group_by(mode) %>%
-          dplyr::summarize(prop= srvyr::survey_mean(na.rm = T),
-                           trips = srvyr::survey_total(na.rm = T),
-                           surveyed = srvyr::unweighted(dplyr::n(na.rm = T))) %>%
-          dplyr::mutate(age=a,
-                        sex=s,
-                        scenario=sc,
-                        scen=scen) %>%
-          dplyr::select(age, sex, scenario, scen, prop, trips, surveyed, mode)
-        index <- index +1}}}}
-
-scenarioTrips<- bind_rows(scenario_trips_weighted)
 saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes.rds"))
+
+#### Belen to adjust as ABOVE
+# ## Create weighted modes (modes of transport are from survey data, to represent population we need to weight)
+# scenario_trips_weighted <- list()
+# index <- 1
+# for (a in unique(scenarioTrips$age)){
+#   for (s in unique(scenarioTrips$sex)){
+#     for (sc in unique(scenarioTrips$scenario)){
+#       for (scen in unique(scenarioTrips$scen)) {
+#         scenario_trips_weighted[[index]] <- scenarioTrips %>%
+#           dplyr::filter(age==a, sex==s, scenario==sc, scen==scen) %>%
+#           srvyr::as_survey_design(weights = participant_wt) %>%
+#           group_by(mode) %>%
+#           dplyr::summarize(prop= srvyr::survey_mean(na.rm = T),
+#                            trips = srvyr::survey_total(na.rm = T),
+#                            surveyed = srvyr::unweighted(dplyr::n(na.rm = T))) %>%
+#           dplyr::mutate(age=a,
+#                         sex=s,
+#                         scenario=sc,
+#                         scen=scen) %>%
+#           dplyr::select(age, sex, scenario, scen, prop, trips, surveyed, mode)
+#         index <- index +1}}}}
+# 
+# scenarioTrips<- bind_rows(scenario_trips_weighted)
+# saveRDS(scenarioTrips,paste0(finalLocation,"/output_transport_modes.rds"))
 # 
 # ## Create PA file and weighed stats
 # ### Combine PA (from ./scenarios file)
