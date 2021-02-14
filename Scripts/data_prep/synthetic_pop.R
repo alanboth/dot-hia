@@ -107,7 +107,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
 ### trips_melbourne
 calculatePersonsTravelScenario <- function(travel_data_location,scenario_location) {
   # travel_data_location="Data/processed/travel_data.csv"
-  # scenario_location="Data/processed/trips_melbourne_scenarios.csv"
+  # scenario_location="scenarios/scenarioTrips/all_0_2.csv"
   # scenario_location=scenario_trips
     
   ### Original set
@@ -371,9 +371,9 @@ calculatePersonsPA <- function(pa_location,hh_location) {
 ### walk_base
 
 calculatePersonsMatch <- function(pa_location,persons_travel_location) {
-  # pa_location="Data/processed/persons_pa.csv"
+  pa_location="Data/processed/persons_pa.csv"
   # persons_travel_location="Data/processed/persons_travel.csv"
-  persons_travel_location=persons_travel
+  # persons_travel_location=persons_travel
   persons_pa <- read.csv(pa_location,as.is=T, fileEncoding="UTF-8-BOM")
 
   # if persons_travel_location is a file location, read the csv. If not, then
