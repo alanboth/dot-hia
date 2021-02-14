@@ -10,7 +10,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,
                                   purpose_input = "Leisure,Shopping,Work,Education,Other") {
-
+  
   # in_data="Data/processed/trips_melbourne.csv"
   # in_speed="Data/processed/speed_trips_melbourne.csv"
   # trips_melbourne = in_data
@@ -19,7 +19,7 @@ calculateScenarioMel2 <- function(trips_melbourne = in_data,
   # distance_replace_walk = 0
   # distance_replace_cycle = 10
   # purpose_input = "Work,Education"
-
+  
   # it's easier to pass in a single string and then split it here
   purpose_input <- unlist(strsplit(purpose_input,","))
   
@@ -91,6 +91,7 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios/",
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
   dir.create(paste0(output_location,"/scenarioTrips"), recursive=TRUE, showWarnings=FALSE)
+  dir.create(paste0(output_location,"/personTravel"), recursive=TRUE, showWarnings=FALSE)
   
   #### 1) Generate trip set with baseline and scenario trips ####
   
@@ -116,15 +117,16 @@ generateMatchedPopulationScenario <- function(output_location="./scenarios/",
   
   ### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
   persons_travel <- calculatePersonsTravelScenario(
-    travel_data_location="Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+    travel_data_location="./Data/processed/travel_data.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
     scenario_location=scenario_trips ### BZ: Generated in step 1
   )
+  write.csv(persons_travel, paste0(output_location,"/personTravel/",scenario_name,".csv"), row.names=F, quote=T)
   
   #### 2.2) Match NHS people to VISTA people based on age, sex, ses, work status and whether they walk for transport
   persons_matched <- calculatePersonsMatch(
-    pa_location="Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
-    persons_travel_location=persons_travel   #"Data/processed/persons_travel.csv"
+    pa_location="./Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
+    persons_travel_location=persons_travel  #"Data/processed/persons_travel.csv"
   ) %>% dplyr::mutate(scen=scenario_name)
-##### ADD scenario names
+  ##### ADD scenario names
   write.csv(persons_matched, paste0(output_location,"/",scenario_name,".csv"), row.names=F, quote=T)
 }
