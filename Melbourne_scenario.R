@@ -13,7 +13,7 @@ suppressPackageStartupMessages(library(stringr))
 
 
 maxDistanceWalk <- c(0,1,2)
-maxDistanceCycle <- c(2,5,10)
+maxDistanceCycle <- c(0,2,5,10)
 # recreational, essential, all trips
 tripPurpose <- c("commuting", "all")
 # Belen, we need to work out what should go in each category here
@@ -32,7 +32,7 @@ tripPurposeDF <- data.frame(purpose=tripPurpose,
 scenarios_Melb <- crossing(data.frame(max_walk=maxDistanceWalk),
                            data.frame(max_cycle=maxDistanceCycle),
                            data.frame(purpose=tripPurpose)) %>%
-  filter(max_walk<max_cycle) %>%
+  filter(max_walk!=max_cycle) %>%
   inner_join(tripPurposeDF) %>%
   mutate(scenario=paste0(purpose,"_",max_walk,"_",max_cycle))
 
