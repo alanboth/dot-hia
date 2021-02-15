@@ -1047,6 +1047,8 @@ CalculationModel <- function(seed=1,
 
 
 summariseOutputs <- function(scenario_location,output_df){
+  
+  memory.limit(size=56000) 
   # scenario_location="scenarios/scenario_1"
   
   # in case the directory hasn't been made yet
@@ -1071,9 +1073,6 @@ summariseOutputs <- function(scenario_location,output_df){
     output_df_year%>%mutate(age_group_final='all',Gender='all')
   )
   rm(output_df_year)
-  
-  
-  
   
   # 7) Summary data frame by age and sex and total
   
@@ -1246,6 +1245,7 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)
   
   rm(datAll)
+
 }
 
 summariseMMETS <- function(scenario_location,output_df){

@@ -83,7 +83,6 @@ for (i in 1:nrow(scenarios_Melb)){
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
 }
 
-
  ### Summarize outputs and save for each scenario ("C:/dot-hia/output/melbourne-outputs-summarised")
 #### Saved items include: output_df_aggregate, output_life_expectancy_change, output_life_year_change, output_disease_change
 
