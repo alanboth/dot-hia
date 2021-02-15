@@ -52,7 +52,7 @@ output_transport_modes_2<-readRDS(paste0(finalLocation,"/output_transport_modes_
 GraphsMode(
   age_val= "all",
   sex_val='female',
-  scen_val='all_0_10'
+  scen_val='all_0_2'
 )
 
 # 2) Minutes-text-example --------------------------------------------------(Alan, this is meant to pick up values, GUS can do this)
@@ -60,7 +60,7 @@ GraphsMode(
 GetMinutesText(
   age_val= "female",
   sex_val='all',
-  scen_val='all_0_10'
+  scen_val='all_0_2'
 )
 
 # 3) diseases -------------------------------------------------------------
@@ -77,14 +77,14 @@ GetMinutesText(
 diseasesExample <- diseasesTable(
   age_val='all',
   sex_val='all',
-  scen_val='all_2_10'
+  scen_val='all_0_2'
 )
 
 #### Graphs for incidence, deaths and life years
 ###### Percentage change disease incidence over the life course of cohort
 diseasesChangeIncidence(
   age_val='all',
-  sex_val='all',
+  sex_val='male',
   scen_val='all_2_10'
 )
 
