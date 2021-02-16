@@ -41,21 +41,20 @@ output_life_years_change<-readRDS(paste0(finalLocation,"/output_life_years_chang
 PAall<-readRDS(paste0(finalLocation,"/PAall.rds"))
 PAallGuide<-readRDS(paste0(finalLocation,"/PAallGuide.rds"))
 output_transport_modes<-readRDS(paste0(finalLocation,"/output_transport_modes.rds"))
-output_transport_modes_2<-readRDS(paste0(finalLocation,"/output_transport_modes_2.rds"))
 # Inputs options ----------------------------------------------------------
 # age_val: "15-19"  "20-39"  "40-64"  "65plus" "all" 
 # sex_val: "all"    "female" "male" 
 # scen_cal: "all_0_2", "commuting_0_2", all_0_5", "commuting_0_5", "all_0_10", "commuting_0_10", "all_1_2", 
 # "commuting_1_2", "all_1_5", "commuting_1_5", "all_1_10", "commuting_1_10", "all_2_5", "commuting_2_5", "all_2_10", "commuting_2_10"
 
-# 1) Transport graph-example ----------------------------------------------(Alan, not sure why it changes walking when walking is not changing)
+# 1) Transport graph-example ----------------------------------------------
 GraphsMode(
   age_val= "all",
   sex_val='female',
-  scen_val='all_0_2'
+  scen_val='all_2_10'
 )
 
-# 2) Minutes-text-example --------------------------------------------------(Alan, this is meant to pick up values, GUS can do this)
+# 2) Minutes-text-example --------------------------------------------------(Gus, this should have the text that Lucy is sharing with use. Transport data from above graph and physical activity data for mean walking and cycling from data called in this function)
 
 GetMinutesText(
   age_val= "female",
@@ -84,7 +83,7 @@ diseasesExample <- diseasesTable(
 ###### Percentage change disease incidence over the life course of cohort
 diseasesChangeIncidence(
   age_val='all',
-  sex_val='male',
+  sex_val='all',
   scen_val='all_2_10'
 )
 
