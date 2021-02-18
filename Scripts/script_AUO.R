@@ -109,6 +109,15 @@ mortalityDiseasesGraph(
   scen_val='all_2_10'
 )
 
+### HALYs table
+
+HALYsexample <- HALYsTable(
+  age_val='all',
+  sex_val='all',
+  scen_val='all_2_10'
+)
+
+
 ### Health adjusted life years (BELEN do table for )
 halyGraph(
   age_val='all',

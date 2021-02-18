@@ -80,6 +80,15 @@ diseasesTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,disease,scen,mean,median,percentile025,percentile975)
 }
 
+HALYsTable <- function(age_val,sex_val,scen_val) {
+  # age_val='all'
+  # sex_val='all'
+  # scen_val='all_2_10'
+  dataFiltered <- output_life_years_change %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    dplyr::select(population,measure,scen,mean,median,percentile025,percentile975)
+}
+
 diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
   # age_val='all'
   # sex_val='all'
