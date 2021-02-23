@@ -136,14 +136,33 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
   tmpPlot <- output_df_agg_all %>%
     filter(age==age_val,sex==sex_val,scen==scen_val) %>%
     filter(measure=="inc.num" & scenario== "diff") %>%
-    dplyr::select(year,disease,mean,median,percentile025,percentile975) %>%
-    arrange(disease,year)
-  #& Gender=="female"
+    dplyr::select(year,disease,median,percentile025,percentile975) %>%
+    arrange(disease,year) %>%
+    group_by(disease) %>%
+    # the rollmean function introduces NA values at the edges, so filling them
+    # with the original values
+    mutate(roll=rollmean(median,7,fill=NA),
+           median=ifelse(is.na(roll),median,roll),
+           roll=rollmean(percentile025,7,fill=NA),
+           percentile025=ifelse(is.na(roll),percentile025,roll),
+           roll=rollmean(percentile975,7,fill=NA),
+           percentile975=ifelse(is.na(roll),percentile975,roll)) %>%
+    ungroup() %>%
+    mutate(disease=factor(
+      disease,
+      levels=c("brsc","carc","dmt2","ishd","strk","tbalc","utrc"),
+      labels=c("Breast cancer","Colon and rectum cancer","Diabetes mellitus type 2",
+               "Ischemic heart disease","Stroke","Tracheal, bronchus, and lung cancer",
+               "Uterine cancer")))
+  
+
   ggplot(tmpPlot, aes(x=year)) +
-    geom_line(aes(y=rollmean(median, 7, na.pad=TRUE))) +
-    geom_line(aes(y=rollmean(percentile025, 7, na.pad=TRUE))) +
-    geom_line(aes(y=rollmean(percentile975, 7, na.pad=TRUE))) +
-    facet_grid(disease~.,scales="free") +
+    geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#52b3d9") +
+    geom_line(aes(y=median)) +
+    # geom_line(aes(y=percentile025)) +
+    # geom_line(aes(y=percentile975)) +
+    # facet_grid(disease~.,scales="free_y") +
+    facet_wrap(facets=vars(disease),ncol=1,scales="free_y") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
