@@ -124,3 +124,9 @@ halyGraph(
   sex_val='all',
   scen_val='all_2_10'
 )
+
+lyGraph(
+  age_val='all',
+  sex_val='all',
+  scen_val='all_2_10'
+)

@@ -202,11 +202,34 @@ halyGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     labs(x="Simulation year", y="Health-adjusted life years", 
-         title = paste("Difference life years and health-adjusted life years")) +
+         title = paste("Total health-adjusted life years gained due to the scenario")) +
     theme_bw()
 }
 
-
+lyGraph <- function(age_val,sex_val,scen_val) {
+  # age_val='all'
+  # sex_val='all'
+  # scen_val='all_2_10'
+  tmpPlot <- output_df_agg_all %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    filter(measure=="Lx" & scenario== "diff") %>%
+    dplyr::select(year,mean,median,percentile025,percentile975) %>%
+    arrange(year)
+  #& Gender=="female"
+  ggplot(tmpPlot, aes(x=year)) +
+    geom_line(aes(y=rollmean(median, 7, na.pad=TRUE))) +
+    geom_line(aes(y=rollmean(percentile025, 7, na.pad=TRUE))) +
+    geom_line(aes(y=rollmean(percentile975, 7, na.pad=TRUE))) +
+    scale_y_continuous(
+      name = waiver(),
+      breaks = waiver(),
+      minor_breaks = NULL,
+      n.breaks = 3,
+      labels = waiver()) +
+    labs(x="Simulation year", y="Health-adjusted life years", 
+         title = paste("Total life years gained due to the scenario")) +
+    theme_bw()
+}
 
 ######################################## Graphs for rmarkdown #################################################################
 ### These graphs are already generated in the file, code below to allow for manipulation for presentation
