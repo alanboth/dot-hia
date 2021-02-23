@@ -20,9 +20,9 @@ source("./Scripts/graphs_AUO.R")
 
 ### Combinations scenarios for graphs and results
 scenariosDF <- crossing(data.frame(max_walk=c(0,1,2)),
-                           data.frame(max_cycle=c(2,5,10)),
+                           data.frame(max_cycle=c(0,2,5,10)),
                            data.frame(purpose=c("commuting", "all"))) %>%
-  filter(max_walk<max_cycle) %>%
+  filter(max_walk!=max_cycle) %>%
   mutate(scen=paste0(purpose,"_",max_walk,"_",max_cycle))
 
 
