@@ -4,8 +4,8 @@ suppressPackageStartupMessages(library(dplyr)) # for manipulating data
 
 
 calculateScenarioMel2 <- function(trips_melbourne = in_data, 
-                                  walk_speed=4.8,
-                                  cycle_speed=14.3,
+                                  walk_speed=4.2,
+                                  cycle_speed=12,
                                   original_mode = "car" , # Just car trips can be replaced
                                   distance_replace_walk = 0,
                                   distance_replace_cycle = 0,

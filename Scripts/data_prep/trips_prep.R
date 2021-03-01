@@ -339,15 +339,15 @@ SPEED_CYCLE <-  SPEED_CYCLE  %>%
 ### Calculate weighted statistics
 
 SPEED_WALK <- SPEED_WALK %>% 
-  group_by(sex, age_group,
-           .drop = FALSE) %>%
+  # group_by(sex, age_group,
+  #          .drop = FALSE) %>%
   dplyr::summarize(mean= srvyr::survey_mean(speed_walk),
                    quantiles= srvyr::survey_quantile(speed_walk,  c(.25,.5,.75),ci=TRUE)) %>% 
   mutate(activity = "walking")
 
 SPEED_CYCLE <- SPEED_CYCLE %>% 
-  group_by(sex, age_group,
-           .drop = FALSE) %>%
+  # group_by(sex, age_group,
+  #          .drop = FALSE) %>%
   dplyr::summarize(mean= srvyr::survey_mean(speed_cycle),
                    quantiles= srvyr::survey_quantile(speed_cycle,  c(.25,.5,.75),ci=TRUE)) %>% 
                      mutate(activity = "bicycle")
