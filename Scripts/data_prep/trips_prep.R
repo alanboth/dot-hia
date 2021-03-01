@@ -321,6 +321,13 @@ SPEED_WALK <- dplyr::filter(trips_melbourne, trip_mode == "pedestrian") %>%
 
 SPEED_WALK <- dplyr::filter(SPEED_WALK, trip_distance != 0)
 
+# Check distribution
+density_walk <- ggplot(SPEED_WALK, aes(speed_walk)) + geom_density()
+density_walk
+
+
+cum_density_walk <- ggplot(SPEED_WALK, aes(speed_walk)) + stat_ecdf(geom = "step")
+cum_density_walk
 
 SPEED_WALK <-  SPEED_WALK  %>%
   srvyr::as_survey_design(weights = trips_wt)
@@ -331,7 +338,12 @@ SPEED_CYCLE <- dplyr::filter(trips_melbourne, trip_mode == "bicycle") %>%
 # Exclude 0 speed, some values have time but not distance
 
 SPEED_CYCLE <- dplyr::filter(SPEED_CYCLE, trip_distance != 0)
+# Check distribution
+density_cycle <- ggplot(SPEED_CYCLE, aes(speed_cycle)) + geom_density()
+density_cycle
 
+cum_density_cycle <- ggplot(SPEED_CYCLE, aes(speed_cycle)) + stat_ecdf(geom = "step")
+cum_density_cycle
 
 SPEED_CYCLE <-  SPEED_CYCLE  %>%
   srvyr::as_survey_design(weights = trips_wt)
