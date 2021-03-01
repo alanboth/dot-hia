@@ -586,8 +586,8 @@ GetParamters <- function(NSAMPLES = 1,
   }
   
   else {
-    parameters$MMET_CYCLING <- 4.63 
-    parameters$MMET_WALKING <- 2.53 
+    parameters$MMET_CYCLING <- 5.8 
+    parameters$MMET_WALKING <- 2.5 
     parameters$DIABETES_IHD_RR_F <- 2.82 
     parameters$DIABETES_STROKE_RR_F <- 2.28 
     parameters$DIABETES_IHD_RR_M <- 2.16 
@@ -634,8 +634,8 @@ CalculationModel <- function(seed=1,
   parameters <- GetParamters(
     NSAMPLES = 1,
     matched_population = persons_matched,
-    MMET_CYCLING = c(4.63, 1.2), ### 
-    MMET_WALKING = c(2.53, 1.1),
+    MMET_CYCLING = 5.8, ### replace with 5.8
+    MMET_WALKING = 2.5, ## replace with 2.5
     PA_DOSE_RESPONSE_QUANTILE = T)
   
   ### BZ: saved to try to debug the issue with uncertainty
