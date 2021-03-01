@@ -310,7 +310,7 @@ CalculateAgeSexSpeed <- function(in_data){
 
 trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age groups to facilitate selection above and matching  
 
-### USe weighted data
+### Use weighted data
 
 
 #### SPEEDs by age and sex groups
@@ -323,11 +323,11 @@ SPEED_WALK <- dplyr::filter(SPEED_WALK, trip_distance != 0)
 
 # Check distribution
 density_walk <- ggplot(SPEED_WALK, aes(speed_walk)) + geom_density()
-density_walk
+# density_walk
 
 
 cum_density_walk <- ggplot(SPEED_WALK, aes(speed_walk)) + stat_ecdf(geom = "step")
-cum_density_walk
+# cum_density_walk
 
 SPEED_WALK <-  SPEED_WALK  %>%
   srvyr::as_survey_design(weights = trips_wt)
@@ -340,10 +340,10 @@ SPEED_CYCLE <- dplyr::filter(trips_melbourne, trip_mode == "bicycle") %>%
 SPEED_CYCLE <- dplyr::filter(SPEED_CYCLE, trip_distance != 0)
 # Check distribution
 density_cycle <- ggplot(SPEED_CYCLE, aes(speed_cycle)) + geom_density()
-density_cycle
+# density_cycle
 
 cum_density_cycle <- ggplot(SPEED_CYCLE, aes(speed_cycle)) + stat_ecdf(geom = "step")
-cum_density_cycle
+# cum_density_cycle
 
 SPEED_CYCLE <-  SPEED_CYCLE  %>%
   srvyr::as_survey_design(weights = trips_wt)
@@ -351,15 +351,15 @@ SPEED_CYCLE <-  SPEED_CYCLE  %>%
 ### Calculate weighted statistics
 
 SPEED_WALK <- SPEED_WALK %>% 
-  # group_by(sex, age_group,
-  #          .drop = FALSE) %>%
+  group_by(sex, age_group,
+           .drop = FALSE) %>%
   dplyr::summarize(mean= srvyr::survey_mean(speed_walk),
                    quantiles= srvyr::survey_quantile(speed_walk,  c(.25,.5,.75),ci=TRUE)) %>% 
   mutate(activity = "walking")
 
 SPEED_CYCLE <- SPEED_CYCLE %>% 
-  # group_by(sex, age_group,
-  #          .drop = FALSE) %>%
+  group_by(sex, age_group,
+           .drop = FALSE) %>%
   dplyr::summarize(mean= srvyr::survey_mean(speed_cycle),
                    quantiles= srvyr::survey_quantile(speed_cycle,  c(.25,.5,.75),ci=TRUE)) %>% 
                      mutate(activity = "bicycle")
@@ -369,57 +369,3 @@ SPEEDS <- rbind(SPEED_WALK, SPEED_CYCLE)
 return(SPEEDS)
 }
 
-######################################### 4) Calculate speeds all modes ##################################################
-#### 
-CalculateAgeSexSpeed <- function(in_data){
-  
-  # in_data="Data/processed/trips_melbourne.csv"
-  
-  trips_melbourne <- read.csv(in_data,as.is=T,fileEncoding="UTF-8-BOM") ## Add age groups to facilitate selection above and matching  
-  
-  ### USe weighted data
-  
-  
-  #### SPEEDs by age and sex groups
-  SPEED_WALK <- dplyr::filter(trips_melbourne, trip_mode == "pedestrian") %>%
-    mutate(speed_walk=trip_distance*60/trip_duration)
-  
-  # Exclude 0 speed, some values have time but not distance
-  
-  SPEED_WALK <- dplyr::filter(SPEED_WALK, trip_distance != 0)
-  
-  
-  SPEED_WALK <-  SPEED_WALK  %>%
-    srvyr::as_survey_design(weights = trips_wt)
-  
-  SPEED_CYCLE <- dplyr::filter(trips_melbourne, trip_mode == "bicycle") %>%
-    mutate(speed_cycle=trip_distance*60/trip_duration)
-  
-  # Exclude 0 speed, some values have time but not distance
-  
-  SPEED_CYCLE <- dplyr::filter(SPEED_CYCLE, trip_distance != 0)
-  
-  
-  SPEED_CYCLE <-  SPEED_CYCLE  %>%
-    srvyr::as_survey_design(weights = trips_wt)
-  
-  ### Calculate weighted statistics
-  
-  SPEED_WALK <- SPEED_WALK %>% 
-    group_by(sex, age_group,
-             .drop = FALSE) %>%
-    dplyr::summarize(mean= srvyr::survey_mean(speed_walk),
-                     quantiles= srvyr::survey_quantile(speed_walk,  c(.25,.5,.75),ci=TRUE)) %>% 
-    mutate(activity = "walking")
-  
-  SPEED_CYCLE <- SPEED_CYCLE %>% 
-    group_by(sex, age_group,
-             .drop = FALSE) %>%
-    dplyr::summarize(mean= srvyr::survey_mean(speed_cycle),
-                     quantiles= srvyr::survey_quantile(speed_cycle,  c(.25,.5,.75),ci=TRUE)) %>% 
-    mutate(activity = "bicycle")
-  
-  SPEEDS <- rbind(SPEED_WALK, SPEED_CYCLE)
-  
-  return(SPEEDS)
-}
