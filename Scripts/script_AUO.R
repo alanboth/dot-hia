@@ -119,6 +119,7 @@ HALYsexample <- HALYsTable(
 
 
 ### Health adjusted life years (BELEN do table for )
+# make like incidence graph
 halyGraph(
   age_val='all',
   sex_val='all',
