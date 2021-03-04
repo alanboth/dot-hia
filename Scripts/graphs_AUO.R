@@ -233,12 +233,13 @@ halyGraph <- function(age_val,sex_val,scen_val) {
            percentile975=ifelse(is.na(roll),percentile975,roll)) %>%
     # year 84 (the last year, has a weird uptick, removing for now)
     filter(year<=83)
+
   
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(data=labelDF, aes(x=0,y=0), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
+    # geom_label(data=labelDF, aes(x=0,y=0), hjust=0, vjust=0, alpha=0.5,
+    #            label.size=0, label="Time = 0 at baseline year 2017") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -272,8 +273,8 @@ lyGraph <- function(age_val,sex_val,scen_val) {
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(data=labelDF, aes(x=0,y=0), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
+    # geom_label(data=labelDF, aes(x=0,y=0), hjust=0, vjust=0, alpha=0.5,
+    #            label.size=0, label="Time = 0 at baseline year 2017") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
