@@ -1055,7 +1055,7 @@ summariseOutputs <- function(scenario_location,output_df){
   dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
   
   
-  output_df_year <- output_df %>% ### Create a simulation year columns
+  output_df_year <- output_df  %>% ### Create a simulation year columns 
     group_by(run, age_group, Gender, .add=TRUE) %>%
     dplyr::mutate(year = row_number()) %>%
     ungroup() %>%
@@ -1196,12 +1196,12 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)
   
   # Table: Diseases deaths, incidence and ylds ----
-  output_diseases_change <- dataAll %>%
+  output_diseases_change <- dataAll %>% #dataAll
     # filter(run==1) %>%
     dplyr::select(run, Gender, age_group_final,
                   matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl|inc_num_bl|inc_num_bl")) %>%
  group_by(run, Gender, age_group_final) %>%
-    summarise_if(is.numeric, funs(sum)) %>%
+    summarise_if(is.numeric, funs(sum), na.rm = TRUE) %>% 
     dplyr::mutate(inc_percent_diff_dmt2=inc_num_diff_dmt2/inc_num_bl_dmt2,
                   inc_percent_diff_ishd=inc_num_diff_ishd/inc_num_bl_ishd,
                   inc_percent_diff_strk=inc_num_diff_strk/inc_num_bl_strk,
