@@ -13,6 +13,16 @@ diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
                    "Ischemic heart disease","Stroke","Lung cancer",
                    "Uterine cancer")
+auo_theme <- theme_bw() +
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16),
+        legend.position = "right",
+        legend.title = element_blank(),
+        legend.text = element_text(size=16),
+        legend.key = element_blank(),
+        strip.text = element_text(size = 14),
+        strip.text.y = element_text(angle=0, hjust=0),
+        strip.background = element_rect(fill="white",size=0))
 
 ########## Change in mode of transport
 GraphsMode <- function(age_val,sex_val,scen_val) {
@@ -29,20 +39,20 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
     geom_bar(stat="identity", position="dodge") + 
     # AUO teal and pink
     scale_fill_manual(values=c("#24C9AC","#EC4497")) +
-    labs(title="Distribution of trips for baseline and scenario", x="",
-         y="Proportion of all trips") +
+    labs(y="Proportion of all trips") +
     geom_text(aes(label=paste0(round(prop*100,1),"%")),
               position=position_dodge(width=0.9), vjust=-0.25) +
     scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
     theme_classic() +
-    theme(plot.title = element_text(hjust=0.5, size=20, face="bold"),
-          axis.text=element_text(size=16),
+    theme(plot.title = element_blank(),
+          axis.text=element_text(size=14),
           axis.title=element_text(size=16),
+          axis.title.x=element_blank(),
+          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1),
           legend.position = "right",
           legend.title = element_blank(),
-          legend.text = element_text(colour = "black", size = 16),
-          legend.key = element_blank(),
-          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+          legend.text = element_text(size=16),
+          legend.key = element_blank())
 }
 
 GetMinutesText <- function(age_val,sex_val,scen_val) {
@@ -88,6 +98,18 @@ HALYsTable <- function(age_val,sex_val,scen_val) {
     dplyr::select(population,measure,mean,median,percentile025,percentile975)
 }
 
+diseasesChangeIncidenceTable <- function(age_val,sex_val,scen_val) {
+  # age_val='all'; sex_val='all'; scen_val='all_2_10'
+  tmpPlot <- output_diseases_change %>%
+    filter(age==age_val,sex==sex_val,scen==scen_val) %>%
+    filter(measure=="inc_percent" & scenario== "diff") %>%
+    # somewhere in the scripts tablc has been mislabeled tbalct
+    mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
+    mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
+    mutate(across(median:percentile975, round, digits=3)) %>%
+    dplyr::select(disease,median,percentile025,percentile975)
+}
+
 diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
@@ -98,6 +120,7 @@ diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
     dplyr::select(disease,median,percentile025,percentile975)
+  
   plot <- ggplot(tmpPlot, aes(x=disease, y=median)) + 
     geom_bar(stat="identity", color=NA, fill="#24C9AC", # AUO teal
              position=position_dodge()) +
@@ -105,7 +128,9 @@ diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
                   position=position_dodge(.9))  +
     scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
     labs(x="Disease", y="Percentage change diseases") +
-    theme_bw()
+    auo_theme +
+    theme(axis.title.x=element_blank(),
+          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
   plot
 }
 
@@ -126,7 +151,9 @@ diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
                   position=position_dodge(.9))  +
     scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
     labs(x="Disease", y="Percentage change deaths") +
-    theme_bw()
+    auo_theme +
+    theme(axis.title.x=element_blank(),
+          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
   plot
 }
 
@@ -149,18 +176,10 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
     ungroup() %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels))
   
-  labelDF <- tmpPlot %>%
-    group_by(disease) %>%
-    summarise(y=min(percentile025,na.rm=TRUE)) %>%
-    ungroup() %>%
-    mutate(x=0.5)
-  
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(data=labelDF, aes(x=x,y=y), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
-    facet_wrap(facets=vars(disease),ncol=1,scales="free_y") +
+    facet_grid(rows=vars(disease), scales = "free_y") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -168,9 +187,8 @@ incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
-    labs(x="Years since scenario commenced", y="Incidence",
-         title = paste("Changes in cases of disease prevented over time")) +
-    theme_bw()
+    labs(x="Years since scenario commenced", y="Incidence") +
+    auo_theme
 }
 
 mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
@@ -192,18 +210,11 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
     ungroup() %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels))
   
-  labelDF <- tmpPlot %>%
-    group_by(disease) %>%
-    summarise(y=min(percentile025,na.rm=TRUE)) %>%
-    ungroup() %>%
-    mutate(x=0.5)
-  
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(data=labelDF, aes(x=x,y=y), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
-    facet_wrap(facets=vars(disease),ncol=1,scales="free_y") +
+    facet_grid(rows=vars(disease), scales = "free_y") +
+    # facet_wrap(facets=vars(disease),ncol=1,scales="free_y") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -211,9 +222,8 @@ mortalityDiseasesGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
-    labs(x="Years since scenario commenced", y="Mortality",
-         title = paste("Changes in cases of disease prevented over time")) +
-    theme_bw()
+    labs(x="Years since scenario commenced", y="Mortality") +
+    auo_theme
 }
 
 halyGraph <- function(age_val,sex_val,scen_val) {
@@ -238,8 +248,6 @@ halyGraph <- function(age_val,sex_val,scen_val) {
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(aes(x=0.5,y=0), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -247,9 +255,8 @@ halyGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
-    labs(x="Years since scenario commenced", y="Health-adjusted life years",
-         title = paste("Total health-adjusted life years gained due to the scenario")) +
-    theme_bw()
+    labs(x="Years since scenario commenced", y="Health-adjusted life years") +
+    auo_theme
 }
 
 lyGraph <- function(age_val,sex_val,scen_val) {
@@ -273,8 +280,6 @@ lyGraph <- function(age_val,sex_val,scen_val) {
   ggplot(tmpPlot, aes(x=year)) +
     geom_ribbon(aes(ymin=percentile025,ymax=percentile975),fill="#24C9AC",alpha=0.5) + # AUO teal
     geom_line(aes(y=median)) +
-    geom_label(aes(x=0.5,y=0), hjust=0, vjust=0, alpha=0.5,
-               label.size=0, label="Time = 0 at baseline year 2017") +
     scale_y_continuous(
       name = waiver(),
       breaks = waiver(),
@@ -282,9 +287,8 @@ lyGraph <- function(age_val,sex_val,scen_val) {
       n.breaks = 3,
       labels = waiver()) +
     scale_x_continuous(limits=c(0,85),breaks=seq(0,80,10), expand=c(0,0)) +
-    labs(x="Years since scenario commenced", y="Health-adjusted life years",
-         title = paste("Total life years gained due to the scenario")) +
-    theme_bw()
+    labs(x="Years since scenario commenced", y="Health-adjusted life years") +
+    auo_theme
 }
 
 ######################################## Graphs for rmarkdown #################################################################
