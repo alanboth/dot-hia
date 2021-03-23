@@ -38,7 +38,7 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
   ggplot(dataFiltered, aes(x=prop, y=mode, fill=scenario)) +
     geom_bar(stat="identity", position="dodge") + 
     # AUO teal and pink
-    # scale_fill_manual(values=c("#24C9AC","#EC4497")) +
+    scale_fill_manual(values=c("#24C9AC","#EC4497")) +
     labs(x="Proportion of all trips") +
     geom_text(aes(label=paste0(round(prop*100,1),"%")),
               position=position_dodge(width=0.9),
