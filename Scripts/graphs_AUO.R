@@ -35,21 +35,23 @@ GraphsMode <- function(age_val,sex_val,scen_val) {
                        levels=c("walking","bicycle","public.transport","car","other"),
                        labels=c("Walking","Cycling","Public transport","Driving","Other")))
   
-  ggplot(dataFiltered, aes(x=mode, y=prop, fill=scenario)) +
+  ggplot(dataFiltered, aes(x=prop, y=mode, fill=scenario)) +
     geom_bar(stat="identity", position="dodge") + 
     # AUO teal and pink
-    scale_fill_manual(values=c("#24C9AC","#EC4497")) +
-    labs(y="Proportion of all trips") +
+    # scale_fill_manual(values=c("#24C9AC","#EC4497")) +
+    labs(x="Proportion of all trips") +
     geom_text(aes(label=paste0(round(prop*100,1),"%")),
-              position=position_dodge(width=0.9), vjust=-0.25) +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
+              position=position_dodge(width=0.9),
+              hjust=-0.05, vjust=0.5, size=5) +
+    scale_x_continuous(labels = scales::percent_format(accuracy = 5L),limits=c(0,.8)) +
     theme_classic() +
     theme(plot.title = element_blank(),
           axis.text=element_text(size=14),
           axis.title=element_text(size=16),
-          axis.title.x=element_blank(),
-          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1),
-          legend.position = "right",
+          axis.title.y=element_blank(),
+          # axis.text.x = element_text(angle=90, vjust=0.5, hjust=1),
+          legend.position = c(.99, .99),
+          legend.justification = c(1,1),
           legend.title = element_blank(),
           legend.text = element_text(size=16),
           legend.key = element_blank())
