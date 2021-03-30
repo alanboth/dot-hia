@@ -21,12 +21,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     rename_all(~c("HOMEPC","ses")) %>%
     filter(!is.na(HOMEPC))
   
-  ## Add SEIFA-IRSD
-  ses_index <- read.csv(ses_index_location,as.is=T,fileEncoding="UTF-8-BOM") %>%
-    rename_all(~c("HOMEPC","ses")) %>%
-    filter(!is.na(HOMEPC))
-  
-  ### Join persons and household, keep data for greater Melb only and create unique weights
+  ## Join persons and household, keep data for greater Melbourne only and create unique weights
   persons_travel <- left_join(person_VISTA, hh_VISTA, by = "HHID") %>% 
     filter(SurveyPeriod == "2017-18" &
              (HomeSubRegion != "Geelong" | HomeSubRegion != "Other")) %>%
@@ -35,7 +30,7 @@ calculateTravelData <- function(hh_VISTA_location,person_VISTA_location,ses_inde
     dplyr::select(-WDPERSWGT,-WEPERSWGT) %>%
     as.data.frame() %>%
     inner_join(ses_index, by="HOMEPC") %>%
-    ### Create age category as persons_pa is only available by age groups
+    ### Create age category as persons_pa (from NHS) is only available by age groups
     rename(age=AGE) %>%
     mutate(age_group = case_when(age <   5             ~  1,
                                  age >=  5 & age <=  9 ~  2,

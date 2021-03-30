@@ -3,6 +3,7 @@
 
 library(readr)
 library(readxl)
+library(stringr)
 GetPopulation <- function(population_data, location){
    # population_data="Data/original/abs/population_census.xlsx"
    # location="Greater Melbourne" # (other options)
