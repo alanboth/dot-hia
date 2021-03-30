@@ -11,7 +11,7 @@ library(zoo) # for calculating rolling mean
 ############################## Graphs function (to do age and sex graphs) ################################################
 diseaseLevels <- c("brsc","carc","dmt2","ishd","strk","tbalc","utrc")
 diseaseLabels <- c("Breast cancer","Colon cancer","Diabetes type 2",
-                   "Ischemic heart disease","Stroke","Lung cancer",
+                   "Ischemic heart\ndisease","Stroke","Lung cancer",
                    "Uterine cancer")
 auo_theme <- theme_bw() +
   theme(axis.text = element_text(size=14),
@@ -129,7 +129,7 @@ diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
     geom_bar(stat="identity", color=NA, fill="#EC4497", # AUO pink
              position=position_dodge()) +
     labs(x="Percentage change diseases") +
-    # geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
     scale_x_continuous(labels = scales::percent) +
     auo_theme +
     theme(axis.title.y=element_blank())
@@ -150,7 +150,7 @@ diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
     geom_bar(stat="identity", color=NA, fill="#EC4497", # AUO pink
              position=position_dodge()) +
     labs(x="Percentage change deaths") +
-    # geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
     scale_x_continuous(labels = scales::percent) +
     auo_theme +
     theme(axis.title.y=element_blank())
