@@ -22,7 +22,9 @@ auo_theme <- theme_bw() +
         legend.key = element_blank(),
         strip.text = element_text(size = 14),
         strip.text.y = element_text(angle=0, hjust=0),
-        strip.background = element_rect(fill="white",size=0))
+        strip.background = element_rect(fill="white",size=0),
+        panel.grid.minor = element_blank(),
+        panel.spacing = unit(0.8, "lines")) # use this to change the spacing between the different disease plots
 
 ########## Change in mode of transport
 GraphsMode <- function(age_val,sex_val,scen_val) {
@@ -123,17 +125,14 @@ diseasesChangeIncidence <- function(age_val,sex_val,scen_val) {
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
     dplyr::select(disease,median,percentile025,percentile975)
   
-  plot <- ggplot(tmpPlot, aes(x=disease, y=median)) + 
-    geom_bar(stat="identity", color=NA, fill="#24C9AC", # AUO teal
+  ggplot(tmpPlot, aes(x=median, y=disease)) +
+    geom_bar(stat="identity", color=NA, fill="#EC4497", # AUO pink
              position=position_dodge()) +
-    geom_errorbar(aes(ymin=percentile025, ymax=percentile975), width=.2,
-                  position=position_dodge(.9))  +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
-    labs(x="Disease", y="Percentage change diseases") +
+    labs(x="Percentage change diseases") +
+    # geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    scale_x_continuous(labels = scales::percent) +
     auo_theme +
-    theme(axis.title.x=element_blank(),
-          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
-  plot
+    theme(axis.title.y=element_blank())
 }
 
 diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
@@ -146,17 +145,15 @@ diseasesChangeDeaths <- function(age_val,sex_val,scen_val) {
     mutate(disease=ifelse(disease=="tbalct","tbalc",disease)) %>%
     mutate(disease=factor(disease, levels=diseaseLevels, labels=diseaseLabels)) %>%
     dplyr::select(disease,median,percentile025,percentile975)
-  plot <- ggplot(tmpPlot, aes(x=disease, y=median)) + 
-    geom_bar(stat="identity", color=NA, fill="#24C9AC", # AUO teal
+  
+  ggplot(tmpPlot, aes(x=median, y=disease)) +
+    geom_bar(stat="identity", color=NA, fill="#EC4497", # AUO pink
              position=position_dodge()) +
-    geom_errorbar(aes(ymin=percentile025, ymax=percentile975), width=.2,
-                  position=position_dodge(.9))  +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 5L)) +
-    labs(x="Disease", y="Percentage change deaths") +
+    labs(x="Percentage change deaths") +
+    # geom_errorbar(aes(xmin=percentile025, xmax=percentile975), width=.2) +
+    scale_x_continuous(labels = scales::percent) +
     auo_theme +
-    theme(axis.title.x=element_blank(),
-          axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
-  plot
+    theme(axis.title.y=element_blank())
 }
 
 incidenceDiseasesGraph <- function(age_val,sex_val,scen_val) {
