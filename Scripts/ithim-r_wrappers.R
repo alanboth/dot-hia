@@ -1054,6 +1054,12 @@ summariseOutputs <- function(scenario_location,output_df){
   # in case the directory hasn't been made yet
   dir.create(scenario_location, recursive=TRUE, showWarnings=FALSE)
   
+  #### Add population numbers for presentation purposes
+  population <- GetPopulation(
+    population_data="Data/original/abs/population_census.xlsx",
+    location="Greater Melbourne") %>%
+    rename(cohort = sex_age_cat) %>%
+    dplyr::filter(cohort %in% unique(output_df$cohort))
   
   output_df_year <- output_df  %>% ### Create a simulation year columns 
     group_by(run, age_group, Gender, .add=TRUE) %>%
@@ -1100,14 +1106,6 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)
   rm(output_df_agg)
   
-  
-  #### Add population numbers for presentation purposes
-  population <- GetPopulation(
-    population_data="Data/original/abs/population_census.xlsx",
-    location="Greater Melbourne") %>%
-    rename(cohort = sex_age_cat) %>%
-    dplyr::filter(cohort %in% unique(output_df$cohort))
-  
   population2 <- population %>%
     separate(cohort,into=c('Gender','age'),sep='_') %>%
     mutate(age_group_final=case_when(
@@ -1125,8 +1123,7 @@ summariseOutputs <- function(scenario_location,output_df){
     group_by(Gender,age_group_final) %>%
     summarise(population=sum(population,na.rm=T)) %>%
     ungroup()
-  rm(population2)
-  
+
   ##################### Below outcomes for presentation ####################################################
   
   # Table: Life expectancy and health adjusted life expectancy
@@ -1244,7 +1241,7 @@ summariseOutputs <- function(scenario_location,output_df){
             paste0(scenario_location,"/output_diseases_change.csv"),
             row.names=F, quote=T)
   
-  rm(datAll)
+  rm(dataAll)
 
 }
 
