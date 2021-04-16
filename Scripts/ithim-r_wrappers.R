@@ -650,8 +650,8 @@ CalculationModel <- function(seed=1,
   ### 1) Generate marginal mets for matched population, then used to derive RRs per person. Total defaults is FALSE, do not include work mmets.
   mmets_pp <- calculateMMETSperPerson(
     matched_pop_location = persons_matched,
-    MMET_CYCLING = MMET_CYCLING, 
-    MMET_WALKING = MMET_WALKING,
+    MMET_CYCLING = 5.8, 
+    MMET_WALKING = 2.5,
     TOTAL = F
   )
   cat(paste0("have run calculateMMETSperPerson\n"))
@@ -1123,7 +1123,7 @@ summariseOutputs <- function(scenario_location,output_df){
     group_by(Gender,age_group_final) %>%
     summarise(population=sum(population,na.rm=T)) %>%
     ungroup()
-
+  
   ##################### Below outcomes for presentation ####################################################
   
   # Table: Life expectancy and health adjusted life expectancy
@@ -1162,8 +1162,8 @@ summariseOutputs <- function(scenario_location,output_df){
             paste0(scenario_location,"/output_life_expectancy_change.csv"),
             row.names=F, quote=T)  
   
- 
-   # Table: Life years and health adjusted life years ----
+  
+  # Table: Life years and health adjusted life years ----
   output_life_years_change <- dataAll %>%
     group_by(run, Gender, age_group_final) %>%
     dplyr::select(age_group_final, Gender, Lx_diff, Lwx_diff, Lx_bl, Lwx_bl) %>%
@@ -1197,7 +1197,7 @@ summariseOutputs <- function(scenario_location,output_df){
     # filter(run==1) %>%
     dplyr::select(run, Gender, age_group_final,
                   matches("diff_dmt2|diff_ishd|diff_strk|diff_carc|diff_copd|diff_tbalc|diff_brsc|diff_utrc|diff_lri|inc_num_bl|mx_num_bl|inc_num_bl|inc_num_bl")) %>%
- group_by(run, Gender, age_group_final) %>%
+    group_by(run, Gender, age_group_final) %>%
     summarise_if(is.numeric, funs(sum), na.rm = TRUE) %>% 
     dplyr::mutate(inc_percent_diff_dmt2=inc_num_diff_dmt2/inc_num_bl_dmt2,
                   inc_percent_diff_ishd=inc_num_diff_ishd/inc_num_bl_ishd,
@@ -1242,7 +1242,7 @@ summariseOutputs <- function(scenario_location,output_df){
             row.names=F, quote=T)
   
   rm(dataAll)
-
+  
 }
 
 summariseMMETS <- function(scenario_location,output_df){
@@ -1294,7 +1294,7 @@ summariseMMETS <- function(scenario_location,output_df){
             row.names=F, quote=T)
 }
 
-  
+
 summariseTransport <- function(inputFile,scenario_name="default") {
   # inputFile=scenarios_Melb[i,]$trips_location
   data <- read.csv(inputFile,as.is=T, fileEncoding="UTF-8-BOM") %>%
@@ -1340,4 +1340,3 @@ importSummarisedOutputs <- function(scenario_location) {
     read.csv(paste0(scenario_location,"/output_diseases_change.csv"),
              as.is=T, fileEncoding="UTF-8-BOM")
 }
-

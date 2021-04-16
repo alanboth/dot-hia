@@ -28,7 +28,7 @@ outputLocation <- "C:/dot-hia/output/melbourne-outputs-raw"
 combinedLocation <-  "C:/dot-hia/output/melbourne-outputs-combined"
 combinedLocationMMETS <-  "C:/dot-hia/output/melbourne-outputs-combined-mmets"
 summarisedLocation <-  "C:/dot-hia/output/melbourne-outputs-summarised"
-finalLocation <- "C:/dot-hia/output/melbourne-outputs"
+# finalLocation <- "C:/dot-hia/output/melbourne-outputs"
 
 ### Scenarios 
 scenarios_Melb <- read.csv("scenarios_for_melbourne.csv",as.is=T,fileEncoding="UTF-8-BOM") %>%
@@ -45,7 +45,7 @@ for (i in 1:nrow(scenarios_Melb)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_Melb[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<-1:1000
+  seeds<-1:1
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
