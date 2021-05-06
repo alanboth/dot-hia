@@ -286,7 +286,7 @@ calculateScenarioTrips <- function(trips_melbourne,
   # trips_melbourne="Data/processed/trips_melbourne_dot.csv"
   # lga_df="Data/processed/lga_df.csv"
   # output_location="./scenarios_dot"
-  
+
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
   dir.create(paste0(output_location,"/scenarioTrips"), recursive=TRUE, showWarnings=FALSE)
@@ -491,7 +491,7 @@ calculateScenarioTrips <- function(trips_melbourne,
     mutate(trip_mode_base=ifelse(trip_mode_base%in%c("pt.walk","pt.drive"),"walking",trip_mode_base)) %>%
     mutate(trip_mode_scen=ifelse(trip_mode_scen%in%c("pt.walk","pt.drive"),"walking",trip_mode_scen))
   
-
+  
   
   ### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
   persons_travel_pt_full <- calculatePersonsTravelScenario(
@@ -519,15 +519,6 @@ calculateScenarioTrips <- function(trips_melbourne,
 }
 
 
-
-
-
-
-
-
-
-
-
 # calculating results -----------------------------------------------------
 
 ### Trips data used in mslt_code and ithim-r
@@ -539,97 +530,8 @@ trips_melbourne <- calculateVistaTripsDOT(
 )
 write.csv(trips_melbourne, "Data/processed/trips_melbourne_dot.csv", row.names=F, quote=F)
 
-
-# THIS SHOULD ALREADY BE CALCULATED
-# ### Travel data people used in mslt_code to generate matched population
-# source("Scripts/data_prep/synthetic_pop.R")
-# travel_data <- calculateTravelData(
-#   hh_VISTA_location="Data/Travelsurvey/VISTA12-18/H_VISTA_1218_V1.csv",
-#   person_VISTA_location="Data/Travelsurvey/VISTA12-18/P_VISTA1218_V1.csv",
-#   ses_index_location="Data/Travelsurvey/ABS SEIFA/ses.csv"
-# )
-# 
-# write.csv(travel_data, "Data/processed/travel_data.csv", row.names=F, quote=T)
-# 
-# ### PA data people used in mslt_code to generate matched population
-# persons_pa <- calculatePersonsPA(
-#   pa_location="Data/Physical activity/NHS2017-18_CSV/NHS17SPB.csv",
-#   hh_location="Data/Physical activity/NHS2017-18_CSV/NHS17HHB.csv"
-# )
-# write.csv(persons_pa, "Data/processed/persons_pa.csv", row.names=F, quote=F)
-
 calculateScenarioTrips(
   trips_melbourne="Data/processed/trips_melbourne_dot.csv",
   lga_df="Data/processed/lga_df.csv",
   output_location="./scenarios_dot"
 )
-
-
- 
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Steps: 1) Generate trip set with baseline and scenario trips, 2) Generate persons_matched 
-
-# source("Scripts/scenarios_MEL.R")
-# source("Scripts/data_prep/synthetic_pop.R")
-# 
-# # iterate through each entry in scenarios_Melb, creating the matched population
-# print(paste0("iterating through ",nrow(scenarios_Melb)," scenarios at ",Sys.time()))
-# for (i in 1:nrow(scenarios_Melb)){
-#   generateMatchedPopulationScenario(
-#     output_location="./scenarios",
-#     scenario_name=scenarios_Melb[i,]$scenario,
-#     in_data="./Data/processed/trips_melbourne.csv",
-#     # in_speed="./Data/processed/speed_trips_melbourne.csv",
-#     max_walk=scenarios_Melb[i,]$max_walk,
-#     max_cycle=scenarios_Melb[i,]$max_cycle,
-#     purpose=scenarios_Melb[i,]$purpose_full
-#   )
-#   cat(paste0("\n scenario ",i,"/",nrow(scenarios_Melb)," complete at ",Sys.time(),"\n"))
-# }
-
-# in_data="./Data/processed/trips_melbourne.csv",
-
-
-
-
-
-
-
-
-
-
-
-
