@@ -1,4 +1,4 @@
-#### Model for Melbourne population AUO
+# ------ DoT model
 
 
 suppressPackageStartupMessages(library(doParallel))
@@ -18,16 +18,16 @@ source("Scripts/data_prep/population_prep.R")
 ### Outputs location (select your local drive)
 scenarioLocation      <- "./scenarios_dot"
 scenarioTripsLocation <- "./scenarios_dot/scenarioTrips"
-outputLocation        <- "/home/alan/DATA/dot-hia/dot-outputs-raw"
-combinedLocation      <- "/home/alan/DATA/dot-hia/dot-outputs-combined"
-combinedLocationMMETS <- "/home/alan/DATA/dot-hia/dot-outputs-combined-mmets"
-summarisedLocation    <- "/home/alan/DATA/dot-hia/dot-outputs-summarised"
-finalLocation         <- "output/dot-outputs"
-# outputLocation        <- "C:/dot-hia/output/dot-outputs-raw"
-# combinedLocation      <- "C:/dot-hia/output/dot-outputs-combined"
-# combinedLocationMMETS <- "C:/dot-hia/output/dot-outputs-combined-mmets"
-# summarisedLocation    <- "C:/dot-hia/output/dot-outputs-summarised"
-# finalLocation         <- "C:/dot-hia/output/dot-outputs"
+# outputLocation        <- "/home/alan/DATA/dot-hia/dot-outputs-raw"
+# combinedLocation      <- "/home/alan/DATA/dot-hia/dot-outputs-combined"
+# combinedLocationMMETS <- "/home/alan/DATA/dot-hia/dot-outputs-combined-mmets"
+# summarisedLocation    <- "/home/alan/DATA/dot-hia/dot-outputs-summarised"
+# finalLocation         <- "output/dot-outputs"
+outputLocation        <- "C:/dot-hia/output/dot-outputs-raw"
+combinedLocation      <- "C:/dot-hia/output/dot-outputs-combined"
+combinedLocationMMETS <- "C:/dot-hia/output/dot-outputs-combined-mmets"
+summarisedLocation    <- "C:/dot-hia/output/dot-outputs-summarised"
+finalLocation         <- "C:/dot-hia/output/dot-outputs"
 
 ### Scenarios 
 scenarios_dot <- data.frame(scenario=c("dotFull","dotTrain")) %>%
@@ -44,7 +44,7 @@ for (i in 1:nrow(scenarios_dot)){
   cl <- makeCluster(number_cores)
   cat(paste0("About to start processing results in parallel, using ",number_cores," cores\n"))
   persons_matched=read.csv(scenarios_dot[i,]$scenario_location,as.is=T, fileEncoding="UTF-8-BOM")
-  seeds<-1:1000
+  seeds<-1:1
   registerDoParallel(cl)
   start_time = Sys.time()
   results <- foreach::foreach(seed_current=seeds,
@@ -101,7 +101,33 @@ for (i in 1:nrow(scenarios_dot)){
   cat(paste0("\n combined scenario ",i,"/",nrow(scenarios_dot)," complete at ",Sys.time(),"\n"))
 }
 
-
+### Summarise transport (customised to account for work trips only)
+summariseTransport <- function(inputFile,scenario_name="default") {
+  # inputFile=scenarios_Melb[i,]$trips_location
+  data <- read.csv(inputFile,as.is=T, fileEncoding="UTF-8-BOM") %>%
+    # dplyr::filter(trip_purpose=="Work") %>% ## Filter work trips only
+    dplyr::select(participant_wt,age,sex,trip_mode_base,trip_mode_scen) %>%
+    mutate(agegroup= case_when(
+      age>=15 & age<=19 ~'15-19',
+      age>=20 & age<=39 ~'20-39',
+      age>=40 & age<=64 ~'40-64',
+      age>=65           ~'65plus')) %>%
+    dplyr::select(age=agegroup,sex,participant_wt,bl=trip_mode_base,sc=trip_mode_scen)
+  
+  
+  dataAll <- bind_rows(
+    data,
+    data%>%mutate(age='all'),
+    data%>%mutate(sex='all'),
+    data%>%mutate(age='all',sex='all')
+  ) %>% pivot_longer(cols = c("bl", "sc"),
+                     names_to = "scenario",
+                     values_to = "mode")%>%
+    mutate(scen=scenario_name) %>%
+    as.data.frame()
+  
+  return(dataAll)
+}
 ### Save to melbourne-outputs
 print(paste0("summarising transport modes ",nrow(scenarios_dot)," scenario outputs at ",Sys.time()))
 scenarioTrips<-NULL
@@ -116,6 +142,9 @@ for (i in 1:nrow(scenarios_dot)){
 
 
 ### Two options for transport trips, weighted and unweigthed, trying to find out issue with walking changing when scenarios does not change
+#### Filter work trips only
+
+
 scenario_trips_weighted <- list()
 iage <- c(unique(scenarioTrips$age))
 isex <- c(unique(scenarioTrips$sex))
