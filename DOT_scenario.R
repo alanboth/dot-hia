@@ -509,12 +509,15 @@ calculateScenarioTrips <- function(trips_melbourne,
   persons_matched_pt_full <- calculatePersonsMatch(
     pa_location="./Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
     persons_travel_location=persons_travel_pt_full  #"Data/processed/persons_travel.csv"
-  ) %>% dplyr::mutate(scen="dotFull")
+  ) %>% dplyr::mutate(scen="dotFull") %>% 
+    dplyr::filter(work_status == "employed")
   write.csv(persons_matched_pt_full, paste0(output_location,"/dotFull.csv"), row.names=F, quote=T)
+  
   persons_matched_pt_train <- calculatePersonsMatch(
     pa_location="./Data/processed/persons_pa.csv", ## BZ: generated in script runInputsMelbourneExposure.R 
     persons_travel_location=persons_travel_pt_train  #"Data/processed/persons_travel.csv"
-  ) %>% dplyr::mutate(scen="dotTrain")
+  ) %>% dplyr::mutate(scen="dotTrain") %>% 
+    dplyr::filter(work_status == "employed")
   write.csv(persons_matched_pt_train, paste0(output_location,"/dotTrain.csv"), row.names=F, quote=T)
 }
 
