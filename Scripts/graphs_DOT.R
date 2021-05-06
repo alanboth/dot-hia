@@ -30,7 +30,7 @@ auo_theme <- theme_bw() +
 GraphsMode <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   
-  scen_label <- case_when(scen_val=="dotFull" ~ "Frequent Trains and Busses",
+  scen_label <- case_when(scen_val=="dotFull" ~ "Frequent Trains and Buses",
                           scen_val=="dotTrain" ~ "Frequent Trains")
   dataFiltered <- output_transport_modes %>% 
     dplyr::filter(age==age_val,sex==sex_val,scen==scen_val) %>%
