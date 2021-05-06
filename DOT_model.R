@@ -105,7 +105,7 @@ for (i in 1:nrow(scenarios_dot)){
 summariseTransport <- function(inputFile,scenario_name="default") {
   # inputFile=scenarios_Melb[i,]$trips_location
   data <- read.csv(inputFile,as.is=T, fileEncoding="UTF-8-BOM") %>%
-    # dplyr::filter(trip_purpose=="Work") %>% ## Filter work trips only
+     dplyr::filter(trip_purpose=="Work") %>% ## Filter work trips only
     dplyr::select(participant_wt,age,sex,trip_mode_base,trip_mode_scen) %>%
     mutate(agegroup= case_when(
       age>=15 & age<=19 ~'15-19',
