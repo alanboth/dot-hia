@@ -27,6 +27,7 @@ auo_theme <- theme_bw() +
         panel.spacing = unit(0.8, "lines")) # use this to change the spacing between the different disease plots
 
 ########## Change in mode of transport
+### Belen/Alan to fix to show only transit trips
 GraphsMode <- function(age_val,sex_val,scen_val) {
   # age_val='all'; sex_val='all'; scen_val='all_2_10'
   

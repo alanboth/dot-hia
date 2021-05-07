@@ -645,7 +645,7 @@ CalculationModel <- function(seed=1,
     matched_population = persons_matched,
     MMET_CYCLING = 5.8, ### replace with 5.8
     MMET_WALKING = 2.5, ## replace with 2.5
-    PA_DOSE_RESPONSE_QUANTILE = F) #### SHOULD BE TRUE
+    PA_DOSE_RESPONSE_QUANTILE = T) #### SHOULD BE TRUE
   
   ### BZ: saved to try to debug the issue with uncertainty
   # save(parameters, file="parameters.RData")### True to run uncertainty  (creates quantiles files for RR physical activity)
@@ -673,7 +673,12 @@ CalculationModel <- function(seed=1,
       age >= 18 & age <= 40 ~ "18 to 40",
       age >= 41 & age <= 65 ~ "41 to 65",
       age >= 65             ~ "65 plus"))) %>%
-    mutate(sex=as.factor(sex)) 
+    mutate(sex=as.factor(sex)) %>% # add column to check that difference is zero or positive (mets should not decrease)
+    dplyr::mutate(diff_mets=scen1_mmet -  base_mmet) 
+    
+
+  write.csv(mmets_pp, file=paste0("./Data/processed.csv"))
+  
   
   ### 2) Create RRs per person to calculate PIFs
   
@@ -700,6 +705,7 @@ CalculationModel <- function(seed=1,
     combined_AP_PA=F,
     calculate_AP=F
   )
+  
   
   
   
