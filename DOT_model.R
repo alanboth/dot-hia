@@ -1,5 +1,9 @@
 # ------ DoT model
 
+#### Differences with AUO model
+# Trips: working trips only. 
+# Matched population: working population only
+# MSLT population: working population from 16 to 65 years of age. 
 
 suppressPackageStartupMessages(library(doParallel))
 

@@ -1,5 +1,9 @@
 # loading libraries and functions -----------------------------------------
+### Clean Global Environment
+rm (list = ls())
 
+### Avoid scientific notation
+options(scipen=999)
 
 # First, you need to convert the matrices to SA2 for ease of use.
 # source("Scripts/convert_dot_matricies.R")
@@ -182,12 +186,7 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
                                            age >= 40 & age <= 64 ~  "40 to 64",
                                            age >= 65             ~ "65 plus"))) %>%
     dplyr::mutate(sex =as.factor(sex)) %>%
-    dplyr::mutate(age_group=as.factor(age_group)) %>%
-    # dplyr::mutate(dist_cat=as.factor(case_when(trip_distance < 1 ~ "<1km",
-    #                                            trip_distance >= 1 & trip_distance <= 2 ~ "1-2km", 
-    #                                            trip_distance <= 5 & trip_distance > 2 ~ "3-5km", 
-    #                                            trip_distance <=10 & trip_distance > 5 ~ "6-10km",
-    #                                            trip_distance > 10 ~ ">10km"))) %>%
+    dplyr::mutate(age_group=as.factor(age_group)) %>% 
     dplyr::mutate(trip_purpose=as.factor(case_when(trip_purpose=="social" ~ "Leisure",
                                                    trip_purpose=="recreational" ~ "Leisure",
                                                    trip_purpose=="buy something" ~ "Shopping",
@@ -243,7 +242,7 @@ chooseTrips <- function(base_choices, lga_name,scen_car,scen_pt.walk,scen_pt.dri
   if(length(removed_trips)==0) {
     choices <- base_choices %>%
       mutate(trip_mode_scen=trip_mode_base)
-    return(choices)
+     return(choices)
   }
   
   trip_mode_scen <- c()
