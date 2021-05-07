@@ -677,7 +677,7 @@ CalculationModel <- function(seed=1,
     dplyr::mutate(diff_mets=scen1_mmet -  base_mmet) 
     
 
-  write.csv(mmets_pp, file=paste0("./Data/processed.csv"))
+  write.csv(mmets_pp, file=paste0("./Data/processed/mets_dot.csv"))
   
   
   ### 2) Create RRs per person to calculate PIFs
