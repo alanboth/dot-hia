@@ -261,7 +261,7 @@ chooseTrips <- function(base_choices, lga_name,scen_car,scen_pt.walk,scen_pt.dri
 }
 
 # attaches distance and time values from scenario_time_and_distance to an intervention
-getDistanceAndTime <- function(df, scen_name) {
+getDistanceAndTime <- function(df, scen_name, scenario_time_and_distance) {
   # scen_name="pt.full"; df=pt_full_scenario
   
   bl <- scenario_time_and_distance %>%
@@ -299,6 +299,9 @@ calculateScenarioTrips <- function(trips_melbourne,
   if(is.character(lga_df)) {
     lga_df <- read.csv(lga_df,as.is=T,fileEncoding="UTF-8-BOM")
   }
+  
+  print(paste0("trips_melbourne length: ",nrow(trips_melbourne)))
+  print(paste0("lga_df length: ",nrow(lga_df)))
   
   scenario_data <- lga_df %>%
     dplyr::select(-lga_code) %>%
@@ -427,7 +430,7 @@ calculateScenarioTrips <- function(trips_melbourne,
     mutate(data = pmap(list(data, lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
     dplyr::select(lga_name,data) %>%
     unnest(cols="data") %>%
-    getDistanceAndTime("pt.full") %>%
+    getDistanceAndTime("pt.full",scenario_time_and_distance) %>%
     inner_join(
       trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
       by=c("lga_name","lga_id")
@@ -458,7 +461,7 @@ calculateScenarioTrips <- function(trips_melbourne,
     mutate(data = pmap(list(data, lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
     dplyr::select(lga_name,data) %>%
     unnest(cols="data") %>%
-    getDistanceAndTime("pt.train") %>%
+    getDistanceAndTime("pt.train",scenario_time_and_distance) %>%
     inner_join(
       trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
       by=c("lga_name","lga_id")

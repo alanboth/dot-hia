@@ -60,6 +60,14 @@ GraphsMode(
 )
 ggsave(paste0(graphsLocation,"mode_all_all_train.pdf"),width=10,height=6)
 
+
+GraphsMode(
+  age_val= "20-39",
+  sex_val='all',
+  scen_val='dotFull'
+)
+ggsave(paste0(graphsLocation,"mode_20-39_all_full.pdf"),width=10,height=6)
+
 # 2) Minutes-text-example --------------------------------------------------(Gus, this should have the text that Lucy is sharing with use. Transport data from above graph and physical activity data for mean walking and cycling from data called in this function)
 
 GetMinutesText(
@@ -105,6 +113,14 @@ ggsave(paste0(graphsLocation,"deathChange_all_all_full.pdf"),width=10,height=6)
 ### Incidence diseases 
 incidenceDiseasesGraph(
   age_val='all',
+  sex_val='all',
+  scen_val='dotFull'
+)
+ggsave(paste0(graphsLocation,"incidence_all_all_full.pdf"),width=10,height=6)
+
+
+incidenceDiseasesGraph(
+  age_val='20-39',
   sex_val='all',
   scen_val='dotFull'
 )
