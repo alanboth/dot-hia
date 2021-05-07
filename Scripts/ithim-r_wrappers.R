@@ -4,6 +4,7 @@ suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(srvyr))
 suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(tidyverse))
 
 # runs a local version of gen_pa_rr (and PA_dose_response) so ithim-r library doesn't need to be called
 # ithim-r still needs to be installed so we can access the dose response folder
@@ -498,7 +499,13 @@ GetParamters <- function(NSAMPLES = 1,
   mslt_general="Data/processed/mslt/mslt_df.csv"
   death_rate_periodic="Data/processed/mslt/deaths_periodic.csv"
   death_rates_projections="Data/processed/mslt/deaths_projections.csv"
-  population_data="Data/original/abs/population_census.xlsx"
+  
+  # Use working population for DoT scenario 
+  population <- readxl::read_xlsx(paste0("Data/original/abs/population_census_employed.xlsx")) #, sheet = "Data Sheet 0", range = "B9:K49")
+  
+  #Use general population for AUO scenario
+  # population_data="Data/original/abs/population_census.xlsx"
+  
   disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv"
   
   
@@ -512,9 +519,10 @@ GetParamters <- function(NSAMPLES = 1,
   
   death_rates <- read.csv(death_rates_projections,as.is=T,fileEncoding="UTF-8-BOM") %>% dplyr::filter(location == "Victoria", assumption == "medium")
   
-  population <- GetPopulation(
-    population_data=population_data,
-    location= location_population)
+  ## Population function needs to be uncommented when running AUO scenarios
+  # population <- GetPopulation(
+  #   population_data=population_data,
+  #   location= location_population)
   MSLT_DF <- left_join(MSLT_DF, population)
   MSLT_DF$age <- as.numeric(MSLT_DF$age)
   
@@ -526,6 +534,7 @@ GetParamters <- function(NSAMPLES = 1,
   parameters$DISEASE_INVENTORY <- DISEASE_INVENTORY
   parameters$disease_inventory_location <- disease_inventory_location  ### added this here to avoid issues with gen_pa_rr_wrapper and health_burden2 in CalculateMOdel
   parameters$PA_DOSE_RESPONSE_QUANTILE <- PA_DOSE_RESPONSE_QUANTILE
+  
   parameters$population <- population  
   
   ### RANDOM INPUTS  
@@ -623,7 +632,7 @@ CalculationModel <- function(seed=1,
   
   ### Model parameters
   #### i_age_cohort and i_age are linked to ouputs of calculateScenarioMel
-  i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82, 87, 92, 97)
+  i_age_cohort <- c(17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82)
   i_sex <- c("male", "female")
   
   DISEASE_SHORT_NAMES <- read.csv("Data/processed/mslt/disease_names.csv",as.is=T,fileEncoding="UTF-8-BOM") ## Alan, not sure whether this should
@@ -636,11 +645,12 @@ CalculationModel <- function(seed=1,
     matched_population = persons_matched,
     MMET_CYCLING = 5.8, ### replace with 5.8
     MMET_WALKING = 2.5, ## replace with 2.5
-    PA_DOSE_RESPONSE_QUANTILE = T)
+    PA_DOSE_RESPONSE_QUANTILE = F) #### SHOULD BE TRUE
   
   ### BZ: saved to try to debug the issue with uncertainty
   # save(parameters, file="parameters.RData")### True to run uncertainty  (creates quantiles files for RR physical activity)
   cat('test\n')
+  
   list2env(parameters,environment()) ### move all elements in parameters list to global environment 
   cat(paste0("have set parameters\n"))
   
@@ -682,19 +692,40 @@ CalculationModel <- function(seed=1,
   
   ### 3) Calculate PIFs by age and sex groups
   
+  
   pif <- health_burden_2(
     ind_ap_pa_location=RR_PA_calculations,
     disease_inventory_location="Data/original/ithimr/disease_outcomes_lookup.csv", ### Also in parameters list
-    demographic_location="Data/processed/DEMO.csv",
+    demographic_location="Data/processed/DEMO_employed.csv",
     combined_AP_PA=F,
     calculate_AP=F
-  ) 
+  )
+  
+  
+  
   cat(paste0("have run health_burden_2\n"))
   
-  pif_age_sex <- pif[[2]] %>% dplyr::rename(age=age_group_2) %>%
+  library(tidyverse)
+
+
+  ### BZ: For DoT scenario adding pifs of 0 from age group 82 to 97(87,92,97)  
+  
+  sex <-  c("female", "female", "female", "male", "male", "male") 
+  age_group_2 <- c(87,92,97,87,92,97)
+  age_groups_old <- data.frame(age_group_2, sex, stringsAsFactors=FALSE)
+  
+  pif_age_sex <- pif[[2]] %>%
+    ungroup() %>%
+    dplyr::bind_rows(age_groups_old) %>%
+          dplyr::rename(age=age_group_2) %>%
     dplyr::slice(rep(1:dplyr::n(), each = 5))
   
+  pif_age_sex[is.na(pif_age_sex)] <- 0
+  
+  
   age <- rep(seq(16,100,1), times = 2)
+  
+  pif_age_sex <- pif_age_sex[order(pif_age_sex$sex),]
   
   pif_age_sex$age <- age
   
@@ -810,7 +841,7 @@ CalculationModel <- function(seed=1,
   
   disease_life_table_list_sc <- list()
   
-  for (i in 1:nrow(age_sex_disease_cohorts)){
+ for (i in 1:nrow(age_sex_disease_cohorts)){
     # i=6
     td1_age_sex <- MSLT_DF %>%
       filter(age >= age_sex_disease_cohorts$age[i] & sex == age_sex_disease_cohorts$sex[i])
