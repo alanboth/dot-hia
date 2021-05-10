@@ -209,6 +209,7 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
   return(trips_melbourne)
 }
 
+## Select lga base trips
 chooseBase <- function(lga_name,count,car,pt.drive,pt.walk) {
   # lga_name='Banyule (C)';count=67;car=62;pt.drive=1;pt.walk=4
   base_choices <- data.frame(lga_name=lga_name,
@@ -224,6 +225,7 @@ chooseTrips <- function(base_choices, lga_name,scen_car,scen_pt.walk,scen_pt.dri
   # scen_pt.walk=pt_full$scen_pt.walk[1]; scen_pt.drive=pt_full$scen_pt.drive[1]
   # base_choices=pt_full$data[[1]]
   
+  # Count number of trips by mode: car, pt.walk and pt.drive (drive to station)
   base_car <- base_choices%>%filter(trip_mode_base=='car')%>%nrow()
   base_pt.walk <- base_choices%>%filter(trip_mode_base=='pt.walk')%>%nrow()
   base_pt.drive <- base_choices%>%filter(trip_mode_base=='pt.drive')%>%nrow()
@@ -318,6 +320,7 @@ calculateScenarioTrips <- function(trips_melbourne,
     mutate(lga_name=ifelse(lga_name=="Kingston (C) (Vic.)","Kingston (C)",lga_name)) %>%
     mutate(lga_name=ifelse(lga_name=="Melton (C)","Melton (S)",lga_name))
   
+  
   scenario_proportions <- scenario_data %>%
     dplyr::select(lga_name,scenario,mode,prop) %>%
     group_by(lga_name,scenario) %>%
@@ -336,6 +339,20 @@ calculateScenarioTrips <- function(trips_melbourne,
     dplyr::select(lga_name,scenario,mode,distance=distance.mean,time=time.mean) %>%
     # time in hours
     mutate(time=time/60)
+  
+### Check time differences between base pt.drive and pt.walk for scenarios pt.full and pt.train (diff are: scen = base)
+  
+  difference_time <- scenario_time_and_distance %>% 
+    select(-distance) %>%
+   pivot_wider(names_from=c(mode,scenario),
+                values_from=time, 
+               values_fill = 0) %>%
+    mutate(diff_pt.drive_pt.full = pt.drive_pt.full - pt.drive_base, 
+           diff_pt.pt_walk.full = pt.walk_pt.full - pt.walk_base, 
+           diff_pt.drive_pt.train = pt.drive_pt.train - pt.drive_base, 
+           diff_pt.pt_walk.train = pt.walk_pt.train - pt.walk_base) %>%
+    select(lga_name, diff_pt.drive_pt.full, diff_pt.pt_walk.full, diff_pt.drive_pt.train, diff_pt.pt_walk.train)
+  
   
   trips_melbourne <- trips_melbourne %>%
     dplyr::mutate(trip_mode=case_when(trip_mode=="pedestrian" ~ 'walking', 
