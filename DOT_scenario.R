@@ -338,7 +338,7 @@ calculateScenarioTrips <- function(trips_melbourne,
   scenario_time_and_distance <- scenario_data %>%
     dplyr::select(lga_name,scenario,mode,distance=distance.mean,time=time.mean) %>%
     # time in hours
-    mutate(time=time/60)
+    mutate(time=distance/4.4)
   
 ### Check time differences between base pt.drive and pt.walk for scenarios pt.full and pt.train (diff are: scen = base)
   
