@@ -15,7 +15,7 @@ options(scipen=999)
 
 #### Functions for model
 source("Scripts/data_prep/mmet_pp.R")
-source("Scripts/ithim-r_wrappers.R")
+source("Scripts/ithim-r_wrappers_dot.R")
 source("Scripts/data_prep/population_prep.R")
 
 
