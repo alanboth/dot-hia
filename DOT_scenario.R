@@ -2,6 +2,10 @@
 ### Clean Global Environment
 rm (list = ls())
 
+### Install library
+# library(devtools)
+# devtools::install_local("~/Downloads/ITHIM-R-master")
+
 ### Avoid scientific notation
 options(scipen=999)
 
@@ -69,6 +73,16 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
   ### Replace all character "N/A" with NA
   trips_melbourne[ trips_melbourne == "N/A" ] <- NA 
   
+  # Identify different modes to PT                              
+  trips_pt.modes <- trips_melbourne %>%
+    filter(if_any(starts_with("MODE"), ~ . %in% c("Public Bus", "School Bus", "Train", "Tram" ))) %>% 
+    mutate(has.walk = if_any(starts_with("MODE"), ~ . == "Walking")) %>% 
+    mutate(has.car = if_any(starts_with("MODE"), ~ . %in% c("Vehicle Driver", "Vehicle Passenger", "Taxi"))) %>% 
+    mutate(pt.mode= case_when(has.car ~ "pt.drive",
+                              has.walk ~ "pt.walk",
+                              TRUE ~ "pt.other")) %>% 
+    dplyr::select(TRIPID, pt.mode)
+  
   # all of the data that isn't MODE,TIME,DIST
   trips_melbourne_tripid <- trips_melbourne %>%
     dplyr::select(HHID, PERSID, AGE, SEX, TRIPID, DayType, SurveyPeriod, 
@@ -100,8 +114,10 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
   trips_melbourne_long <- trips_melbourne_tripid %>%
     inner_join(trips_melbourne_mode, by="TRIPID") %>%
     inner_join(trips_melbourne_time, by=c("TRIPID","STOP")) %>%
-    inner_join(trips_melbourne_dist, by=c("TRIPID","STOP"))
-  
+    inner_join(trips_melbourne_dist, by=c("TRIPID","STOP")) %>% 
+    left_join(trips_pt.modes, by="TRIPID") %>% # Join pt.mode to only pt leg of pt trips
+    mutate(pt.mode = case_when(MODE %in% c("Public Bus", "School Bus", "Train", "Tram" ) ~ pt.mode,
+                               T ~ "NA"))
   
   trips_melbourne <- trips_melbourne_long %>%
     ### Replace mode 13 and 14 with NA
@@ -154,7 +170,7 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
     ### Do not include age_cat as ithim is doing its own synthetic population and this causes issues to have age_cat
     dplyr::select(PERSID, cluster_id, household_id, participant_id, age, sex, year, trip_id,
                   trip_purpose, participant_wt, trips_wt, trip_mode, trip_duration, trip_distance, 
-                  day_type, lga_name=ORIGLGA) %>%
+                  day_type, lga_name=ORIGLGA, pt.mode) %>%
     dplyr::mutate(PERSID=tolower(PERSID)) %>%
     dplyr::mutate(year=as.numeric(year)) %>%
     dplyr::mutate(trip_purpose=tolower(trip_purpose)) %>%
@@ -210,16 +226,15 @@ calculateVistaTripsDOT <- function(hh_VISTA_location,person_VISTA_location,trip_
 }
 
 ## Select lga base trips
-# we dont need this one
-chooseBase <- function(lga_name,count,car,pt.drive,pt.walk) {
-  # lga_name='Banyule (C)';count=67;car=62;pt.drive=1;pt.walk=4
-  base_choices <- data.frame(lga_name=lga_name,
-                             lga_id=sample(1:count, count, replace=F),
-                             trip_mode_base=c(rep("car",car),rep("pt.drive",pt.drive),rep("pt.walk",pt.walk)),
-                             stringsAsFactors=F) %>%
-    arrange(lga_id)
-  return(base_choices)
-}
+# chooseBase <- function(lga_name,count,car,pt.drive,pt.walk) {
+#   # lga_name='Banyule (C)';count=67;car=62;pt.drive=1;pt.walk=4
+#   base_choices <- data.frame(lga_name=lga_name,
+#                              lga_id=sample(1:count, count, replace=F),
+#                              trip_mode_base=c(rep("car",car),rep("pt.drive",pt.drive),rep("pt.walk",pt.walk)),
+#                              stringsAsFactors=F) %>%
+#     arrange(lga_id)
+#   return(base_choices)
+# }
 
 chooseTrips <- function(base_choices,scen_car,scen_pt.walk,scen_pt.drive) {
   # lga_name=pt_full$lga_name[1]; scen_car=pt_full$scen_car[1]
@@ -245,7 +260,7 @@ chooseTrips <- function(base_choices,scen_car,scen_pt.walk,scen_pt.drive) {
   if(length(removed_trips)==0) {
     choices <- base_choices %>%
       mutate(trip_mode_scen=trip_mode_base)
-     return(choices)
+    return(choices)
   }
   
   trip_mode_scen <- c()
@@ -269,14 +284,14 @@ getDistanceAndTime <- function(df, scen_name, scenario_time_and_distance) {
   
   bl <- scenario_time_and_distance %>%
     filter(scenario=='base') %>%
-    dplyr::select(lga_name,trip_mode_base=mode,trip_duration_base=time,trip_distance_base=distance)
+    dplyr::select(trip_mode_base=mode,trip_duration_base=time,trip_distance_base=distance)
   scen <- scenario_time_and_distance %>%
     filter(scenario==scen_name) %>%
-    dplyr::select(lga_name,trip_mode_scen=mode,trip_duration_scen=time,trip_distance_scen=distance)
+    dplyr::select(trip_mode_scen=mode,trip_duration_scen=time,trip_distance_scen=distance)
   
   output <- df %>%
-    inner_join(bl, by=c("lga_name","trip_mode_base")) %>%
-    inner_join(scen, by=c("lga_name","trip_mode_scen"))
+    inner_join(bl, by=c("trip_mode_base")) %>%
+    inner_join(scen, by=c("trip_mode_scen"))
   
   return(output)
 }
@@ -286,10 +301,9 @@ calculateScenarioTrips <- function(trips_melbourne,
                                    output_location) {
   
   # trips_melbourne="Data/processed/trips_melbourne_dot.csv"
-  # lga_df="Data/processed/DOT_df.csv"
   # lga_df="Data/processed/lga_df.csv"
   # output_location="./scenarios_dot"
-
+  
   # in case the directory hasn't been made yet
   dir.create(output_location, recursive=TRUE, showWarnings=FALSE)
   dir.create(paste0(output_location,"/scenarioTrips"), recursive=TRUE, showWarnings=FALSE)
@@ -321,15 +335,16 @@ calculateScenarioTrips <- function(trips_melbourne,
   #   # sum LGAs are named slightly differently
   #   mutate(lga_name=ifelse(lga_name=="Kingston (C) (Vic.)","Kingston (C)",lga_name)) %>%
   #   mutate(lga_name=ifelse(lga_name=="Melton (C)","Melton (S)",lga_name))
-
-
+  # 
+  # 
   # scenario_proportions <- scenario_data %>%
   #   dplyr::select(lga_name,scenario,mode,prop) %>%
   #   group_by(lga_name,scenario) %>%
   #   arrange(-prop) %>%
   #   mutate(rank=row_number()) %>%
   #   ungroup() %>%
-  #   arrange(lga_name,scenario,mode) %>%
+  #   arrange(lga_name,scenario,mode)
+  # %>%
   #   pivot_wider(id_cols=lga_name,
   #               names_from=c(scenario,mode),
   #               values_from=c(prop,rank))
@@ -338,10 +353,10 @@ calculateScenarioTrips <- function(trips_melbourne,
   # Mode is either car, pt.drive (driving to PT), or pt.walk (walking to PT)
   scenario_time_and_distance <- lga_df %>%
     dplyr::select(scenario,mode,distance,time) %>%
-    # time in hours 1.4 m/s ~ 5 km/h
+    # time in hours
     mutate(time=distance/(1.4*3.6))
   
-### Check time differences between base pt.drive and pt.walk for scenarios pt.full and pt.train (diff are: scen = base)
+  ### Check time differences between base pt.drive and pt.walk for scenarios pt.full and pt.train (diff are: scen = base)
   
   # difference_time <- scenario_time_and_distance %>% 
   #   select(-distance) %>%
@@ -395,18 +410,15 @@ calculateScenarioTrips <- function(trips_melbourne,
       trip_duration_scen
     )
   
-  
-  
-  
   # work trips --------------------------------------------------------------
   trips_melbourne_scenarios_car <- trips_melbourne %>%
     filter(trip_mode_base%in%c('car') & trip_purpose=="Work")
-    
+  
   trips_melbourne_scenarios_pt <- trips_melbourne %>%
     filter(trip_mode_base%in%c('public.transport') & trip_purpose=="Work") %>%
-    #temp fix to add in pt split
-    mutate(trip_mode_base=ifelse(row_number()<=600,"pt.drive","pt.walk"))
-
+    # Assign the public transport to pt.walk pt.drive 
+    mutate(trip_mode_base= pt.mode)
+  
   trips_melbourne_scenarios <- bind_rows(trips_melbourne_scenarios_car,
                                          trips_melbourne_scenarios_pt) %>%
     mutate(row_id=row_number())
@@ -427,11 +439,10 @@ calculateScenarioTrips <- function(trips_melbourne,
     #                    count_scenario=c(count_car,count_pt.drive,count_pt.walk))
   }
   
-  dot_baseline <- getModeCount(sum(trips_melbourne_proportions$count_base),
+  dot_baseline <- getModeCount(sum(trips_melbourne_proportions$count_baseline),
                                0.89246215,0.03018683,0.07735101)
- 
-
-# try from here
+  
+  # try from here
   test <- chooseTrips(trips_melbourne_scenarios,
                       dot_baseline[1],dot_baseline[2],dot_baseline[3])
   
@@ -449,26 +460,21 @@ calculateScenarioTrips <- function(trips_melbourne,
     dplyr::select(-trip_mode_scen,-trip_duration_scen,-trip_distance_scen)
   # chooseTrips <- function(base_choices=trips_melbourne_scenarios, lga_name=nothing,scen_car,scen_pt.walk,scen_pt.drive)
   # then, for each scenario, use chooseTrips, but with the scenario proportions.
-
- # for each scenario:
   
+  # for each scenario:
   pt_full <- base_dot %>%
-    chooseTrips(0.8,0.1,0.1) %>%
+    chooseTrips(0.86940174,0.04165867,0.08893959) %>%
     dplyr::mutate(trip_distance_scen=case_when(trip_mode_scen=="car" ~ 10, 
                                                trip_mode_scen=="pt.drive" ~ 1.1, 
                                                trip_mode_scen=="pt.walk" ~ 1.5)) %>%
     mutate(trip_duration_scen=trip_distance_scen/(1.4*3.6))
   
   pt_train <- base_dot %>%
-    chooseTrips(0.8,0.1,0.1) %>%
+    chooseTrips(0.87431739,0.04269600,0.08298661) %>%
     dplyr::mutate(trip_distance_scen=case_when(trip_mode_scen=="car" ~ 10, 
                                                trip_mode_scen=="pt.drive" ~ 1.1, 
                                                trip_mode_scen=="pt.walk" ~ 1.5)) %>%
-    mutate(trip_duration_scen=trip_distance_scen/(1.4*3.6))
-  
-  # make the scenarios correct output format
-  
-  
+    mutate(trip_duration_scen=trip_distance_scen/(1.4*3.6)) 
   
   # pt_full <- baseline %>%
   #   mutate(scen_car      = car_pt.full      - car_base,
@@ -476,30 +482,29 @@ calculateScenarioTrips <- function(trips_melbourne,
   #          scen_pt.walk  = pt.walk_pt.full  - pt.walk_base,
   #   ) %>%
   #   dplyr::select(lga_name,scen_car,scen_pt.walk,scen_pt.drive,data)
-  pt_full_scenario <- pt_full %>%
-    mutate(data = pmap(list(data, lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
-    dplyr::select(lga_name,data) %>%
-    unnest(cols="data") %>%
-    getDistanceAndTime("pt.full",scenario_time_and_distance) %>%
-    inner_join(
-      trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
-      by=c("lga_name","lga_id")
-    ) %>% 
-    mutate(dist_cat=NA) %>%
-    dplyr::select(
-      persid,cluster_id,household_id,participant_id,age,sex,year,trip_id,trip_purpose,
-      participant_wt,trips_wt,trip_mode_base,trip_duration_base,trip_distance_base,
-      day_type,trip_id_2,age_group,dist_cat,trip_mode_scen,trip_distance_scen,
-      trip_duration_scen
-    )
+  # pt_full_scenario <- pt_full %>%
+  #   mutate(data = pmap(list(data,lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
+  #   dplyr::select(lga_name,data) %>%
+  #   unnest(cols="data") %>%
+  #   getDistanceAndTime("pt.full",scenario_time_and_distance) %>%
+  #   inner_join(
+  #     trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
+  #     by=c("lga_name","lga_id")
+  #   ) %>%
+  #   mutate(dist_cat=NA) %>%
+  #   dplyr::select(
+  #     persid,cluster_id,household_id,participant_id,age,sex,year,trip_id,trip_purpose,
+  #     participant_wt,trips_wt,trip_mode_base,trip_duration_base,trip_distance_base,
+  #     day_type,trip_id_2,age_group,dist_cat,trip_mode_scen,trip_distance_scen,
+  #     trip_duration_scen
+  #   )
   
   pt_full_scenario_final <- bind_rows(
     trips_melbourne_unchanged,
-    pt_full_scenario) %>% 
+    pt_full) %>% 
     mutate(dist_cat=NA) %>%
     dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>%
     dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7)
-  
   
   # pt_train <- baseline %>%
   #   mutate(scen_car      = car_pt.train      - car_base,
@@ -507,26 +512,26 @@ calculateScenarioTrips <- function(trips_melbourne,
   #          scen_pt.walk  = pt.walk_pt.train  - pt.walk_base,
   #   ) %>%
   #   dplyr::select(lga_name,scen_car,scen_pt.walk,scen_pt.drive,data)
-  pt_train_scenario <- pt_train %>%
-    mutate(data = pmap(list(data, lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
-    dplyr::select(lga_name,data) %>%
-    unnest(cols="data") %>%
-    getDistanceAndTime("pt.train",scenario_time_and_distance) %>%
-    inner_join(
-      trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
-      by=c("lga_name","lga_id")
-    ) %>% 
-    mutate(dist_cat=NA) %>%
-    dplyr::select(
-      persid,cluster_id,household_id,participant_id,age,sex,year,trip_id,trip_purpose,
-      participant_wt,trips_wt,trip_mode_base,trip_duration_base,trip_distance_base,
-      day_type,trip_id_2,age_group,dist_cat,trip_mode_scen,trip_distance_scen,
-      trip_duration_scen
-    )
+  # pt_train_scenario <- pt_train %>%
+  #   mutate(data = pmap(list(data, lga_name,scen_car,scen_pt.walk,scen_pt.drive), chooseTrips)) %>%
+  #   dplyr::select(lga_name,data) %>%
+  #   unnest(cols="data") %>%
+  #   getDistanceAndTime("pt.train",scenario_time_and_distance) %>%
+  #   inner_join(
+  #     trips_melbourne_scenarios%>%dplyr::select(-trip_mode_base,-trip_duration_base,-trip_distance_base),
+  #     by=c("lga_name","lga_id")
+  #   ) %>%
+  #   mutate(dist_cat=NA) %>%
+  #   dplyr::select(
+  #     persid,cluster_id,household_id,participant_id,age,sex,year,trip_id,trip_purpose,
+  #     participant_wt,trips_wt,trip_mode_base,trip_duration_base,trip_distance_base,
+  #     day_type,trip_id_2,age_group,dist_cat,trip_mode_scen,trip_distance_scen,
+  #     trip_duration_scen
+  #   )
   
   pt_train_scenario_final <- bind_rows(
     trips_melbourne_unchanged,
-    pt_train_scenario) %>% 
+    pt_train) %>% 
     mutate(dist_cat=NA) %>%
     dplyr::mutate(trip_duration_base_hrs = trip_duration_base * 7) %>%
     dplyr::mutate(trip_duration_scen_hrs = trip_duration_scen * 7)
@@ -542,8 +547,6 @@ calculateScenarioTrips <- function(trips_melbourne,
   pt_train_scenario_walking <- pt_train_scenario_final %>%
     mutate(trip_mode_base=ifelse(trip_mode_base%in%c("pt.walk","pt.drive"),"walking",trip_mode_base)) %>%
     mutate(trip_mode_scen=ifelse(trip_mode_scen%in%c("pt.walk","pt.drive"),"walking",trip_mode_scen))
-  
-  
   
   ### 2.1) Create data set with VISTA people and allocate baseline and scenario trips to them
   persons_travel_pt_full <- calculatePersonsTravelScenario(
@@ -573,7 +576,6 @@ calculateScenarioTrips <- function(trips_melbourne,
   write.csv(persons_matched_pt_train, paste0(output_location,"/dotTrain.csv"), row.names=F, quote=T)
 }
 
-
 # calculating results -----------------------------------------------------
 
 ### Trips data used in mslt_code and ithim-r
@@ -587,6 +589,7 @@ write.csv(trips_melbourne, "Data/processed/trips_melbourne_dot.csv", row.names=F
 
 calculateScenarioTrips(
   trips_melbourne="Data/processed/trips_melbourne_dot.csv",
-  lga_df="Data/processed/lga_df.csv",
+  lga_df="Data/processed/DOT_df.csv",
   output_location="./scenarios_dot"
 )
+
